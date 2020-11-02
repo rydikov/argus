@@ -1,7 +1,9 @@
 development:
-  gst: /Users/rydikov/Downloads/video.mp4 
+  gst: ../demo.mov 
   stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills
+  device_name: CPU
 
 production:
   gst: uridecodebin uri=rtsp://***REMOVED***@192.168.1.64:554/Streaming/Channels/101 ! videoconvert ! video/x-raw ! appsink drop=true
   stills_dir: /home/pi/timelapse/Stills
+  device_name: MIRIAD

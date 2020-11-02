@@ -28,9 +28,11 @@ net = ie.read_network(
 
 #Extract network params
 input_blob = next(iter(net.input_info))
+out_blob = next(iter(net.outputs))
+
 _, _, h, w = net.input_info[input_blob].input_data.shape
 
-exec_net = ie.load_network(network=net, device_name='CPU')
+exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
 with open("../coco.names", 'r') as f:
     labels_map = [x.strip() for x in f]
@@ -58,7 +60,7 @@ def recocnize(frame):
         elem['object_label'] = labels_map[elem['class_id']]
         return elem
     
-    objects = map(_add_object_label, objects)
+    objects = list(map(_add_object_label, objects))
 
     return objects
 
@@ -87,7 +89,9 @@ while True:
             is_saved = cv2.imwrite(path, frame)
             if not is_saved:
                 raise
-            # time.sleep(snapshot_delay)
+            
+            if MODE == 'production':
+                time.sleep(snapshot_delay)
     else:
         print("Cap is not avalible")
         sys.exit(0)

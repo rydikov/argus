@@ -90,7 +90,6 @@ def parse_yolo_region(predictions, resized_image_shape, original_im_shape, param
 def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold, is_proportional):
 
     objects = list()
-
     for layer_name, out_blob in output.items():
         out_blob = out_blob.reshape(net.layers[net.layers[layer_name].parents[0]].out_data[0].shape)
         layer_params = YoloParams(net.layers[layer_name].params, out_blob.shape[2])
