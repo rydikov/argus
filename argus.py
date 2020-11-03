@@ -10,7 +10,7 @@ from openvino.inference_engine import IECore
 
 from helpers.yolo import get_objects, filter_objects
 
-MODE = 'development'
+MODE = os.environ.get('MODE', 'development')
 
 with open("conf/app.yml") as f:
     config = yaml.safe_load(f)[MODE]
@@ -28,7 +28,6 @@ net = ie.read_network(
 
 #Extract network params
 input_blob = next(iter(net.input_info))
-out_blob = next(iter(net.outputs))
 
 _, _, h, w = net.input_info[input_blob].input_data.shape
 
