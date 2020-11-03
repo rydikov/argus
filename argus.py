@@ -12,7 +12,10 @@ from helpers.yolo import get_objects, filter_objects
 
 MODE = os.environ.get('MODE', 'development')
 
-with open("conf/app.yml") as f:
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(dir_path, 'conf/app.yml')) as f:
     config = yaml.safe_load(f)[MODE]
 
 cap = cv2.VideoCapture(config['gst'])
@@ -22,8 +25,8 @@ prob_threshold = 0.4
 iou_threshold = 0.4
 
 net = ie.read_network(
-	'../frozen_darknet_yolov4_model.xml', 
-	'../frozen_darknet_yolov4_model.bin'
+	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.xml'), 
+	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.bin')
 	)
 
 #Extract network params
@@ -33,7 +36,7 @@ _, _, h, w = net.input_info[input_blob].input_data.shape
 
 exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
-with open("../coco.names", 'r') as f:
+with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
     labels_map = [x.strip() for x in f]
 
 
