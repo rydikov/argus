@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import cv2
 import yaml
+import collections
 
 from openvino.inference_engine import IECore
 
@@ -67,13 +68,38 @@ def recocnize(frame):
     return objects
 
 
+class BadFrameChecker(object):
+    
+    def __init__(self):
+        self.store_images = 5
+        self.last_image_sizes = collections.deque([], self.store_images)
+        self.deviation_percent = 60
+
+    def is_bad(self, image_path):
+        image_size = os.path.getsize(image_path)
+
+        if len(self.last_image_sizes) < self.store_images:
+            self.last_image_sizes.appendleft(image_size)
+            return False
+        else:
+            avg_image_size = sum(self.last_image_sizes)/self.store_images
+            if (100-image_size/avg_image_size) < self.deviation_percent:
+                return True
+            else:
+                self.last_image_sizes.appendleft(image_size)
+        return False
+
+
+bfc = BadFrameChecker()
+
 while True:
     if cap.isOpened():
         ret, frame = cap.read()
         if ret:
+
             objects = recocnize(frame)
 
-            # Drow rectangle
+            # Draw rectangle
             for obj in objects:
                 if obj['object_label'] == 'person':
                     print(obj)
@@ -91,6 +117,10 @@ while True:
             is_saved = cv2.imwrite(path, frame)
             if not is_saved:
                 raise
+            
+            is_bad = bfc.is_bad(path)
+            if is_bad:
+                os.remove(path)
             
             if MODE == 'production':
                 time.sleep(snapshot_delay)
