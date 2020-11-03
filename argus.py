@@ -1,10 +1,11 @@
+import yaml
 import time
 import sys
 import os 
 import numpy as np
+import logging
 import datetime
 import cv2
-import yaml
 import collections
 
 from openvino.inference_engine import IECore
@@ -13,6 +14,12 @@ from helpers.yolo import get_objects, filter_objects
 
 MODE = os.environ.get('MODE', 'development')
 
+logger = logging.getLogger(__file__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    datefmt='%d/%m/%Y %H:%M:%S'
+    )
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -101,9 +108,12 @@ while True:
 
             # Draw rectangle
             for obj in objects:
-                if obj['object_label'] == 'person':
-                    print(obj)
                 cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
+                if obj['object_label'] == 'person':
+                    logger.warn(obj)
+                else:
+                    logging.info(obj)
+                
 
             # Save image
             if objects:
@@ -116,14 +126,15 @@ while True:
             path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
             is_saved = cv2.imwrite(path, frame)
             if not is_saved:
-                raise
+                logger.error('Unable to save file')
             
             is_bad = bfc.is_bad(path)
             if is_bad:
+                logger.warn('Bad file deleted')
                 os.remove(path)
             
             if MODE == 'production':
                 time.sleep(snapshot_delay)
     else:
-        print("Cap is not avalible")
+        logger.error('Cap is not avalible')
         sys.exit(0)
