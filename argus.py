@@ -84,13 +84,11 @@ class BadFrameChecker(object):
 
     def is_size_larger_avg(self, image_size):
         avg_image_size = sum(self.last_image_sizes)/self.store_images
-        return (100 - image_size/avg_image_size) > self.deviation_percent
+        return (image_size/avg_image_size)*100 > self.deviation_percent
 
     def is_bad(self, image_path):
-        image_size = os.path.getsize(image_path)
-        logging.info(image_size)
-        logging.info(self.last_image_sizes)
-        logging.info(self.is_size_larger_avg(image_size))
+        if self.last_image_sizes:
+            logging.info(self.is_size_larger_avg(image_size))
 
         if len(self.last_image_sizes) < self.store_images or self.is_size_larger_avg(image_size):
             self.last_image_sizes.appendleft(image_size)
