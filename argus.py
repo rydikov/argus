@@ -4,6 +4,7 @@ import sys
 import os 
 import numpy as np
 import logging
+import ffmpeg
 import datetime
 import cv2
 import collections
@@ -11,6 +12,9 @@ import collections
 from openvino.inference_engine import IECore
 
 from helpers.yolo import get_objects, filter_objects
+
+# 25 sec
+DEADLINE_IN_MSEC = 25000000
 
 MODE = os.environ.get('MODE', 'development')
 
@@ -26,9 +30,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, 'conf/app.yml')) as f:
     config = yaml.safe_load(f)[MODE]
 
-cap = cv2.VideoCapture(config['gst'])
-ie = IECore()
 
+ie = IECore()
 prob_threshold = 0.4
 iou_threshold = 0.4
 
@@ -46,6 +49,20 @@ exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
 with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
     labels_map = [x.strip() for x in f]
+
+def make_snapshot():
+    filename_template = "{}/{}.png"
+    snapshot_path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+
+    stream = ffmpeg.input(
+        config['gst'],
+        rtsp_transport='tcp',
+        stimeout=DEADLINE_IN_MSEC
+    )
+    stream = stream.output(snapshot_path, vframes=1, pix_fmt='rgb24')
+    stream.run(capture_stdout=True, capture_stderr=True)
+
+    return snapshot_path
 
 
 def recocnize(frame):
@@ -99,42 +116,37 @@ class BadFrameChecker(object):
 bfc = BadFrameChecker()
 
 while True:
-    if cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
+    snapshot_path = make_snapshot()
+    
 
-            objects = recocnize(frame)
+    frame = cv2.imread(snapshot_path,0)
 
-            # Draw rectangle
-            for obj in objects:
-                cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
-                if obj['object_label'] == 'person':
-                    logger.warn(obj)
-                else:
-                    logging.info(obj)
-                
+    objects = recocnize(frame)
 
-            # Save image
-            if objects:
-                filename_template = "{}/{}_detected.jpg"
-                snapshot_delay = 15
-            else:
-                filename_template = "{}/{}.jpg"
-                snapshot_delay = 60
-
-            path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-            is_saved = cv2.imwrite(path, frame)
-            if not is_saved:
-                logger.error('Unable to save file')
-            
-            is_bad = bfc.is_bad(path)
-            if is_bad:
-                logger.warn('Bad file deleted')
-                os.remove(path)
-                snapshot_delay = 0
-            
-            if MODE == 'production':
-                time.sleep(snapshot_delay)
+    # Draw rectangle
+    for obj in objects:
+        cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
+        if obj['object_label'] == 'person':
+            logger.warn(obj)
+        else:
+            logging.info(obj)
+        
+    # Save image
+    if objects:
+        snapshot_delay = 15
     else:
-        logger.error('Cap is not avalible')
-        sys.exit(0)
+        snapshot_delay = 60
+
+    # path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    # is_saved = cv2.imwrite(path, frame)
+    # if not is_saved:
+    #     logger.error('Unable to save file')
+    
+    is_bad = bfc.is_bad(path)
+    if is_bad:
+        logger.warn('Bad file deleted')
+        os.remove(path)
+        snapshot_delay = 0
+    
+    if MODE == 'production':
+        time.sleep(snapshot_delay)
