@@ -82,19 +82,21 @@ class BadFrameChecker(object):
         self.last_image_sizes = collections.deque([], self.store_images)
         self.deviation_percent = 60
 
+    def is_size_larger_avg(self, image_size):
+        avg_image_size = sum(self.last_image_sizes)/self.store_images
+        return (100 - image_size/avg_image_size) > self.deviation_percent
+
     def is_bad(self, image_path):
         image_size = os.path.getsize(image_path)
+        logging.info(image_size)
+        logging.info(self.last_image_sizes)
+        logging.info(self.is_size_larger_avg(image_size))
 
-        if len(self.last_image_sizes) < self.store_images:
+        if len(self.last_image_sizes) < self.store_images or self.is_size_larger_avg(image_size):
             self.last_image_sizes.appendleft(image_size)
             return False
-        else:
-            avg_image_size = sum(self.last_image_sizes)/self.store_images
-            if (100-image_size/avg_image_size) < self.deviation_percent:
-                return True
-            else:
-                self.last_image_sizes.appendleft(image_size)
-        return False
+        
+        return True
 
 
 bfc = BadFrameChecker()
@@ -118,10 +120,10 @@ while True:
             # Save image
             if objects:
                 filename_template = "{}/{}_detected.jpg"
-                snapshot_delay = 5
+                snapshot_delay = 15
             else:
                 filename_template = "{}/{}.jpg"
-                snapshot_delay = 30
+                snapshot_delay = 60
 
             path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
             is_saved = cv2.imwrite(path, frame)
@@ -132,6 +134,7 @@ while True:
             if is_bad:
                 logger.warn('Bad file deleted')
                 os.remove(path)
+                snapshot_delay = 0
             
             if MODE == 'production':
                 time.sleep(snapshot_delay)
