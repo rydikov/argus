@@ -16,6 +16,7 @@ from helpers.timing import timing
 
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
+PROB_THRESHOLD = 0.4
 
 MODE = os.environ.get('MODE', 'development')
 
@@ -31,11 +32,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, 'conf/app.yml')) as f:
     config = yaml.safe_load(f)[MODE]
 
+with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
+    labels_map = [x.strip() for x in f]
 
 ie = IECore()
-prob_threshold = 0.4
-iou_threshold = 0.4
-
 net = ie.read_network(
 	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.xml'), 
 	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.bin')
@@ -45,9 +45,6 @@ net = ie.read_network(
 input_blob = next(iter(net.input_info))
 _, _, h, w = net.input_info[input_blob].input_data.shape
 exec_net = ie.load_network(network=net, device_name=config['device_name'])
-
-with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
-    labels_map = [x.strip() for x in f]
 
 @timing
 def make_snapshot():
@@ -76,11 +73,11 @@ def recocnize(frame):
         net, 
         (h, w), 
         (frame.shape[0], frame.shape[1]), 
-        prob_threshold,
+        PROB_THRESHOLD,
         False
     )
 
-    objects = filter_objects(objects, iou_threshold, prob_threshold)
+    objects = filter_objects(objects, iou_threshold=0.4, prob_threshold=PROB_THRESHOLD)
 
     def _add_object_label(elem):
         elem['object_label'] = labels_map[elem['class_id']]
@@ -133,15 +130,13 @@ while True:
         # Draw rectangle
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
-            if obj['object_label'] == 'person':
+            if obj['object_label'] in ['person']:
                 logger.warn(obj)
-            else:
-                logging.info(obj)
             
         path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         is_saved = cv2.imwrite(path, frame)
         if not is_saved:
-            logger.error('Unable to save file')
+            logger.error('Unable to save file with detected objects')
     
     if MODE == 'production':
         time.sleep(snapshot_delay)
