@@ -37,8 +37,8 @@ with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
 
 ie = IECore()
 net = ie.read_network(
-	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.xml'), 
-	os.path.join(config['model_path'], 'frozen_darknet_yolov4_model.bin')
+	os.path.join(config['model_path'], 'frozen_darknet_yolov3_model.xml'), 
+	os.path.join(config['model_path'], 'frozen_darknet_yolov3_model.bin')
 	)
 
 #Extract network params
