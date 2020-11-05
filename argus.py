@@ -101,9 +101,9 @@ class BadFrameChecker(object):
 
     def is_bad(self, image_path):
         image_size = os.path.getsize(image_path)
+        self.last_image_sizes.appendleft(image_size)
 
         if len(self.last_image_sizes) < self.store_images or self.is_size_larger_avg(image_size):
-            self.last_image_sizes.appendleft(image_size)
             return False
         
         return True
@@ -122,7 +122,7 @@ while True:
 
     is_bad_file = bfc.is_bad(snapshot_path)
     if is_bad_file:
-        logger.warn('Bad file deleted')
+        logger.warning('Bad file deleted')
         os.remove(snapshot_path)
         continue
 
@@ -136,7 +136,7 @@ while True:
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
             if obj['object_label'] in ['person']:
-                logger.warn(obj)
+                logger.warning(obj)
             
         path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         is_saved = cv2.imwrite(path, frame)
