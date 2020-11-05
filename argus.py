@@ -113,12 +113,17 @@ bfc = BadFrameChecker()
 
 while True:
     snapshot_delay = 30
-    snapshot_path = make_snapshot()
 
-    is_bad = bfc.is_bad(snapshot_path)
-    if is_bad:
+    try:
+        snapshot_path = make_snapshot()
+    except ffmpeg._run.Error as e:
+        logging.exception("Time out Error")
+        continue
+
+    is_bad_file = bfc.is_bad(snapshot_path)
+    if is_bad_file:
         logger.warn('Bad file deleted')
-        os.remove(path)
+        os.remove(snapshot_path)
         continue
 
     frame = cv2.imread(snapshot_path)
