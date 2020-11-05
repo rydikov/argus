@@ -1,6 +1,15 @@
+import logging
+
 from functools import wraps
 from time import time
 
+
+logger = logging.getLogger(__file__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    datefmt='%d/%m/%Y %H:%M:%S'
+    )
 
 def timing(f):
     @wraps(f)
