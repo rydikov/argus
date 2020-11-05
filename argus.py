@@ -12,6 +12,7 @@ import collections
 from openvino.inference_engine import IECore
 
 from helpers.yolo import get_objects, filter_objects
+from helpers.timing import timing
 
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
@@ -42,14 +43,13 @@ net = ie.read_network(
 
 #Extract network params
 input_blob = next(iter(net.input_info))
-
 _, _, h, w = net.input_info[input_blob].input_data.shape
-
 exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
 with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
     labels_map = [x.strip() for x in f]
 
+@timing
 def make_snapshot():
     snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
@@ -63,7 +63,7 @@ def make_snapshot():
 
     return snapshot_path
 
-
+@timing
 def recocnize(frame):
 
     proc_image = cv2.resize(frame, (h, w), interpolation=cv2.INTER_LINEAR)
