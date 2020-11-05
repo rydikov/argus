@@ -51,8 +51,7 @@ with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
     labels_map = [x.strip() for x in f]
 
 def make_snapshot():
-    filename_template = "{}/{}.png"
-    snapshot_path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
     stream = ffmpeg.input(
         config['gst'],
@@ -117,9 +116,14 @@ bfc = BadFrameChecker()
 
 while True:
     snapshot_path = make_snapshot()
-    
 
-    frame = cv2.imread(snapshot_path,0)
+    is_bad = bfc.is_bad(snapshot_path)
+    if is_bad:
+        logger.warn('Bad file deleted')
+        os.remove(path)
+        break
+
+    frame = cv2.imread(snapshot_path)
 
     objects = recocnize(frame)
 
@@ -131,22 +135,13 @@ while True:
         else:
             logging.info(obj)
         
-    # Save image
-    if objects:
-        snapshot_delay = 15
-    else:
-        snapshot_delay = 60
-
-    # path = filename_template.format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-    # is_saved = cv2.imwrite(path, frame)
-    # if not is_saved:
-    #     logger.error('Unable to save file')
+    snapshot_delay = 5 if objects else 30
     
-    is_bad = bfc.is_bad(path)
-    if is_bad:
-        logger.warn('Bad file deleted')
-        os.remove(path)
-        snapshot_delay = 0
+    path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    is_saved = cv2.imwrite(path, frame)
+    if not is_saved:
+        logger.error('Unable to save file')
+    
     
     if MODE == 'production':
         time.sleep(snapshot_delay)
