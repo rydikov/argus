@@ -115,33 +115,33 @@ class BadFrameChecker(object):
 bfc = BadFrameChecker()
 
 while True:
+    snapshot_delay = 30
     snapshot_path = make_snapshot()
 
     is_bad = bfc.is_bad(snapshot_path)
     if is_bad:
         logger.warn('Bad file deleted')
         os.remove(path)
-        break
+        continue
 
     frame = cv2.imread(snapshot_path)
 
     objects = recocnize(frame)
 
-    # Draw rectangle
-    for obj in objects:
-        cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
-        if obj['object_label'] == 'person':
-            logger.warn(obj)
-        else:
-            logging.info(obj)
-        
-    snapshot_delay = 5 if objects else 30
-    
-    path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-    is_saved = cv2.imwrite(path, frame)
-    if not is_saved:
-        logger.error('Unable to save file')
-    
+    if objects:
+        snapshot_delay = 5
+        # Draw rectangle
+        for obj in objects:
+            cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
+            if obj['object_label'] == 'person':
+                logger.warn(obj)
+            else:
+                logging.info(obj)
+            
+        path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+        is_saved = cv2.imwrite(path, frame)
+        if not is_saved:
+            logger.error('Unable to save file')
     
     if MODE == 'production':
         time.sleep(snapshot_delay)
