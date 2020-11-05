@@ -7,7 +7,7 @@ from time import time
 logger = logging.getLogger(__file__)
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s',
+    format='%(levelname)s %(asctime)s %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S'
     )
 
