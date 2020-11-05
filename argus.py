@@ -106,7 +106,7 @@ class BadFrameChecker(object):
         if len(self.last_image_sizes) < self.store_images:
             return False
         
-        return self.is_image_size_less_avg_size(image_size):
+        return self.is_image_size_less_avg_size(image_size)
 
 
 bfc = BadFrameChecker()
