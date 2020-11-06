@@ -5,10 +5,10 @@ import os
 import numpy as np
 import logging
 import ffmpeg
-import datetime
 import cv2
 import collections
 
+from datetime import datetime, timedelta
 from openvino.inference_engine import IECore
 
 from helpers.yolo import get_objects, filter_objects
@@ -48,7 +48,7 @@ exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
 @timing
 def make_snapshot():
-    snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
     stream = ffmpeg.input(
         config['gst'],
@@ -110,6 +110,7 @@ class BadFrameChecker(object):
 
 
 bfc = BadFrameChecker()
+last_time_detected = None
 
 while True:
     snapshot_delay = 30
@@ -127,6 +128,7 @@ while True:
         continue
 
     frame = cv2.imread(snapshot_path)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     objects = recocnize(frame)
 
@@ -137,8 +139,12 @@ while True:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
             if obj['object_label'] in ['person']:
                 logger.warning(obj)
+                snapshot_delay = 0
+                # if last_time_detected and last_time_detected < datetime.now() - timedelta(hours=1):
+                #     logger.warning("Send notification")
+                #     last_time_detected = datetime.now()
             
-        path = "{}/{}_detected.png".format(config['stills_dir'], datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+        path = "{}/{}_detected.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         is_saved = cv2.imwrite(path, frame)
         if not is_saved:
             logger.error('Unable to save file with detected objects')
