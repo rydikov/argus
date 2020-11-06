@@ -128,7 +128,6 @@ while True:
         continue
 
     frame = cv2.imread(snapshot_path)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     objects = recocnize(frame)
 
