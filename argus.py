@@ -13,6 +13,7 @@ from openvino.inference_engine import IECore
 
 from helpers.yolo import get_objects, filter_objects
 from helpers.timing import timing
+from helpers.telegram import send_message
 
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
@@ -136,12 +137,11 @@ while True:
         # Draw rectangle
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
-            if obj['object_label'] in ['person']:
+            if obj['object_label']:
                 logger.warning(obj)
-                snapshot_delay = 0
-                # if last_time_detected and last_time_detected < datetime.now() - timedelta(hours=1):
-                #     logger.warning("Send notification")
-                #     last_time_detected = datetime.now()
+                if not last_time_detected or last_time_detected > datetime.now() - timedelta(hours=1):
+                    send_message('Object detected: {}'.format(obj['object_label']))
+                last_time_detected = datetime.now()
             
         path = "{}/{}_detected.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         is_saved = cv2.imwrite(path, frame)
