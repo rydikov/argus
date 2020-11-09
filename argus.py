@@ -112,6 +112,7 @@ class BadFrameChecker(object):
 
 bfc = BadFrameChecker()
 last_time_detected = None
+silent_to_time = datetime.now()
 
 while True:
     snapshot_delay = 30
@@ -138,15 +139,19 @@ while True:
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
             if obj['object_label']:
-                logger.warning(obj)
-                if not last_time_detected or last_time_detected > datetime.now() - timedelta(hours=1):
-                    send_message('Object detected: {}'.format(obj['object_label']))
                 last_time_detected = datetime.now()
-            
-        path = "{}/{}_detected.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-        is_saved = cv2.imwrite(path, frame)
+                snapshot_delay = 0
+                logger.warning(obj)
+
+        file_name = '{}_detected.png'.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+        is_saved = cv2.imwrite(os.path.join(config['stills_dir'], file_name), frame)
         if not is_saved:
             logger.error('Unable to save file with detected objects')
+            continue
+
+        if last_time_detected and last_time_detected > silent_to_time:
+            send_message('Object detected: https://web.rydikov-home.keenetic.pro/Stills/{}'.format(file_name))
+            silent_to_time = datetime.now() + timedelta(hours=1)
     
     if MODE == 'production':
         time.sleep(snapshot_delay)
