@@ -143,7 +143,7 @@ while True:
                 snapshot_delay = 0
                 logger.warning(obj)
 
-        file_name = '{}_detected.png'.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+        file_name = '{}-detected.png'.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         is_saved = cv2.imwrite(os.path.join(config['stills_dir'], file_name), frame)
         if not is_saved:
             logger.error('Unable to save file with detected objects')
