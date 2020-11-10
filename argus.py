@@ -25,7 +25,7 @@ MODE = os.environ.get('MODE', 'development')
 logger = logging.getLogger(__file__)
 logging.basicConfig(
     level=logging.INFO,
-    format='%(levelname)s %(asctime)s %(message)s',
+    format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S'
     )
 
