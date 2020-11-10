@@ -120,7 +120,6 @@ while True:
 
     try:
         snapshot_path = make_snapshot()
-        snapshot_path = '../test.png'
     except ffmpeg._run.Error as e:
         logging.exception("Time out Error")
         continue
