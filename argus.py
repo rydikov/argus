@@ -18,6 +18,7 @@ from helpers.telegram import send_message
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
 PROB_THRESHOLD = 0.4
+IMPORTANT_OBJECTS = ['person', 'car', 'cow']
 
 MODE = os.environ.get('MODE', 'development')
 
@@ -119,6 +120,7 @@ while True:
 
     try:
         snapshot_path = make_snapshot()
+        snapshot_path = '../test.png'
     except ffmpeg._run.Error as e:
         logging.exception("Time out Error")
         continue
@@ -138,7 +140,7 @@ while True:
         # Draw rectangle
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
-            if obj['object_label']:
+            if obj['object_label'] in IMPORTANT_OBJECTS:
                 last_time_detected = datetime.now()
                 snapshot_delay = 0
                 logger.warning(obj)
@@ -150,7 +152,10 @@ while True:
             continue
 
         if last_time_detected and last_time_detected > silent_to_time:
-            send_message('Object detected: https://web.rydikov-home.keenetic.pro/Stills/{}'.format(file_name))
+            send_message('Objects detected: {} https://web.rydikov-home.keenetic.pro/Stills/{}'.format(
+                ' '.join([obj['object_label'] for obj in objects]),
+                file_name
+            ))
             silent_to_time = datetime.now() + timedelta(hours=1)
     
     if MODE == 'production':
