@@ -48,19 +48,26 @@ input_blob = next(iter(net.input_info))
 _, _, h, w = net.input_info[input_blob].input_data.shape
 exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
+if MODE == 'development':
+    cap = cv2.VideoCapture(config['source'])
+
 @timing
-def make_snapshot():
-    snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-
-    stream = ffmpeg.input(
-        config['gst'],
-        rtsp_transport='tcp',
-        stimeout=DEADLINE_IN_MSEC
-    )
+def make_rtsp_snapshot(snapshot_path):
+    stream = ffmpeg.input(config['source'], rtsp_transport='tcp', stimeout=DEADLINE_IN_MSEC)
     stream = stream.output(snapshot_path, vframes=1, pix_fmt='rgb24')
-    stream.run(capture_stdout=True, capture_stderr=True)
+    try:
+        stream.run(capture_stdout=True, capture_stderr=True)
+    except ffmpeg._run.Error as e:
+        logging.exception("Time out Error")
+        raise
+    
 
-    return snapshot_path
+def make_video_snapshot(snapshot_path):
+    __, frame = cap.read()
+    is_saved = cv2.imwrite(snapshot_path, frame)
+    if not is_saved:
+        raise
+
 
 @timing
 def recocnize(frame):
@@ -90,6 +97,29 @@ def recocnize(frame):
     return objects
 
 
+def split_and_recocnize(frame):
+
+    h, w = frame.shape[0], frame.shape[1] # e.g. 1080x1920
+    half_frame = int(w/2) # 960
+    left_frame = frame[h-half_frame:h, 0:half_frame] # [120:1080, 0:960]
+    right_frame = frame[h-half_frame:h, half_frame:w] # [120:1080, 960:1920]
+
+    left_frame_objects = recocnize(left_frame)
+    right_frame_objects = recocnize(right_frame)
+
+    for obj in left_frame_objects:
+        obj['ymin'] += h - half_frame
+        obj['ymax'] += h - half_frame
+
+    for obj in right_frame_objects:
+        obj['xmin'] += half_frame
+        obj['ymin'] += h - half_frame
+        obj['xmax'] += half_frame
+        obj['ymax'] += h - half_frame
+
+    return left_frame_objects + right_frame_objects
+
+
 class BadFrameChecker(object):
     
     def __init__(self):
@@ -117,22 +147,23 @@ silent_to_time = datetime.now()
 
 while True:
     snapshot_delay = 30
+    snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
+    snapshot_method = make_rtsp_snapshot if MODE == 'production' else make_video_snapshot
+    
     try:
-        snapshot_path = make_snapshot()
-    except ffmpeg._run.Error as e:
-        logging.exception("Time out Error")
+        snapshot_method(snapshot_path)
+    except:
+        logging.exception('Unable to get snapshot')
         continue
 
-    is_bad_file = bfc.is_bad(snapshot_path)
-    if is_bad_file:
+    if bfc.is_bad(snapshot_path):
         logger.warning('Bad file deleted')
         os.remove(snapshot_path)
         continue
 
     frame = cv2.imread(snapshot_path)
-
-    objects = recocnize(frame)
+    objects = split_and_recocnize(frame)
 
     if objects:
         snapshot_delay = 5
@@ -150,7 +181,7 @@ while True:
             logger.error('Unable to save file with detected objects')
             continue
 
-        if last_time_detected and last_time_detected > silent_to_time:
+        if MODE == 'production' and last_time_detected and last_time_detected > silent_to_time:
             send_message('Objects detected: {} https://web.rydikov-home.keenetic.pro/Stills/{}'.format(
                 ' '.join([obj['object_label'] for obj in objects]),
                 file_name

@@ -1,11 +1,13 @@
 development:
-  gst: rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov
+  source: /Users/rydikov/Downloads/2020-11-22-03-00.mp4
   stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills
   model_path: ..
   device_name: CPU
+  snapshot_delay: 0
 
 production:
-  gst: rtsp://***REMOVED***@192.168.1.64:554/Streaming/Channels/101
+  source: rtsp://***REMOVED***@192.168.1.64:554/Streaming/Channels/101
   stills_dir: /home/pi/timelapse/Stills
   model_path: /home/pi/yolo
   device_name: MYRIAD
+  snapshot_delay: 30
