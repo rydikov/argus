@@ -48,9 +48,6 @@ input_blob = next(iter(net.input_info))
 _, _, h, w = net.input_info[input_blob].input_data.shape
 exec_net = ie.load_network(network=net, device_name=config['device_name'])
 
-if MODE == 'development':
-    cap = cv2.VideoCapture(config['source'])
-
 @timing
 def make_rtsp_snapshot(snapshot_path):
     stream = ffmpeg.input(config['source'], rtsp_transport='tcp', stimeout=DEADLINE_IN_MSEC)
@@ -145,12 +142,16 @@ bfc = BadFrameChecker()
 last_time_detected = None
 silent_to_time = datetime.now()
 
+if config['source'].startswith('rtps'):
+    snapshot_method = make_rtsp_snapshot
+else:
+    cap = cv2.VideoCapture(config['source'])
+    snapshot_method = make_video_snapshot
+
 while True:
     snapshot_delay = 30
     snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
-    snapshot_method = make_rtsp_snapshot if MODE == 'production' else make_video_snapshot
-    
     try:
         snapshot_method(snapshot_path)
     except:
@@ -170,6 +171,12 @@ while True:
         # Draw rectangle
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
+            cv2.putText(frame, '{}: {} %'.format(obj['object_label'], round(obj['confidence'] * 100, 1)),
+                        (obj['xmin'], obj['ymin'] - 7),
+                        cv2.FONT_HERSHEY_COMPLEX, 
+                        0.4, 
+                        (255,255,255), 
+                        1)
             if obj['object_label'] in IMPORTANT_OBJECTS:
                 last_time_detected = datetime.now()
                 snapshot_delay = 0
