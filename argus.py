@@ -142,7 +142,7 @@ bfc = BadFrameChecker()
 last_time_detected = None
 silent_to_time = datetime.now()
 
-if config['source'].startswith('rtps'):
+if config['source'].startswith('rtsp'):
     snapshot_method = make_rtsp_snapshot
 else:
     cap = cv2.VideoCapture(config['source'])
