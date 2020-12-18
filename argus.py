@@ -8,6 +8,7 @@ import ffmpeg
 import cv2
 import collections
 
+from usb.core import find as finddev
 from datetime import datetime, timedelta
 from openvino.inference_engine import IECore
 
@@ -71,8 +72,16 @@ def recocnize(frame):
 
     proc_image = cv2.resize(frame, (h, w), interpolation=cv2.INTER_LINEAR)
     proc_image = proc_image.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-    
-    result = exec_net.infer({input_blob: proc_image})
+
+    try:
+        result = exec_net.infer({input_blob: proc_image})
+    except:
+        logging.exception("Exec Network is down")
+        if MODE == 'production': # Reset usb device. Find ids with lsusb
+            dev = finddev(idVendor=0x0424, idProduct=0x9514)
+            dev.reset()
+        sys.exit(0)
+
 
     objects = get_objects(
         result, 
