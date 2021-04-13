@@ -159,7 +159,7 @@ else:
     snapshot_method = make_video_snapshot
 
 while True:
-    snapshot_delay = 30
+    snapshot_delay = 5
     snapshot_path = "{}/{}.png".format(config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
     try:
@@ -179,7 +179,7 @@ while True:
     has_not_unimportant_objects = set(objects) - set(UNIMPORTANT_OBJECTS)
 
     if objects and has_not_unimportant_objects:
-        snapshot_delay = 5
+        snapshot_delay = 0
         # Draw rectangle
         for obj in objects:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
