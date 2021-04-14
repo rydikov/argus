@@ -176,7 +176,7 @@ while True:
     frame = cv2.imread(snapshot_path)
     objects = split_and_recocnize(frame)
 
-    has_not_unimportant_objects = set([obj['object_label'] for obj in objects) - set(UNIMPORTANT_OBJECTS)
+    has_not_unimportant_objects = set([obj['object_label'] for obj in objects]) - set(UNIMPORTANT_OBJECTS)
 
     if objects and has_not_unimportant_objects:
         snapshot_delay = 0
