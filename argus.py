@@ -20,7 +20,14 @@ from helpers.telegram import send_message
 DEADLINE_IN_MSEC = 25000000
 PROB_THRESHOLD = 0.4
 IMPORTANT_OBJECTS = ['person', 'car', 'cow']
-UNIMPORTANT_OBJECTS = ['bench']
+DETECTABLE_OBJECTS = IMPORTANT_OBJECTS + [
+    'bicycle', 
+    'motorcycle',
+    'bird',
+    'cat',
+    'dog',
+    'horse'
+    ]
 
 MODE = os.environ.get('MODE', 'development')
 
@@ -176,9 +183,9 @@ while True:
     frame = cv2.imread(snapshot_path)
     objects = split_and_recocnize(frame)
 
-    has_not_unimportant_objects = set([obj['object_label'] for obj in objects]) - set(UNIMPORTANT_OBJECTS)
+    has_detectable_objects = set([obj['object_label'] for obj in objects]) & set(DETECTABLE_OBJECTS)
 
-    if objects and has_not_unimportant_objects:
+    if has_detectable_objects:
         snapshot_delay = 0
         # Draw rectangle
         for obj in objects:
