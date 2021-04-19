@@ -98,11 +98,10 @@ def recocnize(frame):
 
     objects = get_objects(
         result, 
-        net, 
+        net,
         (h, w), 
         (frame.shape[0], frame.shape[1]), 
         PROB_THRESHOLD,
-        False,
         function
     )
 
