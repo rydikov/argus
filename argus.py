@@ -7,6 +7,7 @@ import logging
 import ffmpeg
 import cv2
 import collections
+import ngraph as ng
 
 from usb.core import find as finddev
 from datetime import datetime, timedelta
@@ -54,6 +55,8 @@ net = ie.read_network(
 	os.path.join(config['model_path'], 'frozen_darknet_yolov3_model.bin')
 	)
 
+function = ng.function_from_cnn(net)
+
 #Extract network params
 input_blob = next(iter(net.input_info))
 _, _, h, w = net.input_info[input_blob].input_data.shape
@@ -99,7 +102,8 @@ def recocnize(frame):
         (h, w), 
         (frame.shape[0], frame.shape[1]), 
         PROB_THRESHOLD,
-        False
+        False,
+        function
     )
 
     objects = filter_objects(objects, iou_threshold=0.4, prob_threshold=PROB_THRESHOLD)

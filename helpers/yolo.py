@@ -11,14 +11,15 @@ class YoloParams:
         self.coords = 4 if 'coords' not in param else int(param['coords'])
         self.classes = 80 if 'classes' not in param else int(param['classes'])
         self.side = side
+
         self.anchors = [10.0, 13.0, 16.0, 30.0, 33.0, 23.0, 30.0, 61.0, 62.0, 45.0, 59.0, 119.0, 116.0, 90.0, 156.0,
                         198.0,
-                        373.0, 326.0] if 'anchors' not in param else [float(a) for a in param['anchors'].split(',')]
+                        373.0, 326.0] if 'anchors' not in param else param['anchors']
 
         self.isYoloV3 = False
 
         if param.get('mask'):
-            mask = [int(idx) for idx in param['mask'].split(',')]
+            mask = param['mask']
             self.num = len(mask)
 
             maskedAnchors = []
@@ -87,12 +88,13 @@ def parse_yolo_region(predictions, resized_image_shape, original_im_shape, param
     return objects
 
 
-def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold, is_proportional):
+def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold, is_proportional, function):
 
     objects = list()
     for layer_name, out_blob in output.items():
-        out_blob = out_blob.reshape(net.layers[net.layers[layer_name].parents[0]].out_data[0].shape)
-        layer_params = YoloParams(net.layers[layer_name].params, out_blob.shape[2])
+        out_blob = out_blob.reshape(net.outputs[layer_name].shape)
+        params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
+        layer_params = YoloParams(params, out_blob.shape[2])
         objects += parse_yolo_region(out_blob, new_frame_height_width, source_height_width, layer_params,
                                      prob_threshold, is_proportional)
 
