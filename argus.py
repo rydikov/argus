@@ -102,11 +102,12 @@ def recocnize(frame):
 
     objects = filter_objects(objects, iou_threshold=0.4, prob_threshold=PROB_THRESHOLD)
 
-    def _add_object_label(elem):
+    def _add_object_label_and_total_area(elem):
         elem['object_label'] = labels_map[elem['class_id']]
+        elem['total_area'] = (elem['ymax'] - elem['ymin']) * (elem['xmax'] - elem['xmin'])
         return elem
     
-    objects = list(map(_add_object_label, objects))
+    objects = list(map(_add_object_label_and_total_area, objects))
 
     return objects
 

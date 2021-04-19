@@ -1,5 +1,5 @@
 development:
-  source: rtsp://admin:w1NCyp2eKVCc3Da9Ab4p@192.168.254.14:554/cam/realmonitor?channel=1&subtype=0
+  source: ../demo.mov
   stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills
   model_path: ..
   device_name: CPU
