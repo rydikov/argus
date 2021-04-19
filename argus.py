@@ -19,6 +19,8 @@ from helpers.telegram import send_message
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
 PROB_THRESHOLD = 0.4
+# Максимальная площадь возможного объекта
+MAX_TOTAL_AREA_FOR_OBJECT = 15000
 IMPORTANT_OBJECTS = ['person', 'car', 'cow']
 DETECTABLE_OBJECTS = IMPORTANT_OBJECTS + [
     'bicycle', 
@@ -184,12 +186,14 @@ while True:
     frame = cv2.imread(snapshot_path)
     objects = split_and_recocnize(frame)
 
-    has_detectable_objects = set([obj['object_label'] for obj in objects]) & set(DETECTABLE_OBJECTS)
+    detactable_objects_with_correct_area = [
+        obj for obj in objects if obj['total_area'] < MAX_TOTAL_AREA_FOR_OBJECT and obj['object_label'] in DETECTABLE_OBJECTS
+        ]
 
-    if has_detectable_objects:
+    if detactable_objects_with_correct_area:
         snapshot_delay = 0
         # Draw rectangle
-        for obj in objects:
+        for obj in detactable_objects_with_correct_area:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
             cv2.putText(frame, '{}: {} %'.format(obj['object_label'], round(obj['confidence'] * 100, 1)),
                         (obj['xmin'], obj['ymin'] - 7),
@@ -210,7 +214,7 @@ while True:
 
         if MODE == 'production' and last_time_detected and last_time_detected > silent_to_time:
             send_message('Objects detected: {} https://web.rydikov-home.keenetic.pro/Stills/{}'.format(
-                ' '.join([obj['object_label'] for obj in objects]),
+                ' '.join([obj['object_label'] for obj in detactable_objects_with_correct_area]),
                 file_name
             ))
             silent_to_time = datetime.now() + timedelta(hours=1)
