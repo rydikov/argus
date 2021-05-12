@@ -1,21 +1,21 @@
-import yaml
-import time
-import sys
-import os 
-import numpy as np
-import logging
-import ffmpeg
 import cv2
-import collections
+import ffmpeg
+import logging
 import ngraph as ng
+import numpy as np
+import os 
+import sys
+import time
+import yaml
 
-from usb.core import find as finddev
 from datetime import datetime, timedelta
 from openvino.inference_engine import IECore
+from usb.core import find as finddev
 
-from helpers.yolo import get_objects, filter_objects
-from helpers.timing import timing
+from helpers.bfc import BadFrameChecker
 from helpers.telegram import send_message
+from helpers.timing import timing
+from helpers.yolo import get_objects, filter_objects
 
 # 25 sec
 DEADLINE_IN_MSEC = 25000000
@@ -72,7 +72,7 @@ def make_rtsp_snapshot(snapshot_path):
         logging.exception("Time out Error")
         raise
     
-
+@timing
 def make_video_snapshot(snapshot_path):
     __, frame = cap.read()
     is_saved = cv2.imwrite(snapshot_path, frame)
@@ -140,27 +140,6 @@ def split_and_recocnize(frame):
     return left_frame_objects + right_frame_objects
 
 
-class BadFrameChecker(object):
-    
-    def __init__(self):
-        self.store_images = 5
-        self.last_image_sizes = collections.deque([], self.store_images)
-        self.deviation_percent = 60
-
-    def is_image_size_less_avg_size(self, image_size):
-        avg_image_size = sum(self.last_image_sizes)/self.store_images
-        return (image_size/avg_image_size)*100 < self.deviation_percent
-
-    def is_bad(self, image_path):
-        image_size = os.path.getsize(image_path)
-        self.last_image_sizes.appendleft(image_size)
-
-        if len(self.last_image_sizes) < self.store_images:
-            return False
-        
-        return self.is_image_size_less_avg_size(image_size)
-
-
 bfc = BadFrameChecker()
 last_time_detected = None
 silent_to_time = datetime.now()
@@ -195,7 +174,7 @@ while True:
 
     if detactable_objects_with_correct_area:
         snapshot_delay = 0
-        # Draw rectangle
+        # Draw rectangle with text
         for obj in detactable_objects_with_correct_area:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), (255,255,255), 1)
             cv2.putText(frame, '{}: {} %'.format(obj['object_label'], round(obj['confidence'] * 100, 1)),

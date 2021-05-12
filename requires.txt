@@ -1,5 +1,5 @@
 opencv-python
 pyyaml
 pyusb
-openvino-python
+requests
 ffmpeg-python
