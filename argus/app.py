@@ -50,7 +50,8 @@ def run(config, mode):
     while True:
         alarm = False
         
-        if snapshot_path := frame_grabber.make_snapshot():
+        snapshot_path = frame_grabber.make_snapshot()
+        if snapshot_path:
             frame = cv2.imread(snapshot_path)
         else:
             continue
