@@ -50,10 +50,9 @@ def run(config, mode):
     while True:
         alarm = False
         
-        snapshot_path = frame_grabber.make_snapshot()
-        if snapshot_path:
-            frame = cv2.imread(snapshot_path)
-        else:
+        frame = frame_grabber.make_snapshot()
+        if not frame:
+            logger.error("Unable to get frame")
             continue
         
         objects = recocnizer.split_and_recocnize(frame)

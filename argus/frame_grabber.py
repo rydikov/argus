@@ -40,43 +40,19 @@ class FrameGrabber:
     def __init__(self, config):
         self.config = config
         self.bfc = BadFrameChecker()
-
-        if self.config['source'].startswith('rtsp'):
-            self.snapshot_method = self.__make_rtsp_snapshot
-        else:
-            self.cap = cv2.VideoCapture(self.config['source'])
-            self.snapshot_method = self.__make_video_snapshot
+        self.cap = cv2.VideoCapture(self.config['source'])
 
     @timing
-    def __make_rtsp_snapshot(self, snapshot_path):
-        stream = ffmpeg.input(self.config['source'], rtsp_transport='tcp', stimeout=DEADLINE_IN_MSEC)
-        stream = stream.output(snapshot_path, vframes=1, pix_fmt='yuvj444p')
-        try:
-            stream.run(capture_stdout=True, capture_stderr=True)
-        except ffmpeg._run.Error as e:
-            logger.exception("Time out Error")
-            raise
-        
-    @timing
-    def __make_video_snapshot(self, snapshot_path):
+    def make_snapshot(self):
+        snapshot_path = "{}/{}.jpg".format(self.config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
         __, frame = self.cap.read()
         is_saved = cv2.imwrite(snapshot_path, frame)
         if not is_saved:
-            raise
-
-    def make_snapshot(self):
-
-        snapshot_path = "{}/{}.jpg".format(self.config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-
-        try:
-            self.snapshot_method(snapshot_path)
-        except:
-            logger.exception("Unable to make snapshot")
             return
-        
+
         if self.bfc.is_bad(snapshot_path):
             logger.warning('Bad file deleted')
             os.remove(snapshot_path)
             return
         
-        return snapshot_path
+        return frame
