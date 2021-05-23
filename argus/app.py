@@ -51,7 +51,7 @@ def run(config, mode):
         alarm = False
         
         frame = frame_grabber.make_snapshot()
-        if not frame:
+        if frame is None:
             logger.error("Unable to get frame")
             continue
         
