@@ -50,7 +50,7 @@ class FrameGrabber:
     @timing
     def __make_rtsp_snapshot(self, snapshot_path):
         stream = ffmpeg.input(self.config['source'], rtsp_transport='tcp', stimeout=DEADLINE_IN_MSEC)
-        stream = stream.output(snapshot_path, vframes=1, pix_fmt='rgb24')
+        stream = stream.output(snapshot_path, vframes=1, pix_fmt='yuvj444p')
         try:
             stream.run(capture_stdout=True, capture_stderr=True)
         except ffmpeg._run.Error as e:
