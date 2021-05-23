@@ -45,7 +45,11 @@ class FrameGrabber:
     @timing
     def make_snapshot(self):
         snapshot_path = "{}/{}.jpg".format(self.config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+
         __, frame = self.cap.read()
+        if frame is None:
+            return
+
         is_saved = cv2.imwrite(snapshot_path, frame)
         if not is_saved:
             return
