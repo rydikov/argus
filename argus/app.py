@@ -36,17 +36,24 @@ def mark_object_on_frame(frame, obj):
     cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
     cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
-def run(config, mode):
 
-    last_time_detected = None
-    silent_until_time = datetime.now()
+def save_frame(frame, config, with_detected_objects=False):
+    file_format = '{}-detected.jpg' if with_detected_objects else '{}.jpg'
+    file_name = file_format.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+    file_path = os.path.join(config['stills_dir'], file_name)
+    is_saved = cv2.imwrite(file_path, frame)
+    if not is_saved:
+        logger.error('Unable to save file. Detection: {}'.format(with_detected_objects))
+    return file_path
+
+
+def run(config, mode):
 
     recocnizer = OpenVinoRecognizer(config=config, mode=mode)
     frame_grabber = FrameGrabber(config=config)
 
     if mode == 'production':
         telegram = Telegram(config)
-
 
     while True:
         alarm = False
@@ -55,6 +62,8 @@ def run(config, mode):
         if frame is None:
             logger.error("Unable to get frame")
             sys.exit(1)
+
+        save_frame(frame, config)
         
         objects = recocnizer.split_and_recocnize(frame)
         logger.info(objects)
@@ -72,14 +81,10 @@ def run(config, mode):
                 mark_object_on_frame(frame, obj)
                 logger.warning(obj)
 
-            file_name = '{}-detected.jpg'.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
-            is_saved = cv2.imwrite(os.path.join(config['stills_dir'], file_name), frame)
-            if not is_saved:
-                logger.error('Unable to save file with detected objects')
-                continue
+            file_path = save_frame(frame, config, with_detected_objects=True)
 
             if mode == 'production':
-                telegram.send_and_be_silent('Objects detected: {}/{}'.format(config['host_stills_dir'], file_name))
+                telegram.send_and_be_silent('Objects detected: {}/{}'.format(config['host_stills_dir'], file_path))
         
         if mode == 'production':
             time.sleep(0 if alarm else 5)

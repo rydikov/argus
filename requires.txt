@@ -1,5 +1,6 @@
-opencv-python
-pyyaml
-pyusb
-requests
 ffmpeg-python
+opencv-python
+pytesseract
+pyusb
+pyyaml
+requests

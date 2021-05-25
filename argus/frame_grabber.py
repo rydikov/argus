@@ -1,8 +1,8 @@
+import collections
 import cv2
-import ffmpeg
 import logging
 import os 
-import collections
+import pytesseract
 
 from datetime import datetime
 
@@ -14,49 +14,44 @@ DEADLINE_IN_MSEC = 25000000
 logger = logging.getLogger(__file__)
 
 
-class BadFrameChecker:
-    
-    def __init__(self):
-        self.store_images = 5
-        self.last_image_sizes = collections.deque([], self.store_images)
-        self.deviation_percent = 60
+def is_bad_frame(frame):
+    h, w = frame.shape[0], frame.shape[1]
 
-    def is_image_size_less_avg_size(self, image_size):
-        avg_image_size = sum(self.last_image_sizes)/self.store_images
-        return (image_size/avg_image_size)*100 < self.deviation_percent
+    # Year box on frome
+    y_min_percent = 4
+    y_max_percent = 12.5
+    x_min_percent = 16
+    x_max_percent = 26
 
-    def is_bad(self, image_path):
-        image_size = os.path.getsize(image_path)
-        self.last_image_sizes.appendleft(image_size)
+    y_min = round(h * y_min_percent / 100)
+    y_max = round(h * y_max_percent / 100)
+    x_min = round(w * x_min_percent / 100)
+    x_max = round(w * x_max_percent / 100)
 
-        if len(self.last_image_sizes) < self.store_images:
-            return False
-        
-        return self.is_image_size_less_avg_size(image_size)
+    frame = frame[y_min:y_max, x_min:x_max]
+
+    # psm 8: Treat the image as a single word.
+    recognized_year = pytesseract.image_to_string(
+        frame, 
+        config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789'
+    )
+    logger.info('Recognized year: {}'.format(recognized_year))
+
+    return str(datetime.today().year) not in recognized_year
 
 
 class FrameGrabber:
 
     def __init__(self, config):
         self.config = config
-        self.bfc = BadFrameChecker()
         self.cap = cv2.VideoCapture(self.config['source'])
 
     @timing
     def make_snapshot(self):
-        snapshot_path = "{}/{}.jpg".format(self.config['stills_dir'], datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
 
         __, frame = self.cap.read()
-        if frame is None:
-            return
-
-        is_saved = cv2.imwrite(snapshot_path, frame)
-        if not is_saved:
-            return
-
-        if self.bfc.is_bad(snapshot_path):
-            logger.warning('Bad file deleted')
-            os.remove(snapshot_path)
+        if frame is None or is_bad_frame(frame):
+            logger.warning('Bad frame deleted')
             return
         
         return frame
