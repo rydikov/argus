@@ -56,7 +56,7 @@ def run(config, mode):
             continue
         
         objects = recocnizer.split_and_recocnize(frame)
-        logger.info(object)
+        logger.info(objects)
 
         # Filter objects with correct area and save only DETECTABLE_OBJECTS
         objects = [
