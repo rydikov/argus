@@ -25,7 +25,6 @@ class BadFrameChecker:
         avg_image_size = sum(self.last_image_sizes)/self.store_images
         return (image_size/avg_image_size)*100 < self.deviation_percent
 
-    @timing
     def is_bad(self, image_path):
         image_size = os.path.getsize(image_path)
         self.last_image_sizes.appendleft(image_size)
