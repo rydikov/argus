@@ -8,7 +8,7 @@ development:
   telegram_bot_chat_id: 53757246
 
 production:
-  source: uridecodebin uri=rtsp://***REMOVED***@192.168.1.64:554/Streaming/Channels/101 ! videoconvert ! video/x-raw ! appsink max-buffers=1 drop=true
+  source: rtspsrc location=rtsp://***REMOVED***@192.168.1.64:554/Streaming/Channels/101 debug=true latency=100 rtp-blocksize=65536 drop-on-latency=true protocols=GST_RTSP_LOWER_TRANS_TCP do-retransmission=false ! decodebin ! videoconvert ! appsink max-buffers=1 drop=true
   stills_dir: /home/pi/timelapse/Stills
   model_path: /home/pi/yolo
   device_name: MYRIAD
