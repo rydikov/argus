@@ -2,14 +2,16 @@ import logging
 import pytesseract
 
 from datetime import datetime
+from argus.helpers.timing import timing
 
 logger = logging.getLogger(__file__)
 
 
+@timing
 def check_bad_frame(frame):
     h, w = frame.shape[0], frame.shape[1]
 
-    # Year box on frome
+    # Year box on frame
     y_min_percent = 4
     y_max_percent = 12.5
     x_min_percent = 16
@@ -26,7 +28,7 @@ def check_bad_frame(frame):
     recognized_year = pytesseract.image_to_string(
         frame, 
         config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789'
-    )
+    ).rstrip()
     logger.info('Recognized year: {}'.format(recognized_year))
 
     return str(datetime.today().year) not in recognized_year
