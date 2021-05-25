@@ -43,7 +43,7 @@ class OpenVinoRecognizer(Recognizer):
         try:
             result = self.exec_net.infer({self.input_blob: proc_image})
         except:
-            logging.exception("Exec Network is down")
+            logger.exception("Exec Network is down")
             if self.mode == 'production': # Reset usb device. Find ids with lsusb
                 dev = finddev(idVendor=0x0424, idProduct=0x9514)
                 dev.reset()

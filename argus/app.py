@@ -2,8 +2,9 @@ import cv2
 import logging
 import os 
 import time
+import sys
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from openvino.inference_engine import IECore
 from usb.core import find as finddev
 
@@ -53,7 +54,7 @@ def run(config, mode):
         frame = frame_grabber.make_snapshot()
         if frame is None:
             logger.error("Unable to get frame")
-            continue
+            sys.exit(1)
         
         objects = recocnizer.split_and_recocnize(frame)
         logger.info(objects)
