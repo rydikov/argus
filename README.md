@@ -5,6 +5,7 @@ https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-
 cmake -DCMAKE_BUILD_TYPE=Release -DWITH_GSTREAMER=ON -DCMAKE_INSTALL_PREFIX=/usr/local ..
 
 Copy python3 cv2 so
+http://gstreamer-devel.966125.n4.nabble.com/RTSP-raw-RTP-video-frame-drops-td4677730.html
 
 export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
 source /opt/intel/openvino_2021.3.394/bin/setupvars.sh
