@@ -1,10 +1,5 @@
-import collections
 import cv2
 import logging
-import os 
-import pytesseract
-
-from datetime import datetime
 
 from argus.helpers.timing import timing
 
@@ -12,32 +7,6 @@ from argus.helpers.timing import timing
 DEADLINE_IN_MSEC = 25000000
 
 logger = logging.getLogger(__file__)
-
-
-def is_bad_frame(frame):
-    h, w = frame.shape[0], frame.shape[1]
-
-    # Year box on frome
-    y_min_percent = 4
-    y_max_percent = 12.5
-    x_min_percent = 16
-    x_max_percent = 26
-
-    y_min = round(h * y_min_percent / 100)
-    y_max = round(h * y_max_percent / 100)
-    x_min = round(w * x_min_percent / 100)
-    x_max = round(w * x_max_percent / 100)
-
-    frame = frame[y_min:y_max, x_min:x_max]
-
-    # psm 8: Treat the image as a single word.
-    recognized_year = pytesseract.image_to_string(
-        frame, 
-        config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789'
-    )
-    logger.info('Recognized year: {}'.format(recognized_year))
-
-    return str(datetime.today().year) not in recognized_year
 
 
 class FrameGrabber:
@@ -48,10 +17,5 @@ class FrameGrabber:
 
     @timing
     def make_snapshot(self):
-
         __, frame = self.cap.read()
-        if frame is None or is_bad_frame(frame):
-            logger.warning('Bad frame deleted')
-            return
-        
         return frame

@@ -1,15 +1,14 @@
 import cv2
 import logging
 import os 
-import time
 import sys
+import time
 
 from datetime import datetime
-from openvino.inference_engine import IECore
-from usb.core import find as finddev
 
 from argus.frame_grabber import FrameGrabber
 from argus.helpers.telegram import Telegram
+from argus.helpers.bad_frame_checker import check_bad_frame
 from argus.recognizers.openvino import OpenVinoRecognizer
 
 
@@ -62,6 +61,10 @@ def run(config, mode):
         if frame is None:
             logger.error("Unable to get frame")
             sys.exit(1)
+
+        if check_bad_frame(frame):
+            logger.warning('Bad frame ignored')
+            continue
 
         save_frame(frame, config)
         
