@@ -31,4 +31,4 @@ def check_bad_frame(frame):
     
     logger.info('Recognized year: {}'.format(recognized_year))
 
-    return bool(recognized_year)
+    return not bool(recognized_year)
