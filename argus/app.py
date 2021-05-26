@@ -8,7 +8,7 @@ from datetime import datetime
 
 from argus.frame_grabber import FrameGrabber
 from argus.helpers.telegram import Telegram
-from argus.helpers.bad_frame_checker import check_bad_frame
+from argus.helpers.bad_frame_checker import BadFrameChecker
 from argus.recognizers.openvino import OpenVinoRecognizer
 
 
@@ -50,6 +50,7 @@ def run(config, mode):
 
     recocnizer = OpenVinoRecognizer(config=config, mode=mode)
     frame_grabber = FrameGrabber(config=config)
+    bfc = BadFrameChecker()
 
     if mode == 'production':
         telegram = Telegram(config)
@@ -62,7 +63,7 @@ def run(config, mode):
             logger.error("Unable to get frame")
             sys.exit(1)
 
-        if check_bad_frame(frame):
+        if bfc.check(frame):
             logger.warning('Bad frame ignored')
             continue
 
