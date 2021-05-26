@@ -15,7 +15,7 @@ def check_bad_frame(frame):
     day_of_week = datetime.today().strftime('%a')
 
     # pixel from first digit on year on text
-    is_white = frame[80, 378][0] > 0
+    is_white = frame[80, 378][0] > 15
 
     # Day of week name box on frame
     frame = frame[43:135, 499:672]
