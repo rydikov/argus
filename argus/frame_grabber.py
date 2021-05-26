@@ -3,9 +3,6 @@ import logging
 
 from argus.helpers.timing import timing
 
-# 25 sec
-DEADLINE_IN_MSEC = 25000000
-
 logger = logging.getLogger(__file__)
 
 

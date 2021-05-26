@@ -1,7 +1,6 @@
 import logging
 import pytesseract
 
-from datetime import datetime
 from argus.helpers.timing import timing
 
 logger = logging.getLogger(__file__)
@@ -29,6 +28,7 @@ def check_bad_frame(frame):
         frame, 
         config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789'
     ).rstrip()
+    
     logger.info('Recognized year: {}'.format(recognized_year))
 
-    return str(datetime.today().year) not in recognized_year
+    return bool(recognized_year)
