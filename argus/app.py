@@ -36,14 +36,19 @@ def mark_object_on_frame(frame, obj):
     cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
 
-def save_frame(frame, config, with_detected_objects=False):
-    file_format = '{}-detected.jpg' if with_detected_objects else '{}.jpg'
-    file_name = file_format.format(datetime.now().strftime("%d-%m-%Y-%H-%M-%S"))
+def save_frame(frame, config, prefix=None):
+    timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
+
+    if prefix is None:
+        file_name = '{}.jpg'.format(timestamp)
+    else: 
+        file_name = '{}-{}.jpg'.format(timestamp, prefix)
+   
     file_path = os.path.join(config['stills_dir'], file_name)
     is_saved = cv2.imwrite(file_path, frame)
     if not is_saved:
-        logger.error('Unable to save file. Detection: {}'.format(with_detected_objects))
-    return file_path
+        logger.error('Unable to save file. Prefix: {}'.format(prefix))
+    return file_name
 
 
 def run(config, mode):
@@ -65,6 +70,7 @@ def run(config, mode):
 
         if bfc.check(frame):
             logger.warning('Bad frame ignored')
+            save_frame(frame, config, prefix='bad')
             continue
 
         save_frame(frame, config)
@@ -85,7 +91,7 @@ def run(config, mode):
                 mark_object_on_frame(frame, obj)
                 logger.warning(obj)
 
-            file_path = save_frame(frame, config, with_detected_objects=True)
+            file_path = save_frame(frame, config, prefix='detected')
 
             if mode == 'production':
                 telegram.send_and_be_silent('Objects detected: {}/{}'.format(config['host_stills_dir'], file_path))
