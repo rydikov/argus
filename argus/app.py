@@ -70,7 +70,6 @@ def run(config, mode):
 
         if bfc.check(frame):
             logger.warning('Bad frame ignored')
-            save_frame(frame, config, prefix='bad')
             continue
 
         save_frame(frame, config)
@@ -97,4 +96,4 @@ def run(config, mode):
                 telegram.send_and_be_silent('Objects detected: {}/{}'.format(config['host_stills_dir'], file_path))
         
         if mode == 'production':
-            time.sleep(0 if alarm else 5)
+            time.sleep(0 if alarm else 20)
