@@ -7,7 +7,7 @@ from argus.helpers.timing import timing
 
 logger = logging.getLogger(__file__)
 
-THRESHOLD = 10000000
+THRESHOLD = 15000000
 
 
 class BadFrameChecker:
