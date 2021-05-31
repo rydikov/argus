@@ -69,10 +69,10 @@ def run(config, mode):
             sys.exit(1)
 
         if bfc.check(frame):
-            file_name = save_frame(frame, config, prefix='bad')
-            logger.warning('Bad frame detected: {}'.format(file_name))
-        else:
-            save_frame(frame, config)
+            logger.warning('Bad frame detected. Ignored.')
+            continue
+
+        save_frame(frame, config)
         
         objects = recocnizer.split_and_recocnize(frame)
         logger.info(objects)
