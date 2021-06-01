@@ -14,7 +14,7 @@ def timing(f):
         result = f(*args, **kw)
         te = time()
         logger.info(
-            'func:%r took: %2.4f sec' % (f.__name__, te-ts)
+            'func:%r took: %2.4f sec' % (f.__name__, te - ts)
         )
         return result
     return wrap

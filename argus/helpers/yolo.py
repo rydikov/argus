@@ -1,5 +1,4 @@
 # From examles
-import numpy as np
 from math import exp as exp
 
 
@@ -27,13 +26,15 @@ class YoloParams:
                 maskedAnchors += [self.anchors[idx * 2], self.anchors[idx * 2 + 1]]
             self.anchors = maskedAnchors
 
-            self.isYoloV3 = True # Weak way to determine but the only one.
+            self.isYoloV3 = True  # Weak way to determine but the only one.
+
 
 def entry_index(side, coord, classes, location, entry):
     side_power_2 = side ** 2
     n = location // side_power_2
     loc = location % side_power_2
     return int(side_power_2 * (n * (coord + classes + 1) + entry) + loc)
+
 
 def scale_bbox(x, y, h, w, class_id, confidence, h_scale, w_scale):
     xmin = int((x - w / 2) * w_scale)
@@ -100,9 +101,9 @@ def get_objects(output, net, new_frame_height_width, source_height_width, prob_t
         params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
         layer_params = YoloParams(params, out_blob.shape[2])
         objects += parse_yolo_region(
-            out_blob, 
+            out_blob,
             new_frame_height_width,
-            source_height_width, 
+            source_height_width,
             layer_params,
             prob_threshold
         )
@@ -112,7 +113,7 @@ def get_objects(output, net, new_frame_height_width, source_height_width, prob_t
 
 def filter_objects(objects, iou_threshold, prob_threshold):
     # Filtering overlapping boxes with respect to the --iou_threshold CLI parameter
-    objects = sorted(objects, key=lambda obj : obj['confidence'], reverse=True)
+    objects = sorted(objects, key=lambda obj: obj['confidence'], reverse=True)
     for i in range(len(objects)):
         if objects[i]['confidence'] == 0:
             continue
@@ -123,12 +124,12 @@ def filter_objects(objects, iou_threshold, prob_threshold):
     return tuple(obj for obj in objects if obj['confidence'] >= prob_threshold)
 
 
-def intersection_over_union(box_1, box_2):#add DIOU-NMS support
+def intersection_over_union(box_1, box_2):  # add DIOU-NMS support
     width_of_overlap_area = min(box_1['xmax'], box_2['xmax']) - max(box_1['xmin'], box_2['xmin'])
     height_of_overlap_area = min(box_1['ymax'], box_2['ymax']) - max(box_1['ymin'], box_2['ymin'])
 
-    cw = max(box_1['xmax'], box_2['xmax'])-min(box_1['xmin'], box_2['xmin'])
-    ch = max(box_1['ymax'], box_2['ymax'])-min(box_1['ymin'], box_2['ymin'])
+    cw = max(box_1['xmax'], box_2['xmax']) - min(box_1['xmin'], box_2['xmin'])
+    ch = max(box_1['ymax'], box_2['ymax']) - min(box_1['ymin'], box_2['ymin'])
     c_area = cw**2+ch**2+1e-16
     rh02 = ((box_2['xmax']+box_2['xmin'])-(box_1['xmax']+box_1['xmin']))**2/4+((box_2['ymax']+box_2['ymin'])-(box_1['ymax']+box_1['ymin']))**2/4
 
@@ -141,4 +142,4 @@ def intersection_over_union(box_1, box_2):#add DIOU-NMS support
     area_of_union = box_1_area + box_2_area - area_of_overlap
     if area_of_union == 0:
         return 0
-    return area_of_overlap / area_of_union-pow(rh02/c_area,0.6)
+    return area_of_overlap / area_of_union-pow(rh02/c_area, 0.6)

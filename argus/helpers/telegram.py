@@ -7,7 +7,7 @@ class Telegram:
     def __init__(self, config):
         self.bot_token = config['telegram_bot_token']
         self.bot_chat_id = config['telegram_bot_chat_id']
-        
+
         self.time_of_the_last_attempt = None
         self.silent_until_time = datetime.now()
 
@@ -25,4 +25,3 @@ class Telegram:
         if self.time_of_the_last_attempt > self.silent_until_time:
             self.silent_until_time = datetime.now() + silent_time
             return self.send_message(message)
-            
