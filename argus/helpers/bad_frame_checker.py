@@ -1,4 +1,3 @@
-import os
 import cv2
 import logging
 
@@ -7,32 +6,45 @@ from argus.helpers.timing import timing
 
 logger = logging.getLogger(__file__)
 
-THRESHOLD = 17900000
+MIN_WHITE = 50
 
 
 class BadFrameChecker:
-    def __init__(self):
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+    def __init__(self, config):
+        self.coords = config['coords']
+        self.threshold = config['threshold']
+        self.reverse_pixel = config.get('reverse_pixel')
         self.template = cv2.imread(
-            os.path.join(dir_path, '../../res/2.jpg'),
+            config['template_path'],
             cv2.IMREAD_GRAYSCALE
         )
 
     @timing
     def check(self, frame):
-        """ Values for 1920x1080 Image """
 
-        frame = frame[64:104, 324:352]
+        frame = frame[
+            self.coords[0]:self.coords[1],
+            self.coords[2]:self.coords[3]
+            ]
 
-        # digit is white
-        if frame[39, 0][0] > 50:
+        # Checking reverse pixel. Checked digit may be black or white.
+        # If background white – digit black, or on the contrary.
+        if (
+            self.reverse_pixel is not None
+            and all(
+                i > MIN_WHITE for i in frame[
+                    self.reverse_pixel[0],
+                    self.reverse_pixel[1]
+                ]
+            )
+        ):
             frame = cv2.bitwise_not(frame)
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         diff = cv2.matchTemplate(frame, self.template, cv2.TM_SQDIFF)
 
-        if int(diff[0][0]) > THRESHOLD:
+        if int(diff[0][0]) > self.threshold:
             logger.warning('Diff: {}'.format(diff))
 
-        return int(diff[0][0]) > THRESHOLD
+        return int(diff[0][0]) > self.threshold

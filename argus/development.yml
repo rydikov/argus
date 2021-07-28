@@ -1,0 +1,20 @@
+need_sleep: True
+
+sources:
+  first-cam:
+    source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
+    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/first
+    host_stills_uri: http://localhost/Stills/first
+    bfc:
+      threshold: 17900000
+      coords: [64, 104, 324, 352]
+      reverse_pixel: [39, 0]
+      template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
+  second-cam:
+    source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
+    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
+    host_stills_uri: http://localhost/Stills/second
+
+recognizer:
+  model_path: /Users/rydikov/Projects/Other/RASPBERRY/
+  device_name: CPU

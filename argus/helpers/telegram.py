@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 
 class Telegram:
     def __init__(self, config):
-        self.bot_token = config['telegram_bot_token']
-        self.bot_chat_id = config['telegram_bot_chat_id']
+        self.bot_token = config['token']
+        self.bot_chat_id = config['chat_id']
 
         self.time_of_the_last_attempt = None
         self.silent_until_time = datetime.now()

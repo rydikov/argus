@@ -18,15 +18,15 @@ logger = logging.getLogger(__file__)
 
 class OpenVinoRecognizer(Recognizer):
 
-    def init_network(self, config):
+    def init_network(self):
         ie = IECore()
         self.net = ie.read_network(
             os.path.join(
-                config['model_path'],
+                self.config['model_path'],
                 'frozen_darknet_yolov4_model.xml'
             ),
             os.path.join(
-                config['model_path'],
+                self.config['model_path'],
                 'frozen_darknet_yolov4_model.bin'
             )
         )
@@ -41,10 +41,10 @@ class OpenVinoRecognizer(Recognizer):
 
         self.exec_net = ie.load_network(
             network=self.net,
-            device_name=config['device_name']
+            device_name=self.config['device_name']
         )
 
-        with open(os.path.join(config['model_path'], 'coco.names'), 'r') as f:
+        with open(os.path.join(self.config['model_path'], 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
     @timing
@@ -59,11 +59,18 @@ class OpenVinoRecognizer(Recognizer):
 
         try:
             result = self.exec_net.infer({self.input_blob: proc_image})
-        except:
+        except Exception:
             logger.exception("Exec Network is down")
             # Reset usb device. Find ids with lsusb
-            if self.mode == 'production':
-                dev = finddev(idVendor=0x0424, idProduct=0x9514)
+            if (
+                self.config['device_name'] == 'MYRIAD'
+                and self.config.get('id_vendor') is not None
+                and self.config.get('id_product') is not None
+            ):
+                dev = finddev(
+                    idVendor=self.config['id_vendor'],
+                    idProduct=self.config['id_product']
+                )
                 dev.reset()
             sys.exit(0)
 
@@ -83,7 +90,7 @@ class OpenVinoRecognizer(Recognizer):
         )
 
         def _add_object_label_and_total_area(elem):
-            elem['object_label'] = self.labels_map[elem['class_id']]
+            elem['label'] = self.labels_map[elem['class_id']]
 
             elem['total_area'] = \
                 (elem['ymax'] - elem['ymin']) * (elem['xmax'] - elem['xmin'])

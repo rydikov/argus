@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from functools import wraps
 from time import time
@@ -14,7 +15,11 @@ def timing(f):
         result = f(*args, **kw)
         te = time()
         logger.info(
-            'func:%r took: %2.4f sec' % (f.__name__, te - ts)
+            'func:%r in thread %s took: %2.4f sec' % (
+                f.__name__,
+                threading.current_thread().name,
+                te - ts
+            )
         )
         return result
     return wrap

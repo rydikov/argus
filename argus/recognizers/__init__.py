@@ -2,9 +2,9 @@
 
 class Recognizer:
 
-    def __init__(self, config, mode):
-        self.init_network(config)
-        self.mode = mode
+    def __init__(self, config):
+        self.config = config
+        self.init_network()
 
     def init_network(self, config):
         raise NotImplementedError
