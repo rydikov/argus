@@ -1,5 +1,6 @@
 import cv2
 import logging
+import sys
 
 from time import time
 
@@ -27,6 +28,10 @@ class FrameGrabber:
 
         if te - ts > MAX_SNAPSHOT_DELAY_SEC:
             logger.warning('snapshot delay: %2.4f sec' % (te - ts))
+
+        if frame is None:
+            logger.error("Unable to get frame")
+            sys.exit(1)
 
         if self.bfc is not None and self.bfc.check(frame):
             self.make_snapshot()

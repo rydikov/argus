@@ -1,8 +1,6 @@
 import cv2
 import logging
 
-import sys
-
 from threading import current_thread, Thread
 
 from argus.frame_grabber import FrameGrabber
@@ -60,9 +58,6 @@ def async_run(frame_grabber, frame_saver, recocnizer, telegram):
         alarm = False
 
         frame = frame_grabber.make_snapshot()
-        if frame is None:
-            logger.error("Unable to get frame")
-            sys.exit(1)
 
         if current_frame_count == SAVE_EVERY_FRAME:
             frame_saver.save(frame)
@@ -83,10 +78,9 @@ def async_run(frame_grabber, frame_saver, recocnizer, telegram):
             
             for obj in objects:
                 mark_object_on_frame(frame, obj)
-                logger.warning(obj)
                 if obj['label'] in IMPORTANT_OBJECTS:
                     alarm = True
-
+                logger.warning(obj)
 
             file_uri = frame_saver.save(frame, prefix='detected')
 
