@@ -59,11 +59,10 @@ def async_run(frame_grabber, frame_saver, recocnizer, telegram):
 
         frame = frame_grabber.make_snapshot()
 
+        current_frame_count += 1
         if current_frame_count == SAVE_EVERY_FRAME:
             frame_saver.save(frame)
             current_frame_count = 0
-        else:
-            current_frame_count += 1
 
         objects = recocnizer.split_and_recocnize(frame)
 
