@@ -72,7 +72,7 @@ def save_frame(frame, stills_dir, prefix=None):
 
 def async_run(frame_grabber, recocnizer, telegram, host_stills_uri):
     
-    current_frame_cont = 0
+    current_frame_count = 0
     
     while True:
         alarm = False
@@ -82,10 +82,10 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri):
             logger.error("Unable to get frame")
             sys.exit(1)
 
-        current_frames_cont += 1
-        if current_frame_cont == SAVE_EVERY_FRAME:
+        current_frame_count += 1
+        if current_frame_count == SAVE_EVERY_FRAME:
             save_frame(frame, stills_dir)
-            current_frames_cont = 0
+            current_frame_count = 0
 
         objects = recocnizer.split_and_recocnize(frame)
         logger.info(objects)
