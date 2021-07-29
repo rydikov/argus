@@ -1,5 +1,3 @@
-need_sleep: True
-
 sources:
   first-cam:
     source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4

@@ -12,6 +12,8 @@ from argus.helpers.telegram import Telegram
 from argus.recognizers.openvino import OpenVinoRecognizer
 
 
+SAVE_EVERY_FRAME = 5
+
 WHITE_COLOR = (255, 255, 255)
 MAX_TOTAL_AREA_FOR_OBJECT = 15000
 IMPORTANT_OBJECTS = ['person', 'car', 'cow']
@@ -23,7 +25,6 @@ DETECTABLE_OBJECTS = IMPORTANT_OBJECTS + [
     'dog',
     'horse'
 ]
-SLEEP_TIME = 20 # sec
 
 
 logger = logging.getLogger(__file__)
@@ -69,7 +70,10 @@ def save_frame(frame, stills_dir, prefix=None):
     return file_name
 
 
-def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, need_sleep):
+def async_run(frame_grabber, recocnizer, telegram, host_stills_uri):
+    
+    current_frame_cont = 0
+    
     while True:
         alarm = False
 
@@ -78,7 +82,10 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, need_sleep):
             logger.error("Unable to get frame")
             sys.exit(1)
 
-        save_frame(frame, stills_dir)
+        current_frames_cont += 1
+        if current_frame_cont == SAVE_EVERY_FRAME:
+            save_frame(frame, stills_dir)
+            current_frames_cont = 0
 
         objects = recocnizer.split_and_recocnize(frame)
         logger.info(objects)
@@ -106,9 +113,6 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, need_sleep):
                     'Objects detected: {}/{}'.format(host_stills_uri, file_path)
                 )
 
-        if need_sleep:
-            time.sleep(0 if alarm else SLEEP_TIME)
-
 
 def run(config):
 
@@ -127,7 +131,6 @@ def run(config):
                 recocnizer,
                 telegram,
                 config['sources'][source]['host_stills_uri'],
-                config['need_sleep']
             )
         )
         thread.name = source
