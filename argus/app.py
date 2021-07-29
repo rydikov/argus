@@ -4,7 +4,7 @@ import os
 import sys
 
 from datetime import datetime
-from threading import Thread
+from threading import current_thread, Thread
 
 from argus.frame_grabber import FrameGrabber
 from argus.helpers.telegram import Telegram
@@ -72,6 +72,7 @@ def save_frame(frame, stills_dir, prefix=None):
 def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
     
     current_frame_count = 0
+    logger.info('Thread %s started' % current_thread().name)
     
     while True:
         alarm = False

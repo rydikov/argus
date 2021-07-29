@@ -3,7 +3,6 @@ import logging
 
 from time import time
 
-from argus.helpers.timing import timing
 from argus.helpers.bad_frame_checker import BadFrameChecker
 
 logger = logging.getLogger(__file__)
@@ -21,7 +20,6 @@ class FrameGrabber:
         else:
             self.bfc = None
 
-    @timing
     def make_snapshot(self):
         ts = time()
         __, frame = self.cap.read()
