@@ -2,7 +2,6 @@ import cv2
 import logging
 import os
 import sys
-import time
 
 from datetime import datetime
 from threading import Thread
@@ -70,14 +69,14 @@ def save_frame(frame, stills_dir, prefix=None):
     return file_name
 
 
-def async_run(frame_grabber, recocnizer, telegram, host_stills_uri):
+def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
     
     current_frame_count = 0
     
     while True:
         alarm = False
 
-        frame, stills_dir = frame_grabber.make_snapshot()
+        frame = frame_grabber.make_snapshot()
         if frame is None:
             logger.error("Unable to get frame")
             sys.exit(1)
@@ -131,6 +130,7 @@ def run(config):
                 recocnizer,
                 telegram,
                 config['sources'][source]['host_stills_uri'],
+                config['sources'][source]['stills_dir']
             )
         )
         thread.name = source

@@ -11,7 +11,6 @@ class FrameGrabber:
 
     def __init__(self, config):
         self.cap = cv2.VideoCapture(config['source'])
-        self.stills_dir = config['stills_dir']
 
         if 'bfc' in config:
             self.bfc = BadFrameChecker(config['bfc'])
@@ -26,4 +25,4 @@ class FrameGrabber:
             logger.warning('Bad frame detected. Ignored.')
             self.make_snapshot()
 
-        return frame, self.stills_dir
+        return frame
