@@ -29,7 +29,6 @@ class FrameGrabber:
             logger.warning('snapshot delay: %2.4f sec' % (te - ts))
 
         if self.bfc is not None and self.bfc.check(frame):
-            logger.warning('Bad frame detected. Ignored.')
             self.make_snapshot()
 
         return frame

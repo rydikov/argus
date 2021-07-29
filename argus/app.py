@@ -82,10 +82,11 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
             logger.error("Unable to get frame")
             sys.exit(1)
 
-        current_frame_count += 1
         if current_frame_count == SAVE_EVERY_FRAME:
             save_frame(frame, stills_dir)
             current_frame_count = 0
+        else:
+            current_frame_count += 1
 
         objects = recocnizer.split_and_recocnize(frame)
 

@@ -42,6 +42,6 @@ class BadFrameChecker:
         diff = cv2.matchTemplate(frame, self.template, cv2.TM_SQDIFF)
 
         if int(diff[0][0]) > self.threshold:
-            logger.warning('Diff: {}'.format(diff))
+            logger.warning('Bad frame detected. Diff: {}'.format(diff))
 
         return int(diff[0][0]) > self.threshold
