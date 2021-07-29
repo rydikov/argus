@@ -12,7 +12,7 @@ from argus.helpers.telegram import Telegram
 from argus.recognizers.openvino import OpenVinoRecognizer
 
 
-SAVE_EVERY_FRAME = 5
+SAVE_EVERY_FRAME = 15
 
 WHITE_COLOR = (255, 255, 255)
 MAX_TOTAL_AREA_FOR_OBJECT = 15000
