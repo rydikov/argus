@@ -1,12 +1,12 @@
 import cv2
 import logging
-import os
+
 import sys
 
-from datetime import datetime
 from threading import current_thread, Thread
 
 from argus.frame_grabber import FrameGrabber
+from argus.frame_saver import FrameSaver
 from argus.helpers.telegram import Telegram
 from argus.recognizers.openvino import OpenVinoRecognizer
 
@@ -51,25 +51,7 @@ def mark_object_on_frame(frame, obj):
     )
 
 
-def save_frame(frame, stills_dir, prefix=None):
-    timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
-
-    if not os.path.exists(stills_dir):
-        os.makedirs(stills_dir)
-
-    if prefix is None:
-        file_name = '{}.jpg'.format(timestamp)
-    else:
-        file_name = '{}-{}.jpg'.format(timestamp, prefix)
-
-    file_path = os.path.join(stills_dir, file_name)
-    is_saved = cv2.imwrite(file_path, frame)
-    if not is_saved:
-        logger.error('Unable to save file. Prefix: {}'.format(prefix))
-    return file_name
-
-
-def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
+def async_run(frame_grabber, frame_saver, recocnizer, telegram):
     
     current_frame_count = 0
     logger.info('Thread %s started' % current_thread().name)
@@ -83,7 +65,7 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
             sys.exit(1)
 
         if current_frame_count == SAVE_EVERY_FRAME:
-            save_frame(frame, stills_dir)
+            frame_saver.save(frame)
             current_frame_count = 0
         else:
             current_frame_count += 1
@@ -106,12 +88,10 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
                     alarm = True
 
 
-            file_path = save_frame(frame, stills_dir, prefix='detected')
+            file_uri = frame_saver.save(frame, prefix='detected')
 
             if alarm and telegram is not None:
-                telegram.send_and_be_silent(
-                    'Objects detected: {}/{}'.format(host_stills_uri, file_path)
-                )
+                telegram.send_and_be_silent('Objects detected: %s ' % file_uri)
 
 
 def run(config):
@@ -128,10 +108,9 @@ def run(config):
             target=async_run,
             args=(
                 FrameGrabber(config=config['sources'][source]),
+                FrameSaver(config=config['sources'][source]),
                 recocnizer,
                 telegram,
-                config['sources'][source]['host_stills_uri'],
-                config['sources'][source]['stills_dir']
             )
         )
         thread.name = source
