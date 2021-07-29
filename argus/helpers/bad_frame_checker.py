@@ -2,8 +2,6 @@ import cv2
 import logging
 
 
-from argus.helpers.timing import timing
-
 logger = logging.getLogger(__file__)
 
 MIN_WHITE = 50
@@ -19,7 +17,6 @@ class BadFrameChecker:
             cv2.IMREAD_GRAYSCALE
         )
 
-    @timing
     def check(self, frame):
 
         frame = frame[

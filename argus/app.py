@@ -87,7 +87,6 @@ def async_run(frame_grabber, recocnizer, telegram, host_stills_uri, stills_dir):
             current_frame_count = 0
 
         objects = recocnizer.split_and_recocnize(frame)
-        logger.info(objects)
 
         # Filter objects with correct area and save only DETECTABLE_OBJECTS
         objects = [

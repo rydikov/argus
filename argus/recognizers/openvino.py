@@ -9,7 +9,6 @@ from usb.core import find as finddev
 
 from argus.recognizers import Recognizer
 from argus.helpers.yolo import get_objects, filter_objects
-from argus.helpers.timing import timing
 
 PROB_THRESHOLD = 0.4
 
@@ -47,7 +46,6 @@ class OpenVinoRecognizer(Recognizer):
         with open(os.path.join(self.config['model_path'], 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
-    @timing
     def recognize(self, frame):
         proc_image = cv2.resize(
             frame,
