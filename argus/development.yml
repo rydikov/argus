@@ -1,6 +1,21 @@
+important_objects:
+  - person
+  - car
+  - cow
+
+other_objects:
+  - bicycle
+  - motorcycle
+  - bird
+  - cat
+  - dog
+  - horse
+
 sources:
   first-cam:
     source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
+    max_total_area_for_object: 15000
+    save_every_n_frame: 10
     stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/first
     host_stills_uri: http://localhost/Stills/first
     bfc:
@@ -10,6 +25,8 @@ sources:
       template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
   second-cam:
     source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
+    max_total_area_for_object: 15000
+    save_every_n_frame: 10
     stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
     host_stills_uri: http://localhost/Stills/second
 

@@ -43,7 +43,9 @@ class OpenVinoRecognizer(Recognizer):
             device_name=self.config['device_name']
         )
 
-        with open(os.path.join(self.config['model_path'], 'coco.names'), 'r') as f:
+        with open(
+            os.path.join(self.config['model_path'], 'coco.names'), 'r'
+        ) as f:
             self.labels_map = [x.strip() for x in f]
 
     def recognize(self, frame):
@@ -87,13 +89,10 @@ class OpenVinoRecognizer(Recognizer):
             prob_threshold=PROB_THRESHOLD
         )
 
-        def _add_object_label_and_total_area(elem):
-            elem['label'] = self.labels_map[elem['class_id']]
-
-            elem['total_area'] = \
-                (elem['ymax'] - elem['ymin']) * (elem['xmax'] - elem['xmin'])
-
-            return elem
+        def _add_object_label_and_total_area(e):
+            e['label'] = self.labels_map[e['class_id']]
+            e['total_area'] = (e['ymax'] - e['ymin']) * (e['xmax'] - e['xmin'])
+            return e
 
         objects = list(map(_add_object_label_and_total_area, objects))
 

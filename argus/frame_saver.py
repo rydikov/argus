@@ -21,14 +21,14 @@ class FrameSaver:
             os.makedirs(self.stills_dir)
 
         if prefix is None:
-            file_name = '{}.jpg'.format(timestamp)
+            frame_name = '{}.jpg'.format(timestamp)
         else:
-            file_name = '{}-{}.jpg'.format(timestamp, prefix)
+            frame_name = '{}-{}.jpg'.format(timestamp, prefix)
 
-        file_path = os.path.join(self.stills_dir, file_name)
+        file_path = os.path.join(self.stills_dir, frame_name)
         is_saved = cv2.imwrite(file_path, frame)
-        
+
         if not is_saved:
-            logger.error('Unable to save file. Prefix: %s' % prefix)
-        
-        return '{}/{}'.format(self.host_stills_uri, file_name)
+            logger.error('Unable to save file: %s' % frame_name)
+
+        return '{}/{}'.format(self.host_stills_uri, frame_name)
