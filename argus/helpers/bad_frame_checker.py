@@ -19,7 +19,7 @@ class BadFrameChecker:
 
     def check(self, frame):
 
-        frame = frame[
+        subframe = frame[
             self.coords[0]:self.coords[1],
             self.coords[2]:self.coords[3]
             ]
@@ -29,17 +29,28 @@ class BadFrameChecker:
         if (
             self.reverse_pixel is not None
             and all(
-                i > MIN_WHITE for i in frame[
+                i > MIN_WHITE for i in subframe[
                     self.reverse_pixel[0],
                     self.reverse_pixel[1]
                 ]
             )
         ):
-            frame = cv2.bitwise_not(frame)
+            subframe = cv2.bitwise_not(subframe)
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        subframe = cv2.cvtColor(subframe, cv2.COLOR_BGR2GRAY)
 
-        diff = cv2.matchTemplate(frame, self.template, cv2.TM_SQDIFF)
+        diff = cv2.matchTemplate(subframe, self.template, cv2.TM_SQDIFF)
+
+        # Mark diff on frame for analize
+        cv2.putText(
+            frame,
+            str(diff[0][0]),
+            (20, 20), # position
+            cv2.FONT_HERSHEY_COMPLEX,
+            0.5,
+            (0, 0, 255), # red
+            1
+        )
 
         if int(diff[0][0]) > self.threshold:
             logger.warning('Bad frame detected. Diff: {}'.format(diff))

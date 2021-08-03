@@ -31,7 +31,7 @@ class FrameGrabber:
 
         if frame is None:
             logger.error("Unable to get frame")
-            sys.exit(1)
+            self.make_snapshot()
 
         if self.bfc is not None and self.bfc.check(frame):
             self.make_snapshot()
