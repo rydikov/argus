@@ -53,6 +53,6 @@ class BadFrameChecker:
         )
 
         if int(diff[0][0]) > self.threshold:
-            logger.warning('Bad frame detected. Diff: {}'.format(diff))
+            logger.warning('Bad frame detected. Diff: {}'.format(diff[0][0]))
 
         return int(diff[0][0]) > self.threshold

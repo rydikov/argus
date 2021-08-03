@@ -2,7 +2,7 @@ import cv2
 import logging
 import sys
 
-from time import time
+from time import sleep, time
 
 from argus.helpers.bad_frame_checker import BadFrameChecker
 
@@ -31,6 +31,7 @@ class FrameGrabber:
 
         if frame is None:
             logger.error("Unable to get frame")
+            sleep(5) # 5 sec
             self.make_snapshot()
 
         if self.bfc is not None and self.bfc.check(frame):
