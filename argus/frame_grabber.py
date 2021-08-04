@@ -34,6 +34,6 @@ class FrameGrabber:
             sys.exit(1)
 
         if self.bfc is not None and self.bfc.check(frame):
-            self.make_snapshot()
+            return self.make_snapshot()
 
         return frame
