@@ -39,12 +39,14 @@ class BadFrameChecker:
 
         subframe = cv2.cvtColor(subframe, cv2.COLOR_BGR2GRAY)
 
-        diff = cv2.matchTemplate(subframe, self.template, cv2.TM_SQDIFF)
+        diff = int(
+            cv2.matchTemplate(subframe, self.template, cv2.TM_SQDIFF)[0][0]
+        )
 
         # Mark diff on frame for analize
         cv2.putText(
             frame,
-            str(diff[0][0]),
+            diff,
             (20, 20), # position
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
@@ -52,7 +54,8 @@ class BadFrameChecker:
             1
         )
 
-        if int(diff[0][0]) > self.threshold:
-            logger.warning('Bad frame detected. Diff: {}'.format(diff[0][0]))
+        if diff > self.threshold:
+            logger.warning('Bad frame detected. Diff: {}'.format(diff))
+            return True
 
-        return int(diff[0][0]) > self.threshold
+        return False
