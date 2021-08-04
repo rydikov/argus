@@ -1,5 +1,6 @@
 import cv2
 import logging
+import locale
 
 
 logger = logging.getLogger(__file__)
@@ -46,7 +47,7 @@ class BadFrameChecker:
         # Mark diff on frame for analize
         cv2.putText(
             frame,
-            diff,
+            f"{diff:,}",
             (20, 20), # position
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
