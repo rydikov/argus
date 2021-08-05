@@ -131,7 +131,8 @@ def intersection_over_union(box_1, box_2):  # add DIOU-NMS support
     cw = max(box_1['xmax'], box_2['xmax']) - min(box_1['xmin'], box_2['xmin'])
     ch = max(box_1['ymax'], box_2['ymax']) - min(box_1['ymin'], box_2['ymin'])
     c_area = cw**2+ch**2+1e-16
-    rh02 = ((box_2['xmax']+box_2['xmin'])-(box_1['xmax']+box_1['xmin']))**2/4+((box_2['ymax']+box_2['ymin'])-(box_1['ymax']+box_1['ymin']))**2/4
+    rh02 = ((box_2['xmax'] + box_2['xmin']) - (box_1['xmax'] + box_1['xmin'])) ** 2/4 \
+        + ((box_2['ymax'] + box_2['ymin']) - (box_1['ymax'] + box_1['ymin'])) ** 2/4
 
     if width_of_overlap_area < 0 or height_of_overlap_area < 0:
         area_of_overlap = 0

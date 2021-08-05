@@ -1,6 +1,5 @@
 import cv2
 import logging
-import locale
 
 
 logger = logging.getLogger(__file__)
@@ -40,18 +39,16 @@ class BadFrameChecker:
 
         subframe = cv2.cvtColor(subframe, cv2.COLOR_BGR2GRAY)
 
-        diff = int(
-            cv2.matchTemplate(subframe, self.template, cv2.TM_SQDIFF)[0][0]
-        )
+        diff = int(cv2.matchTemplate(subframe, self.template, cv2.TM_SQDIFF)[0][0])
 
         # Mark diff on frame for analize
         cv2.putText(
             frame,
             f"{diff:,}",
-            (20, 20), # position
+            (20, 20),  # position
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (0, 0, 255), # red
+            (0, 0, 255),  # red
             1
         )
 
