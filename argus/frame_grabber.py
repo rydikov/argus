@@ -7,7 +7,7 @@ from time import time
 from argus.helpers.timing import timing
 from argus.helpers.bad_frame_checker import BadFrameChecker
 
-logger = logging.getLogger()
+logger = logging.getLogger('json')
 
 MAX_SNAPSHOT_DELAY_SEC = 5
 
