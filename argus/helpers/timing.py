@@ -1,16 +1,10 @@
 import logging
 import threading
 
-from pythonjsonlogger import jsonlogger
 from functools import wraps
 from time import time
 
-logger = logging.getLogger(__file__)
-
-formatter = jsonlogger.JsonFormatter()
-logHandler = logging.StreamHandler()
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
+logger = logging.getLogger('json')
 
 
 def timing(f):
@@ -28,7 +22,8 @@ def timing(f):
             extra = {
                 'time': te-ts, 
                 'func': f.__name__,
-                'thread_name': threading.current_thread().name}
+                'thread_name': threading.current_thread().name,
+                'level': 'info'}
         )
         return result
     return wrap

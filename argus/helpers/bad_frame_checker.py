@@ -2,7 +2,7 @@ import cv2
 import logging
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger('json')
 
 MIN_WHITE = 50
 

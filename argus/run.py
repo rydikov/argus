@@ -1,13 +1,16 @@
 import logging
 import os
 import sys
-
 import yaml
+
+from logging import config
 
 from argus import app
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__file__)
+
+config.fileConfig('log.conf')
+
+logger = logging.getLogger('json')
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger('json')
 
 
 class FrameSaver:
