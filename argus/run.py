@@ -6,9 +6,7 @@ import yaml
 
 from argus import app
 
-logging.basicConfig(
-    level=logging.INFO,
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 

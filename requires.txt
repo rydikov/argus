@@ -1,6 +1,7 @@
-ffmpeg-python
-opencv-python
-pytesseract
-pyusb
-pyyaml
 requests
+pyyaml
+pyusb
+python-json-logger
+pytesseract
+opencv-python
+ffmpeg-python
