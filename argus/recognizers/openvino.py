@@ -7,6 +7,7 @@ import sys
 from openvino.inference_engine import IECore
 from usb.core import find as finddev
 
+from argus.helpers.timing import timing
 from argus.recognizers import Recognizer
 from argus.helpers.yolo import get_objects, filter_objects
 
@@ -48,6 +49,7 @@ class OpenVinoRecognizer(Recognizer):
         ) as f:
             self.labels_map = [x.strip() for x in f]
 
+    @timing
     def recognize(self, frame):
         proc_image = cv2.resize(
             frame,
