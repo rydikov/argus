@@ -22,7 +22,7 @@ class FrameGrabber:
         else:
             self.bfc = None
 
-    # @timing
+    @timing
     def make_snapshot(self):
         ts = time()
         __, frame = self.cap.read()
