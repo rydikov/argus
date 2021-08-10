@@ -13,7 +13,7 @@ from argus.helpers.yolo import get_objects, filter_objects
 
 PROB_THRESHOLD = 0.4
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger('json')
 
 
 class OpenVinoRecognizer(Recognizer):

@@ -14,7 +14,7 @@ WHITE_COLOR = (255, 255, 255)
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=3)
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger('json')
 
 
 def mark_object_on_frame(frame, obj):
