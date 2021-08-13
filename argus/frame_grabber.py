@@ -9,7 +9,7 @@ from argus.helpers.bad_frame_checker import BadFrameChecker
 
 logger = logging.getLogger('json')
 
-MAX_SNAPSHOT_DELAY_SEC = 5
+SLEEP_TIME_IF_FRAME_IS_FAILED_SEC = 5
 MAX_FAILED_FRAMES = 5
 
 
@@ -30,7 +30,7 @@ class FrameGrabber:
 
         if frame is None:
             logger.error('Unable to get frame')
-            sleep(5)
+            sleep(SLEEP_TIME_IF_FRAME_IS_FAILED_SEC)
             self.failed_frames += 1
             if self.failed_frames == MAX_FAILED_FRAMES:
                 logger.error('Unable to get frames. Restart app')

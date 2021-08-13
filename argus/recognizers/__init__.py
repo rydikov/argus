@@ -1,4 +1,4 @@
-
+from argus.helpers.timing import timing
 
 class Recognizer:
 
@@ -12,6 +12,7 @@ class Recognizer:
     def recognize(self, frame):
         raise NotImplementedError
 
+    @timing
     def split_and_recocnize(self, frame):
         h, w = frame.shape[0], frame.shape[1]  # e.g. 1080x1920
 

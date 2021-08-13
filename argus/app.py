@@ -75,7 +75,7 @@ def async_run(
             ):
                 objects_detected = True
                 mark_object_on_frame(frame, obj)
-                logger.warning(obj)
+                logger.warning('Object detected', extra=obj)
                 if obj['label'] in important_objects:
                     alarm = True
 
