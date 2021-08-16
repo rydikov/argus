@@ -27,8 +27,7 @@ class Recognizer:
         right_frame = frame[h-half_frame:h, half_frame:w]
 
         left_frame_objects = self.recognize(left_frame, thread_number)
-        # right_frame_objects = self.recognize(right_frame, thread_number)
-        right_frame_objects = []
+        right_frame_objects = self.recognize(right_frame, thread_number)
 
         for obj in left_frame_objects:
             obj['ymin'] += h - half_frame

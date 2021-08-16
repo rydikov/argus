@@ -50,6 +50,7 @@ class OpenVinoRecognizer(Recognizer):
             self.labels_map = [x.strip() for x in f]
 
     def recognize(self, frame, thread_number):
+
         proc_image = cv2.resize(
             frame,
             (self.h, self.w),

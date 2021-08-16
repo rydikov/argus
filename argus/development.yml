@@ -32,5 +32,4 @@ sources:
 
 recognizer:
   model_path: /Users/rydikov/Projects/Other/RASPBERRY/
-  device_name: MULTI:MYRIAD.20.1.2.1-ma2480,MYRIAD.20.1.2.4.4-ma2480
-  # device_name: MYRIAD
+  device_name: CPU
