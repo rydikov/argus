@@ -4,7 +4,7 @@ import ngraph as ng
 import os
 import sys
 
-from openvino.inference_engine import IECore
+from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
 
 from argus.recognizers import Recognizer
@@ -40,7 +40,8 @@ class OpenVinoRecognizer(Recognizer):
 
         self.exec_net = ie.load_network(
             network=self.net,
-            device_name=self.config['device_name']
+            device_name=self.config['device_name'],
+            num_requests=self.threads_count
         )
 
         with open(
@@ -48,7 +49,7 @@ class OpenVinoRecognizer(Recognizer):
         ) as f:
             self.labels_map = [x.strip() for x in f]
 
-    def recognize(self, frame):
+    def recognize(self, frame, thread_number):
         proc_image = cv2.resize(
             frame,
             (self.h, self.w),
@@ -58,7 +59,7 @@ class OpenVinoRecognizer(Recognizer):
         proc_image = proc_image.transpose((2, 0, 1))
 
         try:
-            result = self.exec_net.infer({self.input_blob: proc_image})
+            self.exec_net.requests[thread_number].async_infer({self.input_blob: proc_image})
         except Exception:
             logger.exception("Exec Network is down")
             # Reset usb device. Find ids with lsusb
@@ -73,6 +74,15 @@ class OpenVinoRecognizer(Recognizer):
                 )
                 dev.reset()
             sys.exit(0)
+
+        while True:        
+            infer_status = self.exec_net.requests[thread_number].wait(0)
+            if infer_status == StatusCode.RESULT_NOT_READY:
+                continue
+            else:
+                break
+
+        result = self.exec_net.requests[thread_number].output_blobs
 
         objects = get_objects(
             result,

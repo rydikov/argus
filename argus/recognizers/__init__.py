@@ -2,8 +2,9 @@ from argus.helpers.timing import timing
 
 class Recognizer:
 
-    def __init__(self, config):
+    def __init__(self, config, threads_count):
         self.config = config
+        self.threads_count = threads_count
         self.init_network()
 
     def init_network(self, config):
@@ -13,7 +14,7 @@ class Recognizer:
         raise NotImplementedError
 
     @timing
-    def split_and_recocnize(self, frame):
+    def split_and_recocnize(self, frame, thread_number):
         h, w = frame.shape[0], frame.shape[1]  # e.g. 1080x1920
 
         # 960
@@ -25,8 +26,9 @@ class Recognizer:
         # [120:1080, 960:1920]
         right_frame = frame[h-half_frame:h, half_frame:w]
 
-        left_frame_objects = self.recognize(left_frame)
-        right_frame_objects = self.recognize(right_frame)
+        left_frame_objects = self.recognize(left_frame, thread_number)
+        # right_frame_objects = self.recognize(right_frame, thread_number)
+        right_frame_objects = []
 
         for obj in left_frame_objects:
             obj['ymin'] += h - half_frame

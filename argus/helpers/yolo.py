@@ -97,7 +97,7 @@ def get_objects(output, net, new_frame_height_width, source_height_width, prob_t
     objects = list()
 
     for layer_name, out_blob in output.items():
-        out_blob = out_blob.reshape(net.outputs[layer_name].shape)
+        out_blob = out_blob.buffer.reshape(net.outputs[layer_name].shape)
         params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
         layer_params = YoloParams(params, out_blob.shape[2])
         objects += parse_yolo_region(

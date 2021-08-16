@@ -31,6 +31,7 @@ def async_run(
     telegram,
     important_objects,
     detectable_objects,
+    thread_number,
     max_total_area_for_object,
     save_every_n_frame
 ):
@@ -60,7 +61,7 @@ def async_run(
             frame_saver.save(frame)
             current_frame_count = 0
 
-        objects = recocnizer.split_and_recocnize(frame)
+        objects = recocnizer.split_and_recocnize(frame, thread_number)
 
         for obj in objects:
             # Mark and save objects with correct area
@@ -93,7 +94,10 @@ def async_run(
 
 def run(config):
 
-    recocnizer = OpenVinoRecognizer(config=config['recognizer'])
+    recocnizer = OpenVinoRecognizer(
+        config=config['recognizer'], 
+        threads_count=len(config['sources'])
+    )
 
     if 'telegram_bot' in config:
         telegram = Telegram(config['telegram_bot'])
@@ -103,7 +107,7 @@ def run(config):
     important_objects = config['important_objects']
     detectable_objects = important_objects + config.get('other_objects', [])
 
-    for source in config['sources']:
+    for thread_number, source in enumerate(config['sources']):
         thread = Thread(
             target=async_run,
             args=(
@@ -113,6 +117,7 @@ def run(config):
                 telegram,
                 important_objects,
                 detectable_objects,
+                thread_number,
                 config['sources'][source].get('max_total_area_for_object'),
                 config['sources'][source].get('save_every_n_frame')
             )
