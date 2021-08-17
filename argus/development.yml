@@ -32,4 +32,7 @@ sources:
 
 recognizer:
   model_path: /Users/rydikov/Projects/Other/RASPBERRY/
-  device_name: CPU
+  device_name: 
+    - MYRIAD 
+    - CPU
+  # device_name: CPU

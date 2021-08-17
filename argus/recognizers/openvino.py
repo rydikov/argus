@@ -3,6 +3,7 @@ import logging
 import ngraph as ng
 import os
 import sys
+import asyncio
 
 from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
@@ -33,11 +34,28 @@ class OpenVinoRecognizer:
         self.input_blob = next(iter(self.net.input_info))
         _, _, self.h, self.w = self.net.input_info[self.input_blob].input_data.shape
 
-        self.exec_net = ie.load_network(
-            network=self.net,
-            device_name=self.config['device_name'],
-            num_requests=self.threads_count * 2
-        )
+        if isinstance(self.config['device_name'], list) and len(self.config['device_name']) == 2:
+            self.exec_net1 = ie.load_network(
+                network=self.net,
+                device_name=self.config['device_name'][0],
+                num_requests=self.threads_count
+            )
+            self.exec_net2 = ie.load_network(
+                network=self.net,
+                device_name=self.config['device_name'][1],
+                num_requests=self.threads_count
+            )
+        elif isinstance(self.config['device_name'], str):
+            self.exec_net1 = self.exec_net2 = ie.load_network(
+                network=self.net,
+                device_name=self.config['device_name'],
+                num_requests=self.threads_count * 2
+            )
+        else:
+            logger.error('One or two devices for recognize allowed')
+            sys.exit(1)
+
+
 
         with open(os.path.join(self.config['model_path'], 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
@@ -79,15 +97,25 @@ class OpenVinoRecognizer:
 
         return objects
 
+    def get_net_result(self, net, request_num):
+        net.requests[request_num].wait()
+        return net.requests[request_num].output_blobs
+
 
     @timing
     def split_and_recocnize(self, frame, thread_number):
 
-        # Two request for one image (for left and right tail)
-        if thread_number == 0:
-            r1, r2 = thread_number, thread_number + 1
+        if isinstance(self.config['device_name'], str):
+            if thread_number == 0:
+                request_num_for_left_frame = thread_number
+                request_num_for_right_frame = thread_number + 1
+            else:
+                request_num_for_left_frame = thread_number + 1
+                request_num_for_right_frame = thread_number + 2
         else:
-            r1, r2 = thread_number + 1, thread_number + 2
+            request_num_for_left_frame = thread_number
+            request_num_for_right_frame = thread_number
+
 
         h, w = frame.shape[0], frame.shape[1]  # e.g. 1080x1920
         # 960
@@ -100,41 +128,20 @@ class OpenVinoRecognizer:
         proc_image_left = self.proc_image(left_frame)
         proc_image_right = self.proc_image(right_frame)
 
-        try:
-            self.exec_net.requests[r1].async_infer({self.input_blob: proc_image_left})
-            self.exec_net.requests[r2].async_infer({self.input_blob: proc_image_right})
-        except Exception:
-            logger.exception("Exec Network is down")
-            # Reset usb device. Find ids with lsusb
-            if (
-                self.config['device_name'] == 'MYRIAD'
-                and self.config.get('id_vendor') is not None
-                and self.config.get('id_product') is not None
-            ):
-                dev = finddev(
-                    idVendor=self.config['id_vendor'],
-                    idProduct=self.config['id_product']
-                )
-                dev.reset()
-            sys.exit(0)
+        asyncio.run(
+            self.create_infer_tasks(
+                proc_image_left, 
+                request_num_for_left_frame,
+                proc_image_right,
+                request_num_for_right_frame
+            )
+        )
+        
+        result_for_left_frame = self.get_net_result(self.exec_net1, request_num_for_left_frame)
+        result_for_right_frame = self.get_net_result(self.exec_net2, request_num_for_right_frame)
 
-        result = {}
-        output_queue = [r1, r2]
-        while True:
-            for i in output_queue:
-                infer_status= self.exec_net.requests[i].wait(0)
-                if infer_status == StatusCode.RESULT_NOT_READY:
-                    continue
-                if infer_status != StatusCode.OK:
-                    logger.error("Unexpected infer status code")
-                    sys.exit(0)
-                result[i] = self.exec_net.requests[i].output_blobs
-                output_queue.remove(i)
-            if len(output_queue) == 0:
-                break
-
-        left_frame_objects = self.get_filtered_objects_with_label(left_frame, result[r1])
-        right_frame_objects = self.get_filtered_objects_with_label(right_frame, result[r2])
+        left_frame_objects = self.get_filtered_objects_with_label(left_frame, result_for_left_frame)
+        right_frame_objects = self.get_filtered_objects_with_label(right_frame, result_for_right_frame)
 
         for obj in left_frame_objects:
             obj['ymin'] += h - half_frame
@@ -147,3 +154,16 @@ class OpenVinoRecognizer:
             obj['ymax'] += h - half_frame
 
         return left_frame_objects + right_frame_objects
+
+
+    async def create_infer_tasks(self, left_frame, request_num_for_left_frame, right_frame, request_num_for_right_frame):
+        await asyncio.gather(
+            self.infer(self.exec_net1, request_num_for_left_frame, left_frame),
+            self.infer(self.exec_net2, request_num_for_right_frame, right_frame),
+        )
+
+    async def infer(self, exec_net, request_num, frame):
+        print(">>>>>>>>")
+        exec_net.requests[request_num].async_infer({self.input_blob: frame})
+        # await asyncio.sleep(10)
+        print("<<<<<<<<")
