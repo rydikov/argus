@@ -35,18 +35,17 @@ class OpenVinoRecognizer:
         _, _, self.h, self.w = self.net.input_info[self.input_blob].input_data.shape
 
         if isinstance(self.config['device_name'], list) and len(self.config['device_name']) == 2:
-            self.exec_net1 = ie.load_network(
-                network=self.net,
-                device_name=self.config['device_name'][0],
-                num_requests=self.threads_count
-            )
-            self.exec_net2 = ie.load_network(
-                network=self.net,
-                device_name=self.config['device_name'][1],
-                num_requests=self.threads_count
-            )
+            self.exec_net = []
+            for device in config['device_name']:
+                exec_net = ie.load_network(
+                    network=self.net,
+                    device_name=device,
+                    num_requests=self.threads_count
+                )
+                self.exec_net.append(exec_net)
+
         elif isinstance(self.config['device_name'], str):
-            self.exec_net1 = self.exec_net2 = ie.load_network(
+            self.exec_net = ie.load_network(
                 network=self.net,
                 device_name=self.config['device_name'],
                 num_requests=self.threads_count * 2
@@ -54,7 +53,6 @@ class OpenVinoRecognizer:
         else:
             logger.error('One or two devices for recognize allowed')
             sys.exit(1)
-
 
 
         with open(os.path.join(self.config['model_path'], 'coco.names'), 'r') as f:
@@ -72,12 +70,13 @@ class OpenVinoRecognizer:
         return proc_frame
 
 
-    def get_filtered_objects_with_label(self, frame, result):
+    def get_filtered_objects_with_label(self, frame_height_width, result):
+
         objects = get_objects(
             result,
             self.net,
             (self.h, self.w),
-            (frame.shape[0], frame.shape[1]),
+            (frame_height_width, frame_height_width),
             PROB_THRESHOLD,
             self.function_from_cnn
         )
@@ -97,73 +96,110 @@ class OpenVinoRecognizer:
 
         return objects
 
-    def get_net_result(self, net, request_num):
-        net.requests[request_num].wait()
-        return net.requests[request_num].output_blobs
-
-
     @timing
     def split_and_recocnize(self, frame, thread_number):
 
-        if isinstance(self.config['device_name'], str):
-            if thread_number == 0:
-                request_num_for_left_frame = thread_number
-                request_num_for_right_frame = thread_number + 1
-            else:
-                request_num_for_left_frame = thread_number + 1
-                request_num_for_right_frame = thread_number + 2
-        else:
-            request_num_for_left_frame = thread_number
-            request_num_for_right_frame = thread_number
-
-
         h, w = frame.shape[0], frame.shape[1]  # e.g. 1080x1920
         # 960
-        half_frame = int(w/2)
+        frame_height_width = int(w/2) # half_frame
         # [120:1080, 0:960]
-        left_frame = frame[h-half_frame:h, 0:half_frame]
+        left_frame = frame[h-frame_height_width:h, 0:frame_height_width]
         # [120:1080, 960:1920]
-        right_frame = frame[h-half_frame:h, half_frame:w]
+        right_frame = frame[h-frame_height_width:h, frame_height_width:w]
 
-        proc_image_left = self.proc_image(left_frame)
-        proc_image_right = self.proc_image(right_frame)
+        proc_frame_left = self.proc_image(left_frame)
+        proc_frame_right = self.proc_image(right_frame)
 
-        asyncio.run(
-            self.create_infer_tasks(
-                proc_image_left, 
-                request_num_for_left_frame,
-                proc_image_right,
-                request_num_for_right_frame
-            )
-        )
-        
-        result_for_left_frame = self.get_net_result(self.exec_net1, request_num_for_left_frame)
-        result_for_right_frame = self.get_net_result(self.exec_net2, request_num_for_right_frame)
+        if isinstance(self.exec_net, list):
+            infer_method = self.multi_devices_infer
+        else:
+            infer_method = self.single_device_infer
 
-        left_frame_objects = self.get_filtered_objects_with_label(left_frame, result_for_left_frame)
-        right_frame_objects = self.get_filtered_objects_with_label(right_frame, result_for_right_frame)
+        result = infer_method(proc_frame_left, proc_frame_right, thread_number)
+
+        left_frame_objects = self.get_filtered_objects_with_label(frame_height_width, result['left_frame'])
+        right_frame_objects = self.get_filtered_objects_with_label(frame_height_width, result['right_frame'])
 
         for obj in left_frame_objects:
-            obj['ymin'] += h - half_frame
-            obj['ymax'] += h - half_frame
+            obj['ymin'] += h - frame_height_width
+            obj['ymax'] += h - frame_height_width
 
         for obj in right_frame_objects:
-            obj['xmin'] += half_frame
-            obj['ymin'] += h - half_frame
-            obj['xmax'] += half_frame
-            obj['ymax'] += h - half_frame
+            obj['xmin'] += frame_height_width
+            obj['ymin'] += h - frame_height_width
+            obj['xmax'] += frame_height_width
+            obj['ymax'] += h - frame_height_width
 
         return left_frame_objects + right_frame_objects
 
 
-    async def create_infer_tasks(self, left_frame, request_num_for_left_frame, right_frame, request_num_for_right_frame):
+    def try_infer(self, exec_net, request_num, frame):
+        try:
+            exec_net.requests[request_num].async_infer({self.input_blob: frame})
+        except Exception:
+            logger.exception("Exec Network is down")
+            # Reset usb device. Find ids with lsusb
+            if (
+                self.config['device_name'] == 'MYRIAD'
+                and self.config.get('id_vendor') is not None
+                and self.config.get('id_product') is not None
+            ):
+                dev = finddev(
+                    idVendor=self.config['id_vendor'],
+                    idProduct=self.config['id_product']
+                )
+                dev.reset()
+            sys.exit(0)
+    
+    def single_device_infer(self, proc_image_left, proc_image_right, thread_number):
+        # Two request for one image (for left and right part)
+        if thread_number == 0:
+            r1, r2 = thread_number, thread_number + 1
+        else:
+            r1, r2 = thread_number + 1, thread_number + 2
+
+        self.try_infer(self.exec_net, r1, proc_image_left)
+        self.try_infer(self.exec_net, r2, proc_image_right)
+
+        result = {}
+        output_queue = [r1, r2]
+        while True:
+            for i in output_queue:
+                infer_status= self.exec_net.requests[i].wait(0)
+                if infer_status == StatusCode.RESULT_NOT_READY:
+                    continue
+                if infer_status != StatusCode.OK:
+                    logger.error("Unexpected infer status code")
+                    sys.exit(0)
+                result[i] = self.exec_net.requests[i].output_blobs
+                output_queue.remove(i)
+            if len(output_queue) == 0:
+                break
+        
+        result['left_frame'] = result.pop(r1)
+        result['right_frame'] = result.pop(r2)
+
+        return result
+
+    #####
+    def multi_devices_infer(self, proc_image_left, proc_image_right, thread_number):
+        
+        def _get_net_result(net, request_num):
+            net.requests[request_num].wait()
+            return net.requests[request_num].output_blobs
+
+        result = {}
+        asyncio.run(self.create_infer_tasks(proc_image_left, proc_image_right, thread_number))
+        result['left_frame'] = _get_net_result(self.exec_net[0], thread_number)
+        result['right_frame'] = _get_net_result(self.exec_net[1], thread_number)
+        return result
+
+    async def create_infer_tasks(self, left_frame, right_frame, thread_number):
         await asyncio.gather(
-            self.infer(self.exec_net1, request_num_for_left_frame, left_frame),
-            self.infer(self.exec_net2, request_num_for_right_frame, right_frame),
+            self.infer(self.exec_net[0], thread_number, left_frame),
+            self.infer(self.exec_net[1], thread_number, right_frame),
         )
 
     async def infer(self, exec_net, request_num, frame):
-        print(">>>>>>>>")
-        exec_net.requests[request_num].async_infer({self.input_blob: frame})
-        # await asyncio.sleep(10)
-        print("<<<<<<<<")
+        self.try_infer(exec_net, request_num, frame)
+    #####
