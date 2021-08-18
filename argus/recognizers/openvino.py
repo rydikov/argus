@@ -171,11 +171,12 @@ class OpenVinoRecognizer:
                 if infer_status != StatusCode.OK:
                     logger.error("Unexpected infer status code")
                     sys.exit(0)
+                print("Single: !!!!!!!!! %d" % i)
                 result[i] = self.exec_net.requests[i].output_blobs
                 output_queue.remove(i)
             if len(output_queue) == 0:
                 break
-        
+      
         result['left_frame'] = result.pop(r1)
         result['right_frame'] = result.pop(r2)
 
@@ -184,14 +185,33 @@ class OpenVinoRecognizer:
     #####
     def multi_devices_infer(self, proc_image_left, proc_image_right, thread_number):
         
-        def _get_net_result(net, request_num):
-            net.requests[request_num].wait()
-            return net.requests[request_num].output_blobs
+        # def _get_net_result(net, request_num):
+        #     net.requests[request_num].wait()
+        #     return net.requests[request_num].output_blobs
 
         result = {}
         asyncio.run(self.create_infer_tasks(proc_image_left, proc_image_right, thread_number))
-        result['left_frame'] = _get_net_result(self.exec_net[0], thread_number)
-        result['right_frame'] = _get_net_result(self.exec_net[1], thread_number)
+
+        output_queue = [0, 1]
+        while True:
+            for i in output_queue:
+                infer_status= self.exec_net[i].requests[thread_number].wait(0)
+                if infer_status == StatusCode.RESULT_NOT_READY:
+                    continue
+                if infer_status != StatusCode.OK:
+                    logger.error("Unexpected infer status code")
+                    sys.exit(0)
+                print("Multi: !!!!!!!!! %d" % i)    
+                result[i] = self.exec_net[i].requests[thread_number].output_blobs
+                output_queue.remove(i)
+            if len(output_queue) == 0:
+                break
+
+        result['left_frame'] = result.pop(0)
+        result['right_frame'] = result.pop(1)
+
+        # result['left_frame'] = _get_net_result(self.exec_net[0], thread_number)
+        # result['right_frame'] = _get_net_result(self.exec_net[1], thread_number)
         return result
 
     async def create_infer_tasks(self, left_frame, right_frame, thread_number):
@@ -202,4 +222,54 @@ class OpenVinoRecognizer:
 
     async def infer(self, exec_net, request_num, frame):
         self.try_infer(exec_net, request_num, frame)
+    #####
+
+    # #####
+    # def multi_devices_infer(self, proc_image_left, proc_image_right, thread_number):
+        
+    #     def _get_net_result(net, request_num):
+    #         net.requests[request_num].wait()
+    #         return net.requests[request_num].output_blobs
+
+    #     result = {}
+    #     asyncio.run(self.create_infer_tasks(proc_image_left, proc_image_right, thread_number))
+    #     result['left_frame'] = _get_net_result(self.exec_net[0], thread_number)
+    #     result['right_frame'] = _get_net_result(self.exec_net[1], thread_number)
+    #     return result
+
+    # async def create_infer_tasks(self, left_frame, right_frame, thread_number):
+    #     await asyncio.gather(
+    #         self.infer(self.exec_net[0], thread_number, left_frame),
+    #         self.infer(self.exec_net[1], thread_number, right_frame),
+    #     )
+
+    # async def infer(self, exec_net, request_num, frame):
+    #     self.try_infer(exec_net, request_num, frame)
+    # #####
+
+
+    #####
+    # def multi_devices_infer(self, proc_image_left, proc_image_right, thread_number):
+        
+    #     def _get_net_result(net, request_num):
+    #         net.requests[request_num].wait()
+    #         return net.requests[request_num].output_blobs
+
+    #     result = {}
+    #     res = asyncio.run(self.create_infer_tasks(proc_image_left, proc_image_right, thread_number))
+    #     result['left_frame'] = res[0]
+    #     result['right_frame'] = res[1]
+    #     return result
+
+    # async def create_infer_tasks(self, left_frame, right_frame, thread_number):
+    #     result = await asyncio.gather(
+    #         self.infer(self.exec_net[0], thread_number, left_frame),
+    #         self.infer(self.exec_net[1], thread_number, right_frame),
+    #     )
+    #     return result
+
+    # async def infer(self, exec_net, request_num, frame):
+    #     self.try_infer(exec_net, request_num, frame)
+    #     exec_net.requests[request_num].wait()
+    #     return exec_net.requests[request_num].output_blobs
     #####
