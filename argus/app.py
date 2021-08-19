@@ -42,11 +42,13 @@ def async_run(
 
     logger.info('Thread %s started' % current_thread().name)
 
+    frame = None 
+
     while True:
         alarm = False
         objects_detected = False
 
-        frame = frame_grabber.make_snapshot()
+        source_frame = frame_grabber.make_snapshot()
 
         if save_every_n_frame is not None:
             current_frame_count += 1
@@ -58,11 +60,20 @@ def async_run(
             )
             
         ):
-            frame_saver.save(frame)
+            frame_saver.save(source_frame)
             current_frame_count = 0
 
-        objects = recocnizer.split_and_recocnize(frame, thread_number)
+        
+        request_id, is_waited = recocnizer.get_request_id()
 
+        if is_waited:
+            objects, frame = recocnizer.get_result(request_id)
+
+        recocnizer.send_to_recocnize(source_frame, request_id)
+
+        if not is_waited:
+            objects, frame = recocnizer.get_result(request_id)
+        
         for obj in objects:
             # Mark and save objects with correct area
             # and save frame with detectable objects only

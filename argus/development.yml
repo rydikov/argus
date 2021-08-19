@@ -12,28 +12,31 @@ other_objects:
   - horse
 
 sources:
-  first-cam:
-    source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
-    max_total_area_for_object: 15000
-    save_every_n_frame: 5
-    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/first
-    host_stills_uri: http://localhost/Stills/first
-    bfc:
-      threshold: 17900000
-      coords: [64, 104, 324, 352]
-      reverse_pixel: [39, 0]
-      template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
-  # second-cam:
-  #   source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
+  # first-cam:
+  #   source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
   #   max_total_area_for_object: 15000
-  #   save_every_n_frame: 10
-  #   stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
-  #   host_stills_uri: http://localhost/Stills/second
+  #   save_every_n_frame: 5
+  #   stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/first
+  #   host_stills_uri: http://localhost/Stills/first
+  #   bfc:
+  #     threshold: 17900000
+  #     coords: [64, 104, 324, 352]
+  #     reverse_pixel: [39, 0]
+  #     template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
+  second-cam:
+    source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
+    max_total_area_for_object: 15000
+    save_every_n_frame: 0
+    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
+    host_stills_uri: http://localhost/Stills/second
+
 
 recognizer:
   model_path: /Users/rydikov/Projects/Other/RASPBERRY/
   # device_name: 
-  #   - CPU
-  #   - MYRIAD 
-  device_name: MYRIAD
+  #   - MYRIAD.20.3.2.1-ma2480
+  #   - MYRIAD.20.3.2.4.4-ma2480
+  # device_name: MYRIAD
   # device_name: CPU
+  device_name: MULTI:MYRIAD.20.3.2.1-ma2480,MYRIAD.20.3.2.4.4-ma2480
+  num_requests: 8
