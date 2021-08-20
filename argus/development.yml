@@ -36,7 +36,7 @@ recognizer:
   # device_name: 
   #   - MYRIAD.20.3.2.1-ma2480
   #   - MYRIAD.20.3.2.4.4-ma2480
-  # device_name: MYRIAD
+  device_name: MYRIAD
   # device_name: CPU
-  device_name: MULTI:MYRIAD.20.3.2.1-ma2480,MYRIAD.20.3.2.4.4-ma2480
-  num_requests: 8
+  # device_name: MULTI:MYRIAD.20.3.2.1-ma2480,MYRIAD.20.3.2.4.4-ma2480
+  num_requests: 4

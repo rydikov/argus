@@ -2,6 +2,7 @@ import cv2
 import logging
 
 from threading import current_thread, Thread
+from time import sleep
 from datetime import datetime, timedelta
 
 from argus.frame_grabber import FrameGrabber
@@ -64,16 +65,10 @@ def async_run(
             current_frame_count = 0
 
         
-        request_id, is_waited = recocnizer.get_request_id()
-
-        if is_waited:
-            objects, frame = recocnizer.get_result(request_id)
-
+        request_id = recocnizer.get_request_id()
+        objects, frame = recocnizer.get_result(request_id)
         recocnizer.send_to_recocnize(source_frame, request_id)
 
-        if not is_waited:
-            objects, frame = recocnizer.get_result(request_id)
-        
         for obj in objects:
             # Mark and save objects with correct area
             # and save frame with detectable objects only

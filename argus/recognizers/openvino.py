@@ -50,17 +50,15 @@ class OpenVinoRecognizer:
 
 
     def get_request_id(self):
-        is_waited = False
         infer_request_id = self.exec_net.get_idle_request_id()
         if infer_request_id < 0:
             status = self.wait()
-            is_waited = True
             if status != StatusCode.OK:
                 raise Exception("Wait for idle request failed!")
             infer_request_id = self.exec_net.get_idle_request_id()
             if infer_request_id < 0:
                 raise Exception("Invalid request id!")
-        return infer_request_id, is_waited
+        return infer_request_id
 
 
     def send_to_recocnize(self, frame, request_id):
@@ -96,10 +94,13 @@ class OpenVinoRecognizer:
     def get_result(self, request_id):
         infer_status= self.exec_net.requests[request_id].wait(0)
 
-        if infer_status == StatusCode.RESULT_NOT_READY:
+        if (
+            infer_status == StatusCode.RESULT_NOT_READY
+            or self.frame_buffer.get(request_id) is None
+        ):
             return [], None
 
-        frame = self.frame_buffer[request_id]
+        frame = self.frame_buffer.pop(request_id)
         result = self.exec_net.requests[request_id].output_blobs
 
         objects = get_objects(
