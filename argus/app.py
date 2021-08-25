@@ -13,7 +13,7 @@ from argus.recognizers.openvino import OpenVinoRecognizer
 
 WHITE_COLOR = (255, 255, 255)
 SILENT_TIME = timedelta(minutes=30)
-SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=3)
+SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=1)
 
 logger = logging.getLogger('json')
 
