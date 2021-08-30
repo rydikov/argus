@@ -72,14 +72,7 @@ def async_run(
         for obj in objects:
             # Mark and save objects with correct area
             # and save frame with detectable objects only
-            if (
-                obj['label'] in detectable_objects and
-                (
-                    max_total_area_for_object is None or
-                    obj['total_area'] < max_total_area_for_object
-
-                )
-            ):
+            if obj['label'] in detectable_objects:
                 objects_detected = True
                 mark_object_on_frame(frame, obj)
                 logger.warning('Object detected', extra=obj)

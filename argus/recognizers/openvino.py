@@ -120,7 +120,6 @@ class OpenVinoRecognizer:
 
         def _add_object_label_and_total_area(e):
             e['label'] = self.labels_map[e['class_id']]
-            e['total_area'] = (e['ymax'] - e['ymin']) * (e['xmax'] - e['xmin'])
             return e
 
         result = list(map(_add_object_label_and_total_area, objects))

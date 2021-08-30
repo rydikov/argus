@@ -2,8 +2,6 @@ import cv2
 import logging
 import sys
 
-from time import sleep
-
 from argus.helpers.timing import timing
 from argus.helpers.bad_frame_checker import BadFrameChecker
 
@@ -14,7 +12,6 @@ class FrameGrabber:
 
     def __init__(self, config):
         self.cap = cv2.VideoCapture(config['source'])
-        self.failed_frames = 0
 
         if 'bfc' in config:
             self.bfc = BadFrameChecker(config['bfc'])
