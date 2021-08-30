@@ -33,7 +33,6 @@ def async_run(
     important_objects,
     detectable_objects,
     thread_number,
-    max_total_area_for_object,
     save_every_n_frame
 ):
 
@@ -117,7 +116,6 @@ def run(config):
                 important_objects,
                 detectable_objects,
                 thread_number,
-                config['sources'][source].get('max_total_area_for_object'),
                 config['sources'][source].get('save_every_n_frame')
             )
         )
