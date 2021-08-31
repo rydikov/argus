@@ -18,7 +18,8 @@ SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=1)
 
 logger = logging.getLogger('json')
 
-frames = LifoQueue(maxsize=120)
+WARNING_QUEUE_SIZE = 10
+frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
 
 
 def mark_object_on_frame(frame, obj):
@@ -75,7 +76,9 @@ def run(config):
 
         queue_elem = frames.get()
 
-        logger.info('Queue size: %s' % frames.qsize(), extra={'queue_size': frames.qsize()})
+        queue_size = frames.qsize()
+        if queue_size > WARNING_QUEUE_SIZE:
+            logger.warning('Queue size: %s' % queue_size, extra={'queue_size': queue_size})
 
         source_frame = queue_elem['frame']
         thread_name = queue_elem['thread_name']
