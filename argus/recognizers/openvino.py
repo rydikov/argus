@@ -61,9 +61,12 @@ class OpenVinoRecognizer:
         return infer_request_id
 
 
-    def send_to_recocnize(self, frame, request_id):
+    def send_to_recocnize(self, frame, thread_name, request_id):
 
-        self.frame_buffer[request_id] = frame
+        self.frame_buffer[request_id] = {
+            'frame': frame, 
+            'thread_name': thread_name,
+        }
 
         proc_frame = cv2.resize(
             frame,
@@ -98,9 +101,12 @@ class OpenVinoRecognizer:
             infer_status == StatusCode.RESULT_NOT_READY
             or self.frame_buffer.get(request_id) is None
         ):
-            return [], None
+            return [], None, None
 
-        frame = self.frame_buffer.pop(request_id)
+        buffer_item = self.frame_buffer.pop(request_id)
+        thread_name = buffer_item['thread_name']
+        frame = buffer_item['frame']
+
         result = self.exec_net.requests[request_id].output_blobs
 
         objects = get_objects(
@@ -124,4 +130,4 @@ class OpenVinoRecognizer:
 
         result = list(map(_add_object_label_and_total_area, objects))
 
-        return result, frame
+        return result, frame, thread_name
