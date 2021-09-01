@@ -1,6 +1,6 @@
 import cv2
 import logging
-import sys
+import os
 
 from argus.helpers.timing import timing
 from argus.helpers.bad_frame_checker import BadFrameChecker
@@ -25,11 +25,11 @@ class FrameGrabber:
             __, frame = self.cap.read()
         except Exception:
             logger.exception("Unable to get frame. Restart app")
-            sys.exit(1)
+            os._exit(1)
 
         if frame is None:
             logger.error('Empty frame. Restart app')
-            sys.exit(1)
+            os._exit(1)
 
         if self.bfc is not None and self.bfc.check(frame):
             return self.make_snapshot()
