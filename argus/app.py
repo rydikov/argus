@@ -20,7 +20,7 @@ SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=1)
 logger = logging.getLogger('json')
 
 WARNING_QUEUE_SIZE = 10
-QUEUE_TIMEOUT = 1
+QUEUE_TIMEOUT = 10
 
 frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
 snapshot_threads = []
@@ -92,6 +92,7 @@ def run(config):
         try:
             queue_elem = frames.get(timeout=QUEUE_TIMEOUT)
         except Empty:
+            logger.error("Queue if Empty for %s" % QUEUE_TIMEOUT)
             continue
 
         queue_size = frames.qsize()
