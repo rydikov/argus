@@ -17,8 +17,8 @@ def timing(f):
                 f.__name__,
                 te - ts
             ),
-            extra = {
-                'leadTime': te-ts, 
+            extra={
+                'leadTime': te-ts,
                 'func': f.__name__,
             }
         )

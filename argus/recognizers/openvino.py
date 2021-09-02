@@ -3,7 +3,6 @@ import logging
 import ngraph as ng
 import os
 import sys
-import asyncio
 
 from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
@@ -48,7 +47,6 @@ class OpenVinoRecognizer:
     def wait(self):
         return self.exec_net.wait(num_requests=1)
 
-
     def get_request_id(self):
         infer_request_id = self.exec_net.get_idle_request_id()
         if infer_request_id < 0:
@@ -60,11 +58,10 @@ class OpenVinoRecognizer:
                 raise Exception("Invalid request id!")
         return infer_request_id
 
-
     def send_to_recocnize(self, frame, thread_name, request_id):
 
         self.frame_buffer[request_id] = {
-            'frame': frame, 
+            'frame': frame,
             'thread_name': thread_name,
         }
 
@@ -93,9 +90,8 @@ class OpenVinoRecognizer:
                 dev.reset()
             sys.exit(0)
 
-
     def get_result(self, request_id):
-        infer_status= self.exec_net.requests[request_id].wait(0)
+        infer_status = self.exec_net.requests[request_id].wait(0)
 
         if (
             infer_status == StatusCode.RESULT_NOT_READY

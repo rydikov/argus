@@ -35,10 +35,8 @@ class FrameSaver:
 
         return '{}/{}'.format(self.host_stills_uri, frame_name)
 
-
     def save_if_need(self, frame, forced=False, prefix=None):
         self.frame_count += 1
         if self.frame_count == self.save_every_n_frame or forced:
             self.frame_count = 0
             return self.save(frame, prefix)
-

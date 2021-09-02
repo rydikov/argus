@@ -1,9 +1,9 @@
 import cv2
 import logging
 import sys
-import os
 
 from time import sleep
+
 from argus.helpers.timing import timing
 from argus.helpers.bad_frame_checker import BadFrameChecker
 
@@ -20,7 +20,6 @@ class FrameGrabber:
         if not self.cap.isOpened():
             logger.error("Could not connect to camera: %s " % config['source'])
             self._exit()
-            # os._exit(1)
 
         if 'bfc' in config:
             self.bfc = BadFrameChecker(config['bfc'])
