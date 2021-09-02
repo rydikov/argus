@@ -92,12 +92,12 @@ def run(config):
         try:
             queue_elem = frames.get(timeout=QUEUE_TIMEOUT)
         except Empty:
-            logger.error("Queue if Empty for %s" % QUEUE_TIMEOUT)
+            logger.error("Queue is empty for %s sec." % QUEUE_TIMEOUT)
             continue
 
         queue_size = frames.qsize()
         if queue_size > WARNING_QUEUE_SIZE:
-            logger.warning('Queue size: %s' % queue_size, extra={'queue_size': queue_size})
+            logger.warning('Warning queue size: %s' % queue_size, extra={'queue_size': queue_size})
 
         source_frame = queue_elem['frame']
         thread_name = queue_elem['thread_name']
