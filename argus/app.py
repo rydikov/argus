@@ -1,4 +1,5 @@
 import queue
+from time import sleep
 import cv2
 import logging
 import threading
@@ -21,9 +22,10 @@ logger = logging.getLogger('json')
 
 WARNING_QUEUE_SIZE = 10
 QUEUE_TIMEOUT = 10
+SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 
 frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
-snapshot_threads = []
+snapshot_threads_names = []
 
 
 class SnapshotThread(Thread):
@@ -68,8 +70,8 @@ def run(config):
         thread = SnapshotThread(source, config)
         thread.start()
         logger.info('Thread %s started' % source)
-        snapshot_threads.append(thread)
-        frame_savers[source] = FrameSaver(config=config['sources'][source])
+        snapshot_threads_names.append(thread.name)
+        frame_savers[thread.name] = FrameSaver(config=config['sources'][source])
 
     important_objects = config['important_objects']
     detectable_objects = important_objects + config.get('other_objects', [])
@@ -79,11 +81,12 @@ def run(config):
     while True:
 
         # Check and restart dead threads
-        for t in snapshot_threads:
-            if not t.is_alive():
-                thread = SnapshotThread(t.name, config)
+        active_threads = [t.name for t in threading.enumerate()]
+        for thread_name in snapshot_threads_names:
+            if thread_name not in active_threads:
+                thread = SnapshotThread(thread_name, config)
                 thread.start()
-                logger.info('Thread %s restarted' % t.name)
+                logger.info('Thread %s restarted' % thread_name)
         
         alarm = False
         objects_detected = False
@@ -93,6 +96,7 @@ def run(config):
             queue_elem = frames.get(timeout=QUEUE_TIMEOUT)
         except Empty:
             logger.error("Queue is empty for %s sec." % QUEUE_TIMEOUT)
+            sleep(SLEEP_TIME_IF_QUEUE_IS_EMPTY)
             continue
 
         queue_size = frames.qsize()
