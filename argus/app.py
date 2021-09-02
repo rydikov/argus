@@ -86,7 +86,7 @@ def run(config):
             if thread_name not in active_threads:
                 thread = SnapshotThread(thread_name, config)
                 thread.start()
-                logger.info('Thread %s restarted' % thread_name)
+                logger.warning('Thread %s restarted' % thread_name)
         
         alarm = False
         objects_detected = False
