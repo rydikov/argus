@@ -1,4 +1,3 @@
-import cv2
 import logging
 import threading
 
@@ -13,15 +12,14 @@ from argus.helpers.telegram import Telegram
 from argus.recognizers.openvino import OpenVinoRecognizer
 
 
-WHITE_COLOR = (255, 255, 255)
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=1)
-
-logger = logging.getLogger('json')
 
 WARNING_QUEUE_SIZE = 10
 QUEUE_TIMEOUT = 10
 SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
+
+logger = logging.getLogger('json')
 
 frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
 snapshot_threads_names = []
@@ -50,19 +48,9 @@ def check_and_restart_dead_snapshot_threads(config):
             logger.warning('Thread %s restarted' % thread_name)
 
 
-def mark_object_on_frame(frame, obj):
-    label = '{}: {} %'.format(obj['label'], round(obj['confidence'] * 100, 1))
-    label_position = (obj['xmin'], obj['ymin'] - 7)
-    cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
-    cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
-
-
 def run(config):
 
-    recocnizer = OpenVinoRecognizer(
-        config=config['recognizer'],
-        threads_count=len(config['sources'])
-    )
+    recocnizer = OpenVinoRecognizer(config)
 
     silent_notify_until_time = datetime.now()
 
@@ -80,17 +68,11 @@ def run(config):
         snapshot_threads_names.append(thread.name)
         frame_savers[thread.name] = FrameSaver(config=config['sources'][source])
 
-    important_objects = config['important_objects']
-    detectable_objects = important_objects + config.get('other_objects', [])
-
     time_of_last_object_detection = {}
 
     while True:
 
         check_and_restart_dead_snapshot_threads(config)
-
-        alarm = False
-        objects_detected = False
 
         try:
             queue_elem = frames.get(timeout=QUEUE_TIMEOUT)
@@ -115,19 +97,10 @@ def run(config):
         frame_savers[source_thread_name].save_if_need(source_frame, forced_save)
 
         request_id = recocnizer.get_request_id()
-        objects, processed_frame, processed_thread_name = recocnizer.get_result(request_id)
+        status, processed_frame, processed_thread_name = recocnizer.get_result(request_id)
         recocnizer.send_to_recocnize(source_frame, source_thread_name, request_id)
 
-        for obj in objects:
-            # Mark and save frame with detectable objects only
-            if obj['label'] in detectable_objects:
-                objects_detected = True
-                mark_object_on_frame(processed_frame, obj)
-                logger.warning('Object detected', extra=obj)
-                if obj['label'] in important_objects:
-                    alarm = True
-
-        if objects_detected:
+        if status.objects_detected:
             time_of_last_object_detection[processed_thread_name] = datetime.now()
             frame_uri = frame_savers[processed_thread_name].save_if_need(
                 processed_frame,
@@ -135,7 +108,7 @@ def run(config):
                 prefix='detected'
             )
             if (
-                alarm and
+                status.alarm and
                 telegram is not None and
                 time_of_last_object_detection[processed_thread_name] > silent_notify_until_time
             ):
