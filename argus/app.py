@@ -13,7 +13,7 @@ from argus.recognizers.openvino import OpenVinoRecognizer
 
 
 SILENT_TIME = timedelta(minutes=30)
-SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(minutes=1)
+SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 
 WARNING_QUEUE_SIZE = 10
 QUEUE_TIMEOUT = 10
