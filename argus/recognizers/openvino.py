@@ -29,6 +29,7 @@ class OpenVinoRecognizer:
 
         self.important_objects = config['important_objects']
         self.detectable_objects = self.important_objects + config.get('other_objects', [])
+        self.max_object_area = 15000
 
         self.frame_buffer = {}
 
@@ -142,7 +143,8 @@ class OpenVinoRecognizer:
         for obj in objects:
             obj['label'] = self.labels_map[obj['class_id']]
             # Mark and save frame with detectable objects only
-            if obj['label'] in self.detectable_objects:
+            obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
+            if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
                 status.objects_detected = True
                 __mark_object_on_frame(frame, obj)
                 logger.warning('Object detected', extra=obj)
