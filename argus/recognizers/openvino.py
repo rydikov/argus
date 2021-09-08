@@ -11,25 +11,19 @@ from argus.helpers.timing import timing
 from argus.helpers.yolo import get_objects, filter_objects
 
 PROB_THRESHOLD = 0.5
-WHITE_COLOR = (255, 255, 255)
 
 logger = logging.getLogger('json')
 
 
 class RecoginizeState:
     objects_detected = False
-    alarm = False
+    important_objects_detected = False
 
 
 class OpenVinoRecognizer:
 
-    def __init__(self, config):
-        self.net_config = config['recognizer']
-        self.threads_count = len(config['sources'])
-
-        self.important_objects = config['important_objects']
-        self.detectable_objects = self.important_objects + config.get('other_objects', [])
-        self.max_object_area = 15000
+    def __init__(self, net_config):
+        self.net_config = net_config
 
         self.frame_buffer = {}
 
@@ -69,12 +63,12 @@ class OpenVinoRecognizer:
                 raise Exception("Invalid request id!")
         return infer_request_id
 
-    def send_to_recocnize(self, queue_elem, request_id):
+    def send_to_recocnize(self, queue_item, request_id):
 
-        self.frame_buffer[request_id] = queue_elem
+        self.frame_buffer[request_id] = queue_item
 
         proc_frame = cv2.resize(
-            queue_elem.frame,
+            queue_item.frame,
             (self.h, self.w),
             interpolation=cv2.INTER_LINEAR
         )
@@ -100,25 +94,17 @@ class OpenVinoRecognizer:
 
     def get_result(self, request_id):
 
-        def __mark_object_on_frame(frame, obj):
-            label = '{}: {} %'.format(obj['label'], round(obj['confidence'] * 100, 1))
-            label_position = (obj['xmin'], obj['ymin'] - 7)
-            cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
-            cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
-
-        state = RecoginizeState()
-
         infer_status = self.exec_net.requests[request_id].wait(0)
 
         if (
             infer_status == StatusCode.RESULT_NOT_READY
             or self.frame_buffer.get(request_id) is None
         ):
-            return state, None
-
-        buffer_item = self.frame_buffer.pop(request_id)
+            return None
 
         result = self.exec_net.requests[request_id].output_blobs
+
+        buffer_item = self.frame_buffer.pop(request_id)
 
         objects = get_objects(
             result,
@@ -135,14 +121,6 @@ class OpenVinoRecognizer:
             prob_threshold=PROB_THRESHOLD
         )
 
-        for obj in objects:
-            obj['label'] = self.labels_map[obj['class_id']]
-            obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
-            if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
-                state.objects_detected = True
-                __mark_object_on_frame(buffer_item.frame, obj)
-                logger.warning('Object detected', extra=obj)
-                if obj['label'] in self.important_objects:
-                    state.alarm = True
+        buffer_item.map(objects, self.labels_map)
 
-        return state, buffer_item
+        return buffer_item

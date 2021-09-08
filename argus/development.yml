@@ -1,16 +1,3 @@
-important_objects:
-  - person
-  - car
-  - cow
-
-other_objects:
-  - bicycle
-  - motorcycle
-  - bird
-  - cat
-  - dog
-  - horse
-
 sources:
   first-cam:
     source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
@@ -22,11 +9,26 @@ sources:
       coords: [64, 104, 324, 352]
       reverse_pixel: [39, 0]
       template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
+    max_object_area: 15000
+    important_objects:
+      - person
   second-cam:
     source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
     save_every_n_frame: 0
     stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
     host_stills_uri: http://localhost/Stills/second
+    max_object_area: 15000
+    important_objects:
+      - person
+      - car
+      - cow
+    other_objects:
+      - bicycle
+      - motorcycle
+      - bird
+      - cat
+      - dog
+      - horse
 
 
 recognizer:
