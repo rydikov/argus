@@ -22,7 +22,6 @@ SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 logger = logging.getLogger('json')
 
 frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
-snapshot_threads_names = []
 
 
 class SnapshotThread(Thread):
@@ -41,7 +40,7 @@ class SnapshotThread(Thread):
 
 def check_and_restart_dead_snapshot_threads(config):
     active_threads = [t.name for t in threading.enumerate()]
-    for thread_name in snapshot_threads_names:
+    for thread_name in config['sources']:
         if thread_name not in active_threads:
             thread = SnapshotThread(thread_name, config)
             thread.start()
@@ -65,7 +64,6 @@ def run(config):
         thread = SnapshotThread(source, config)
         thread.start()
         logger.info('Thread %s started' % source)
-        snapshot_threads_names.append(thread.name)
         frame_savers[thread.name] = FrameSaver(config=config['sources'][source])
 
     time_of_last_object_detection = {}
