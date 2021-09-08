@@ -74,7 +74,7 @@ def run(config):
         thread.start()
         logger.info('Thread %s started' % source)
 
-    time_of_last_object_detection = {}
+    last_detection = {}
 
     frame_saver = FrameSaver(config['sources'])
 
@@ -93,10 +93,8 @@ def run(config):
         if queue_size > WARNING_QUEUE_SIZE:
             logger.warning('Warning queue size: %s' % queue_size, extra={'queue_size': queue_size})
 
-        source_thread_name = queue_elem.thread_name
-
         # Save all frames N sec after objects detection or every N frame (defined in config)
-        save_every_n_frame = config['sources'][source_thread_name].get('save_every_n_frame')
+        save_every_n_frame = config['sources'][queue_elem.thread_name].get('save_every_n_frame')
         frame_needs_to_be_save = (
             (
                 save_every_n_frame and
@@ -104,8 +102,8 @@ def run(config):
 
             ) or
             (
-                time_of_last_object_detection.get(source_thread_name) is not None and
-                time_of_last_object_detection[source_thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+                last_detection.get(queue_elem.thread_name) is not None and
+                last_detection[queue_elem.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
             )
         )
 
@@ -117,12 +115,12 @@ def run(config):
         recocnizer.send_to_recocnize(queue_elem, request_id)
 
         if state.objects_detected:
-            time_of_last_object_detection[processed_queue_elem.thread_name] = datetime.now()
+            last_detection[processed_queue_elem.thread_name] = datetime.now()
             frame_uri = frame_saver.save(processed_queue_elem, prefix='detected')
             if (
                 state.alarm and
                 telegram is not None and
-                time_of_last_object_detection[processed_queue_elem.thread_name] > silent_notify_until_time
+                last_detection[processed_queue_elem.thread_name] > silent_notify_until_time
             ):
                 telegram.send_message('Objects detected: %s' % frame_uri)
                 silent_notify_until_time = datetime.now() + SILENT_TIME
