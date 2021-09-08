@@ -29,13 +29,16 @@ class SnapshotThread(Thread):
         super(SnapshotThread, self).__init__()
         self.name = name
         self.frame_grabber = FrameGrabber(config=config['sources'][name])
+        self.frames_count = 0
 
     def run(self):
         while True:
             frames.put({
                 'frame': self.frame_grabber.make_snapshot(),
-                'thread_name': self.name
+                'thread_name': self.name,
+                'index_number': self.frames_count
             })
+            self.frames_count += 1
 
 
 def check_and_restart_dead_snapshot_threads(config):
@@ -58,13 +61,10 @@ def run(config):
     else:
         telegram = None
 
-    frame_savers = {}
-
     for source in config['sources']:
         thread = SnapshotThread(source, config)
         thread.start()
         logger.info('Thread %s started' % source)
-        frame_savers[thread.name] = FrameSaver(config=config['sources'][source])
 
     time_of_last_object_detection = {}
 
@@ -86,13 +86,22 @@ def run(config):
         source_frame = queue_elem['frame']
         source_thread_name = queue_elem['thread_name']
 
-        # Safe all frames forced N sec after objects detect
-        forced_save = (
-            time_of_last_object_detection.get(source_thread_name) is not None and
-            time_of_last_object_detection[source_thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+        # Save all frames N sec after objects detection or every N frame (defined in config)
+        save_every_n_frame = config['sources'][source_thread_name].get('save_every_n_frame')
+        frame_needs_to_be_save = (
+            (
+                save_every_n_frame and
+                queue_elem['index_number'] % save_every_n_frame == 0
+
+            ) or
+            (
+                time_of_last_object_detection.get(source_thread_name) is not None and
+                time_of_last_object_detection[source_thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+            )
         )
 
-        frame_savers[source_thread_name].save_if_need(source_frame, forced_save)
+        if frame_needs_to_be_save:
+            FrameSaver.save(source_frame, config['sources'][source_thread_name]['stills_dir'])
 
         request_id = recocnizer.get_request_id()
         status, processed_frame, processed_thread_name = recocnizer.get_result(request_id)
@@ -100,9 +109,9 @@ def run(config):
 
         if status.objects_detected:
             time_of_last_object_detection[processed_thread_name] = datetime.now()
-            frame_uri = frame_savers[processed_thread_name].save_if_need(
+            frame_name = FrameSaver.save(
                 processed_frame,
-                forced=True,
+                config['sources'][processed_thread_name]['stills_dir'],
                 prefix='detected'
             )
             if (
@@ -110,5 +119,6 @@ def run(config):
                 telegram is not None and
                 time_of_last_object_detection[processed_thread_name] > silent_notify_until_time
             ):
+                frame_uri = '{}/{}'.format(config['sources'][processed_thread_name]['host_stills_uri'], frame_name)
                 telegram.send_message('Objects detected: %s' % frame_uri)
                 silent_notify_until_time = datetime.now() + SILENT_TIME
