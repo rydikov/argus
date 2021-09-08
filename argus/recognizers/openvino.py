@@ -16,7 +16,7 @@ WHITE_COLOR = (255, 255, 255)
 logger = logging.getLogger('json')
 
 
-class RecoginizeStatus:
+class RecoginizeState:
     objects_detected = False
     alarm = False
 
@@ -69,15 +69,12 @@ class OpenVinoRecognizer:
                 raise Exception("Invalid request id!")
         return infer_request_id
 
-    def send_to_recocnize(self, frame, thread_name, request_id):
+    def send_to_recocnize(self, queue_elem, request_id):
 
-        self.frame_buffer[request_id] = {
-            'frame': frame,
-            'thread_name': thread_name,
-        }
+        self.frame_buffer[request_id] = queue_elem
 
         proc_frame = cv2.resize(
-            frame,
+            queue_elem.frame,
             (self.h, self.w),
             interpolation=cv2.INTER_LINEAR
         )
@@ -109,7 +106,7 @@ class OpenVinoRecognizer:
             cv2.rectangle(frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
             cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
-        status = RecoginizeStatus()
+        state = RecoginizeState()
 
         infer_status = self.exec_net.requests[request_id].wait(0)
 
@@ -117,11 +114,9 @@ class OpenVinoRecognizer:
             infer_status == StatusCode.RESULT_NOT_READY
             or self.frame_buffer.get(request_id) is None
         ):
-            return status, None, None
+            return state, None
 
         buffer_item = self.frame_buffer.pop(request_id)
-        thread_name = buffer_item['thread_name']
-        frame = buffer_item['frame']
 
         result = self.exec_net.requests[request_id].output_blobs
 
@@ -129,7 +124,7 @@ class OpenVinoRecognizer:
             result,
             self.net,
             (self.h, self.w),
-            (frame.shape[0], frame.shape[1]),
+            (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
             PROB_THRESHOLD,
             self.function_from_cnn
         )
@@ -144,10 +139,10 @@ class OpenVinoRecognizer:
             obj['label'] = self.labels_map[obj['class_id']]
             obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
             if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
-                status.objects_detected = True
-                __mark_object_on_frame(frame, obj)
+                state.objects_detected = True
+                __mark_object_on_frame(buffer_item.frame, obj)
                 logger.warning('Object detected', extra=obj)
                 if obj['label'] in self.important_objects:
-                    status.alarm = True
+                    state.alarm = True
 
-        return status, frame, thread_name
+        return state, buffer_item

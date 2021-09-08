@@ -24,20 +24,28 @@ logger = logging.getLogger('json')
 frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
 
 
+class QueueElem:
+
+    def __init__(self, frame, thread_name, index_number):
+        self.frame = frame
+        self.thread_name = thread_name
+        self.index_number = index_number
+
+
 class SnapshotThread(Thread):
     def __init__(self, name, config):
         super(SnapshotThread, self).__init__()
         self.name = name
-        self.frame_grabber = FrameGrabber(config=config['sources'][name])
         self.frames_count = 0
+        self.frame_grabber = FrameGrabber(config=config['sources'][name])
 
     def run(self):
         while True:
-            frames.put({
-                'frame': self.frame_grabber.make_snapshot(),
-                'thread_name': self.name,
-                'index_number': self.frames_count
-            })
+            frames.put(QueueElem(
+                self.frame_grabber.make_snapshot(),
+                self.name,
+                self.frames_count
+            ))
             self.frames_count += 1
 
 
@@ -68,6 +76,8 @@ def run(config):
 
     time_of_last_object_detection = {}
 
+    frame_saver = FrameSaver(config['sources'])
+
     while True:
 
         check_and_restart_dead_snapshot_threads(config)
@@ -83,15 +93,14 @@ def run(config):
         if queue_size > WARNING_QUEUE_SIZE:
             logger.warning('Warning queue size: %s' % queue_size, extra={'queue_size': queue_size})
 
-        source_frame = queue_elem['frame']
-        source_thread_name = queue_elem['thread_name']
+        source_thread_name = queue_elem.thread_name
 
         # Save all frames N sec after objects detection or every N frame (defined in config)
         save_every_n_frame = config['sources'][source_thread_name].get('save_every_n_frame')
         frame_needs_to_be_save = (
             (
                 save_every_n_frame and
-                queue_elem['index_number'] % save_every_n_frame == 0
+                queue_elem.index_number % save_every_n_frame == 0
 
             ) or
             (
@@ -101,24 +110,19 @@ def run(config):
         )
 
         if frame_needs_to_be_save:
-            FrameSaver.save(source_frame, config['sources'][source_thread_name]['stills_dir'])
+            frame_saver.save(queue_elem)
 
         request_id = recocnizer.get_request_id()
-        status, processed_frame, processed_thread_name = recocnizer.get_result(request_id)
-        recocnizer.send_to_recocnize(source_frame, source_thread_name, request_id)
+        state, processed_queue_elem = recocnizer.get_result(request_id)
+        recocnizer.send_to_recocnize(queue_elem, request_id)
 
-        if status.objects_detected:
-            time_of_last_object_detection[processed_thread_name] = datetime.now()
-            frame_name = FrameSaver.save(
-                processed_frame,
-                config['sources'][processed_thread_name]['stills_dir'],
-                prefix='detected'
-            )
+        if state.objects_detected:
+            time_of_last_object_detection[processed_queue_elem.thread_name] = datetime.now()
+            frame_uri = frame_saver.save(processed_queue_elem, prefix='detected')
             if (
-                status.alarm and
+                state.alarm and
                 telegram is not None and
-                time_of_last_object_detection[processed_thread_name] > silent_notify_until_time
+                time_of_last_object_detection[processed_queue_elem.thread_name] > silent_notify_until_time
             ):
-                frame_uri = '{}/{}'.format(config['sources'][processed_thread_name]['host_stills_uri'], frame_name)
                 telegram.send_message('Objects detected: %s' % frame_uri)
                 silent_notify_until_time = datetime.now() + SILENT_TIME
