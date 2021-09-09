@@ -66,4 +66,4 @@ class QueueItem:
 
     def save_if_need(self, forced=False, prefix=None):
         if self.frame_for_save or forced:
-            self.__save(prefix)
+            return self.__save(prefix)
