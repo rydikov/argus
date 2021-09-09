@@ -2,6 +2,4 @@ requests
 pyyaml
 pyusb
 python-json-logger
-pytesseract
 opencv-python
-ffmpeg-python

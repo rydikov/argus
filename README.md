@@ -1,13 +1,11 @@
 # Object detecton using OpenVINO and YOLO v4
 
-| Details            |              |
-|-----------------------|---------------|
-| Programming Language: |  [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
+| Details                 |               |
+|-------------------------|---------------|
+| Programming Language:   |[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
 | Intel OpenVINO ToolKit: |[![OpenVINO 2020.3](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://software.intel.com/content/www/us/en/develop/tools/openvino-toolkit/choose-download.html)|
-| Hardware Used: | Raspberry Pi B+ |
-| Device: | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
-
-
+| Hardware Used:          | Raspberry Pi B+ |
+| Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
 Argus application uses Deep Learning/Machine Learning to recognize objects on sources stream. 
 Sources can be cameras and videos.
@@ -116,6 +114,7 @@ pip3 install -r requirements.txt
 ```bash
 $ python python run.py development.yml
 ```
+
 ### Config options
 **sources**  (Required) 
 *Set of data sources.*
@@ -147,7 +146,19 @@ $ python python run.py development.yml
 **sources -> source-name -> bfc**  
 *Bad frame checker.*
 
-Example:
+**sources -> source-name -> bfc -> threshold**  
+*Threshold for detecton. Set experimentally*
+
+**sources -> source-name -> bfc -> coords**  
+*Coords for pattern image*
+
+**sources -> source-name -> bfc -> reverse_pixel**  
+*Analyzed pixel. If Pixel is black - revert image*
+
+**sources -> source-name -> bfc -> template_path**  
+*Template with pattern for analyze*
+
+Example for sources secton with all options:
 ```yaml
 sources:
   first-cam:
@@ -182,6 +193,48 @@ sources:
       - horse
 ```
 
+**recognizer**  (Required) 
+*Recognize section.*
+
+**recognizer -> model_path**  (Required) 
+*Path to pre-trained model.*
+
+**recognizer -> device_name**  (Required) 
+*Device for network.*
+
+**recognizer -> num_requests**  (Required) 
+*Num of requests for recognize. Usually 4 per one MYRIAD device.*
+
+Example for recognizer secton with all options:
+```yaml
+recognizer:
+  model_path: ../
+  device_name: MYRIAD
+  num_requests: 4
+```
+
+**telegram_bot** 
+*Telegram section. Use it for alarming.*
+
+**telegram_bot -> token**
+*Token.*
+
+**telegram_bot -> chat_id**
+*ChatId.*
+
+Example for telegram_bot secton with all options:
+
+```yaml
+telegram_bot:
+  token: __token__
+  chat_id: __chat_id__
+```
+
+## Deploy on raspberry
+### Nginx exapmle
+```
+
+```
 
 ## Credit
 
