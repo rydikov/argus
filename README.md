@@ -116,47 +116,25 @@ $ python python run.py development.yml
 ```
 
 ### Config options
-**sources**  (Required) 
-*Set of data sources.*
+#### Sources secton
 
-**sources -> source-name**  (Required) 
-*Source name.*
+| Option                 | Required | Description                                                              |
+|------------------------|----------|--------------------------------------------------------------------------|
+| sources                | ☑️       | Set of data sources                                                      |
+|   source-name          | ☑️       | Source name                                                              |
+|     source             | ☑️       | Source                                                                   |
+|     stills_dir         | ☑️       | Direcrory for saved frames                                               |
+|     host_stills_uri    | ☑️       | Web link to folder with frames                                           |
+|     important_objects  | ☑️       | Important objects. Mark an Alert if this objects detected on frame       |
+|     other_objects      |          | Other objects. Mark if this objects detected on frame                    |
+|     max_object_area    |          | Max object area for detecton                                             |
+|     save_every_n_frame |          | Save every N frame                                                       |
+|     bfc                |          | Bad frame checker                                                        |
+|       threshold        |          | Threshold for detecton. Set experimentally                               |
+|       coords           |          | Coords for pattern image                                                 |
+|       reverse_pixel    |          | Analyzed pixel. If Pixel is black - revert image                         |
+|       template_path    |          | Template with pattern for analyze                                        |
 
-**sources -> source-name -> source**  (Required) 
-*Source.*
-
-**sources -> source-name -> stills_dir**  (Required) 
-*Direcrory for saved frames.*
-
-**sources -> source-name -> host_stills_uri**  (Required) 
-*Web link to folder with frames.*
-
-**sources -> source-name -> important_objects**  (Required) 
-*Important objects. Mark an Alert if this objects detected on frame.*
-
-**sources -> source-name -> other_objects**  
-*Other objects. Mark if this objects detected on frame.*
-
-**sources -> source-name -> max_object_area**  
-*Max object area for detecton.*
-
-**sources -> source-name -> save_every_n_frame**  
-*Save every N frame.*
-
-**sources -> source-name -> bfc**  
-*Bad frame checker.*
-
-**sources -> source-name -> bfc -> threshold**  
-*Threshold for detecton. Set experimentally*
-
-**sources -> source-name -> bfc -> coords**  
-*Coords for pattern image*
-
-**sources -> source-name -> bfc -> reverse_pixel**  
-*Analyzed pixel. If Pixel is black - revert image*
-
-**sources -> source-name -> bfc -> template_path**  
-*Template with pattern for analyze*
 
 Example for sources secton with all options:
 ```yaml
@@ -193,17 +171,14 @@ sources:
       - horse
 ```
 
-**recognizer**  (Required) 
-*Recognize section.*
+#### Recognizer secton
 
-**recognizer -> model_path**  (Required) 
-*Path to pre-trained model.*
-
-**recognizer -> device_name**  (Required) 
-*Device for network.*
-
-**recognizer -> num_requests**  (Required) 
-*Num of requests for recognize. Usually 4 per one MYRIAD device.*
+| Option                 | Required | Description                                                              |
+|------------------------|----------|--------------------------------------------------------------------------|
+| recognizer             | ☑️       | Recognize section                                                        |
+|   model_path           | ☑️       | Path to pre-trained model                                                |
+|   device_name          | ☑️       | Device for network                                                       |
+|   num_requests         | ☑️       | Num of requests for recognize. Usually 4 per one MYRIAD device           |
 
 Example for recognizer secton with all options:
 ```yaml
@@ -213,14 +188,13 @@ recognizer:
   num_requests: 4
 ```
 
-**telegram_bot** 
-*Telegram section. Use it for alarming.*
+#### Telegram secton
 
-**telegram_bot -> token**
-*Token.*
-
-**telegram_bot -> chat_id**
-*ChatId.*
+| Option                 | Required | Description                                                              |
+|------------------------|----------|--------------------------------------------------------------------------|
+| telegram_bot           |          | Telegram section. Use it for alarming                                    |
+|   token                |          | Token                                                                    |
+|   chat_id              |          | ChatId                                                                   |
 
 Example for telegram_bot secton with all options:
 
