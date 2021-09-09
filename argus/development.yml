@@ -1,21 +1,21 @@
 sources:
   first-cam:
-    source: /Users/rydikov/Projects/Other/RASPBERRY/demohd.mp4
+    source: ../../demohd.mp4
     save_every_n_frame: 15
-    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/first
+    stills_dir: ../../Stills/first
     host_stills_uri: http://localhost/Stills/first
     bfc:
       threshold: 17900000
       coords: [64, 104, 324, 352]
       reverse_pixel: [39, 0]
-      template_path: /Users/rydikov/Projects/Other/RASPBERRY/argus-production-config/res/2.jpg
+      template_path: ../../argus-production-config/res/2.jpg
     max_object_area: 15000
     important_objects:
       - person
   second-cam:
-    source: /Users/rydikov/Projects/Other/RASPBERRY/demo.mov
+    source: ../../demo.mov
     save_every_n_frame: 0
-    stills_dir: /Users/rydikov/Projects/Other/RASPBERRY/Stills/second
+    stills_dir: ../../Stills/second
     host_stills_uri: http://localhost/Stills/second
     max_object_area: 15000
     important_objects:
@@ -32,11 +32,8 @@ sources:
 
 
 recognizer:
-  model_path: /Users/rydikov/Projects/Other/RASPBERRY/
-  # device_name: 
-  #   - MYRIAD.20.3.2.1-ma2480
-  #   - MYRIAD.20.3.2.4.4-ma2480
-  # device_name: MYRIAD
+  model_path: ../../
   device_name: CPU
-  # device_name: MULTI:MYRIAD.20.3.2.1-ma2480,MYRIAD.20.3.2.4.4-ma2480
+  # device_name: MYRIAD
+    # device_name: MULTI:MYRIAD.20.3.2.1-ma2480,MYRIAD.20.3.2.4.4-ma2480
   num_requests: 4

@@ -9,7 +9,7 @@ from time import sleep
 from argus.frame_grabber import FrameGrabber
 from argus.helpers.telegram import Telegram
 from argus.queue_item import QueueItem
-from argus.recognizers.openvino import OpenVinoRecognizer
+from argus.recognizer import OpenVinoRecognizer
 
 
 SILENT_TIME = timedelta(minutes=30)

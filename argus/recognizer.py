@@ -15,11 +15,6 @@ PROB_THRESHOLD = 0.5
 logger = logging.getLogger('json')
 
 
-class RecoginizeState:
-    objects_detected = False
-    important_objects_detected = False
-
-
 class OpenVinoRecognizer:
 
     def __init__(self, net_config):
