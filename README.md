@@ -231,9 +231,80 @@ telegram_bot:
 ```
 
 ## Deploy on raspberry
-### Nginx exapmle
+
+I recommend creating a private repository for production configs.
+My private repository contains files:
+* nginx.conf - Nginx to view images
+* production.yml - Production config
+* supervisord.conf – On raspberry app started with supervisor
+* loki.yml - I'm use Cloud Grafana for visualize metrics and alerting. 
+
+Nginx exapmle
+```
+server {
+    listen   8080 default;
+	server_name  localhost;
+
+	access_log  /var/log/nginx/localhost.access.log;
+
+	location / {
+		root   /home/pi/timelapse/;
+		autoindex  on;
+		autoindex_localtime on;
+  }
+}
 ```
 
+Supervisor exapmle
+```
+[program:argus]
+command=/bin/bash -c 'source /home/pi/openvino_dist/bin/setupvars.sh && sleep 5 && /usr/bin/python3.7 /home/pi/argus/argus/run.py /home/pi/argus-production-config/production.yml'
+stdout_logfile=/home/pi/timelapse/argus.log
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stderr_logfile=/home/pi/timelapse/argus.err
+stderr_logfile_maxbytes=1MB 
+stderr_logfile_backups=10
+redirect_stderr=true
+autostart=true
+autorestart=true
+user=pi
+environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus"
+```
+
+Loki exapmle
+```
+loki:
+  configs:
+  - name: integrations
+    positions:
+      filename: /tmp/positions.yaml
+    scrape_configs:
+    - job_name: argus
+      static_configs:
+      - targets: [localhost]
+        labels:
+          job: argus
+          __path__: /home/pi/timelapse/argus.log
+      pipeline_stages:
+      - json:
+          expressions:
+            func: func
+            loglevel: levelname
+            threadName: threadName
+            timestamp: timestamp
+      - timestamp:
+          format: RFC3339
+          source: timestamp
+      - labels:
+          loglevel:
+          func:
+          threadName:
+    clients:
+    - url: __url__
+      basic_auth:
+        username: __username__
+        password: __password__
 ```
 
 ## Credit
