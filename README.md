@@ -26,6 +26,26 @@ If you have found this useful, you can donate by clicking on the [link ☘️](h
 
 - Minimum Intel Gen 6 processors
 
+## Installtion for develop
+
+1. Clone project
+```bash
+git clone git@github.com:rydikov/argus.git
+```
+
+2. Install dependencies
+```bash
+cd argus
+pip3 install -r requirements.txt
+```
+
+Run application with example config
+```bash
+export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
+source /opt/intel/openvino_2021.3.394/bin/setupvars.sh
+python run.py development.yml
+```
+
 ## Installation OpenVINO on Raspbery Pi
 
 Precompiled toolkit for Raspbian don't support ngraph and you must install OpenVINO manually.
@@ -98,21 +118,15 @@ cd /home/pi/openvino_dist/deployment_tools/inference_engine/samples/python/objec
 python3 object_detection_sample_ssd.py -h
 ```
 
-## Installation Arugs
-1. Clone project
+8. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
 ```
-2. Install dependencies
+
+9. Install dependencies
 ```bash
 cd argus
 pip3 install -r requirements.txt
-```
-
-## Usage
-### Run application with example config
-```bash
-$ python python run.py development.yml
 ```
 
 ### Config options
@@ -297,5 +311,4 @@ cmake -DCMAKE_BUILD_TYPE=Release -DWITH_GSTREAMER=ON -DCMAKE_INSTALL_PREFIX=/usr
 Copy python3 cv2 so
 http://gstreamer-devel.966125.n4.nabble.com/RTSP-raw-RTP-video-frame-drops-td4677730.html
 
-export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
-source /opt/intel/openvino_2021.3.394/bin/setupvars.sh
+
