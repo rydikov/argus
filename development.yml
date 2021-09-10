@@ -1,0 +1,14 @@
+sources:
+  first-cam:
+    source: ../res/demo.mov
+    save_every_n_frame: 0
+    stills_dir: ../../Stills/second
+    host_stills_uri: http://localhost/Stills/first
+    max_object_area: 15000
+    important_objects:
+      - person
+
+recognizer:
+  model_path: ../models
+  device_name: CPU
+  num_requests: 4
