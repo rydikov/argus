@@ -8,7 +8,7 @@ from logging import config
 from argus import app
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-config.fileConfig(os.path.join(dir_path, 'log.conf'))
+config.fileConfig(os.path.join(dir_path, 'logger.conf'))
 
 logger = logging.getLogger('json')
 
