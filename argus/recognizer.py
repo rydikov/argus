@@ -22,10 +22,12 @@ class OpenVinoRecognizer:
 
         self.frame_buffer = {}
 
+        models_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'models'))
+
         ie = IECore()
         self.net = ie.read_network(
-            os.path.join(self.net_config['model_path'], 'frozen_darknet_yolov4_model.xml'),
-            os.path.join(self.net_config['model_path'], 'frozen_darknet_yolov4_model.bin')
+            os.path.join(models_path, 'frozen_darknet_yolov4_model.xml'),
+            os.path.join(models_path, 'frozen_darknet_yolov4_model.bin')
         )
 
         self.function_from_cnn = ng.function_from_cnn(self.net)
@@ -40,7 +42,7 @@ class OpenVinoRecognizer:
             num_requests=self.net_config['num_requests'],
         )
 
-        with open(os.path.join(self.net_config['model_path'], 'coco.names'), 'r') as f:
+        with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
     @timing

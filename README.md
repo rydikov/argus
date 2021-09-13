@@ -190,7 +190,6 @@ sources:
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
 | recognizer             | ☑️       | Recognize section                                                        |
-|   model_path           | ☑️       | Path to pre-trained model                                                |
 |   device_name          | ☑️       | Device for network                                                       |
 |   num_requests         | ☑️       | Num of requests for recognize. Usually 4 per one MYRIAD device           |
 
@@ -239,6 +238,7 @@ server {
 		root   /home/pi/timelapse/;
 		autoindex  on;
 		autoindex_localtime on;
+    autoindex_exact_size off;
   }
 }
 ```
