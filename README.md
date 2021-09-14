@@ -33,6 +33,8 @@ If you have found this useful, you can donate by clicking on the [link ☘️](h
 1. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
+cd argus
+git lfs pull
 ```
 
 2. Install dependencies
@@ -123,11 +125,12 @@ python3 object_detection_sample_ssd.py -h
 8. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
+cd argus
+git lfs pull
 ```
 
 9. Install dependencies
 ```bash
-cd argus
 pip3 install -r requirements.txt
 ```
 
