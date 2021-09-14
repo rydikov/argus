@@ -28,9 +28,13 @@ If you have found this useful, you can donate by clicking on the [link ☘️](h
 
 ## Installtion for develop
 
+0. Install [Intel OpenVINO ToolKit](https://software.seek.intel.com/openvino-toolkit)
+
 1. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
+cd argus
+git lfs pull
 ```
 
 2. Install dependencies
@@ -48,7 +52,7 @@ python run.py development.yml
 
 ## Installation OpenVINO on Raspbery Pi
 
-Precompiled toolkit for Raspbian don't support ngraph and you must install OpenVINO manually.
+!!! Precompiled toolkit for Raspbian don't support ngraph and you must install OpenVINO manually. !!!
 
 1. Set up build environment and install build tools
 ```bash
@@ -121,15 +125,96 @@ python3 object_detection_sample_ssd.py -h
 8. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
+cd argus
+git lfs pull
 ```
 
 9. Install dependencies
 ```bash
-cd argus
 pip3 install -r requirements.txt
 ```
 
-### Config options
+10. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
+
+My private repository contains files:
+* nginx.conf - Nginx to view images
+* supervisord.conf – On raspberry app started with supervisor
+* loki.yml - I'm use Cloud Grafana for visualize metrics and alerting. 
+* production.yml - Production config
+
+Nginx exapmle
+```
+server {
+    listen   8080 default;
+	server_name  localhost;
+
+	access_log  /var/log/nginx/localhost.access.log;
+
+	location / {
+		root   /home/pi/timelapse/;
+		autoindex  on;
+		autoindex_localtime on;
+                autoindex_exact_size off;
+  }
+}
+```
+
+Supervisor exapmle
+```
+[program:argus]
+command=/bin/bash -c 'source /home/pi/openvino_dist/bin/setupvars.sh && sleep 5 && /usr/bin/python3.7 /home/pi/argus/argus/run.py /home/pi/argus-production-config/production.yml'
+stdout_logfile=/home/pi/timelapse/argus.log
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stderr_logfile=/home/pi/timelapse/argus.err
+stderr_logfile_maxbytes=1MB 
+stderr_logfile_backups=10
+redirect_stderr=true
+autostart=true
+autorestart=true
+user=pi
+environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus"
+```
+
+Loki exapmle
+```
+loki:
+  configs:
+  - name: integrations
+    positions:
+      filename: /tmp/positions.yaml
+    scrape_configs:
+    - job_name: argus
+      static_configs:
+      - targets: [localhost]
+        labels:
+          job: argus
+          __path__: /home/pi/timelapse/argus.log
+      pipeline_stages:
+      - json:
+          expressions:
+            func: func
+            loglevel: levelname
+            threadName: threadName
+            timestamp: timestamp
+      - timestamp:
+          format: RFC3339
+          source: timestamp
+      - labels:
+          loglevel:
+          func:
+          threadName:
+    clients:
+    - url: __url__
+      basic_auth:
+        username: __username__
+        password: __password__
+```
+
+11. Reload supervisor
+
+### App Config options
+
 #### Sources secton
 
 | Option                 | Required | Description                                                              |
@@ -196,7 +281,6 @@ sources:
 Example for recognizer secton with all options:
 ```yaml
 recognizer:
-  model_path: ../
   device_name: MYRIAD
   num_requests: 4
 ```
@@ -217,98 +301,10 @@ telegram_bot:
   chat_id: __chat_id__
 ```
 
-## Deploy on raspberry
-
-I recommend creating a private repository for production configs.
-My private repository contains files:
-* nginx.conf - Nginx to view images
-* production.yml - Production config
-* supervisord.conf – On raspberry app started with supervisor
-* loki.yml - I'm use Cloud Grafana for visualize metrics and alerting. 
-
-Nginx exapmle
-```
-server {
-    listen   8080 default;
-	server_name  localhost;
-
-	access_log  /var/log/nginx/localhost.access.log;
-
-	location / {
-		root   /home/pi/timelapse/;
-		autoindex  on;
-		autoindex_localtime on;
-    autoindex_exact_size off;
-  }
-}
-```
-
-Supervisor exapmle
-```
-[program:argus]
-command=/bin/bash -c 'source /home/pi/openvino_dist/bin/setupvars.sh && sleep 5 && /usr/bin/python3.7 /home/pi/argus/argus/run.py /home/pi/argus-production-config/production.yml'
-stdout_logfile=/home/pi/timelapse/argus.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=10
-stderr_logfile=/home/pi/timelapse/argus.err
-stderr_logfile_maxbytes=1MB 
-stderr_logfile_backups=10
-redirect_stderr=true
-autostart=true
-autorestart=true
-user=pi
-environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus"
-```
-
-Loki exapmle
-```
-loki:
-  configs:
-  - name: integrations
-    positions:
-      filename: /tmp/positions.yaml
-    scrape_configs:
-    - job_name: argus
-      static_configs:
-      - targets: [localhost]
-        labels:
-          job: argus
-          __path__: /home/pi/timelapse/argus.log
-      pipeline_stages:
-      - json:
-          expressions:
-            func: func
-            loglevel: levelname
-            threadName: threadName
-            timestamp: timestamp
-      - timestamp:
-          format: RFC3339
-          source: timestamp
-      - labels:
-          loglevel:
-          func:
-          threadName:
-    clients:
-    - url: __url__
-      basic_auth:
-        username: __username__
-        password: __password__
-```
 
 ## Credit
 
 - AlexeyAB/darknet: [https://github.com/AlexeyAB/darknet](https://github.com/AlexeyAB/darknet)
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-raspebrry-pi-4
-
-
-
-
----
-
-cmake -DCMAKE_BUILD_TYPE=Release -DWITH_GSTREAMER=ON -DCMAKE_INSTALL_PREFIX=/usr/local ..
-
-Copy python3 cv2 so
-http://gstreamer-devel.966125.n4.nabble.com/RTSP-raw-RTP-video-frame-drops-td4677730.html
-
 
