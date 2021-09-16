@@ -4,8 +4,8 @@ import sys
 
 from time import sleep
 
-from argus.helpers.timing import timing
-from argus.helpers.bad_frame_checker import BadFrameChecker
+from argus.utils.timing import timing
+from argus.utils.bad_frame_checker import BadFrameChecker
 
 RECONNECT_SLEEP_TIME = 1
 logger = logging.getLogger('json')

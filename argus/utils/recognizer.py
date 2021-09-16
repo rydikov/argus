@@ -7,8 +7,8 @@ import sys
 from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
 
-from argus.helpers.timing import timing
-from argus.helpers.yolo import get_objects, filter_objects
+from argus.utils.timing import timing
+from argus.utils.yolo import get_objects, filter_objects
 
 PROB_THRESHOLD = 0.5
 
@@ -22,7 +22,7 @@ class OpenVinoRecognizer:
 
         self.frame_buffer = {}
 
-        models_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'models'))
+        models_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'models'))
 
         ie = IECore()
         self.net = ie.read_network(

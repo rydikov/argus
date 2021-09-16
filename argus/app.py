@@ -6,10 +6,10 @@ from queue import LifoQueue, Empty
 from threading import Thread
 from time import sleep
 
-from argus.frame_grabber import FrameGrabber
-from argus.helpers.telegram import Telegram
-from argus.queue_item import QueueItem
-from argus.recognizer import OpenVinoRecognizer
+from argus.domain.queue_item import QueueItem
+from argus.utils.frame_grabber import FrameGrabber
+from argus.utils.recognizer import OpenVinoRecognizer
+from argus.utils.telegram import Telegram
 
 
 SILENT_TIME = timedelta(minutes=30)
