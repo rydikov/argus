@@ -118,6 +118,6 @@ class OpenVinoRecognizer:
             prob_threshold=PROB_THRESHOLD
         )
 
-        buffer_item.map(objects, self.labels_map)
+        buffer_item.map_objects_to_frame(objects, self.labels_map)
 
         return buffer_item

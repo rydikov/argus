@@ -37,6 +37,17 @@ class QueueItem:
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
+    def map_objects_to_frame(self, objects, labels):
+        for obj in objects:
+            obj['label'] = labels[obj['class_id']]
+            obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
+            if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
+                self.objects_detected = True
+                self.__mark_object(obj)
+                logger.warning('Object detected', extra=obj)
+                if obj['label'] in self.important_objects:
+                    self.important_objects_detected = True
+
     def __save(self, prefix):
         timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
@@ -52,17 +63,6 @@ class QueueItem:
             logger.error('Unable to save file: %s' % frame_name)
 
         return '{}/{}'.format(self.host_stills_uri, frame_name)
-
-    def map(self, objects, labels):
-        for obj in objects:
-            obj['label'] = labels[obj['class_id']]
-            obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
-            if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
-                self.objects_detected = True
-                self.__mark_object(obj)
-                logger.warning('Object detected', extra=obj)
-                if obj['label'] in self.important_objects:
-                    self.important_objects_detected = True
 
     def save_if_need(self, forced=False, prefix=None):
         if self.frame_for_save or forced:
