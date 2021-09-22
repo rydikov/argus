@@ -21,7 +21,7 @@ SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 
 logger = logging.getLogger('json')
 
-frames = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
+frame_items_queue = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
 
 
 class SnapshotThread(Thread):
@@ -34,7 +34,7 @@ class SnapshotThread(Thread):
 
     def run(self):
         while True:
-            frames.put(QueueItem(
+            frame_items_queue.put(QueueItem(
                 self.source_config,
                 self.frame_grabber.make_snapshot(),
                 self.name,
@@ -75,13 +75,13 @@ def run(config):
         check_and_restart_dead_snapshot_threads(config)
 
         try:
-            queue_item = frames.get(timeout=QUEUE_TIMEOUT)
+            queue_item = frame_items_queue.get(timeout=QUEUE_TIMEOUT)
         except Empty:
             logger.error("Queue is empty for %s sec." % QUEUE_TIMEOUT)
             sleep(SLEEP_TIME_IF_QUEUE_IS_EMPTY)
             continue
 
-        queue_size = frames.qsize()
+        queue_size = frame_items_queue.qsize()
         if queue_size > WARNING_QUEUE_SIZE:
             logger.warning('Warning queue size: %s' % queue_size, extra={'queue_size': queue_size})
 
