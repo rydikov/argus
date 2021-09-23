@@ -19,6 +19,11 @@ This application executes parallel threads for capture frames from sources and m
 
 OpenVino (OpenVisual Inferencing and Neural Network Optimization) is toolkit to develop Deep Learning Application especially for Computer Vision by Intel. OpenVino Enables deep learning inference at the edge and supports heterogeneous execution across computer vision accelerators—CPU, GPU, Intel® Movidius™ Neural Compute Stick, and FPGA—using a common API. [read more](https://docs.openvinotoolkit.org/)
 
+## Architecture
+
+In different threads, frames put to the queue from cameras.
+In the main thread, frames gets from queue and send to asynchronous recognition. Also in main thread results are received and processed.
+
 ## Support
 If you have found this useful, you can donate by clicking on the [link ☘️](https://paypal.me/rydikov):
 
@@ -30,7 +35,7 @@ If you have found this useful, you can donate by clicking on the [link ☘️](h
 
 0. Install [Intel OpenVINO ToolKit](https://software.seek.intel.com/openvino-toolkit)
 
-1. Clone project
+1. Clone project and download models
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
@@ -139,7 +144,7 @@ pip3 install -r requirements.txt
 My private repository contains files:
 * nginx.conf - Nginx to view images
 * supervisord.conf – On raspberry app started with supervisor
-* loki.yml - I'm use Cloud Grafana for visualize metrics and alerting. 
+* loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting. 
 * production.yml - Production config
 
 Nginx exapmle
@@ -219,12 +224,12 @@ loki:
 
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
-| sources                | ☑️       | Set of data sources                                                      |
-|   source-name          | ☑️       | Source name                                                              |
-|     source             | ☑️       | Source                                                                   |
-|     stills_dir         | ☑️       | Direcrory for saved frames                                               |
-|     host_stills_uri    | ☑️       | Web link to folder with frames                                           |
-|     important_objects  | ☑️       | Important objects. Mark an Alert if this objects detected on frame       |
+| sources                | +        | Set of data sources                                                      |
+|   source-name          | +        | Source name                                                              |
+|     source             | +        | Source                                                                   |
+|     stills_dir         | +        | Direcrory for saved frames                                               |
+|     host_stills_uri    | +        | Web link to folder with frames                                           |
+|     important_objects  | +        | Important objects. Mark an Alert if this objects detected on frame       |
 |     other_objects      |          | Other objects. Mark if this objects detected on frame                    |
 |     max_object_area    |          | Max object area for detecton                                             |
 |     save_every_n_frame |          | Save every N frame                                                       |
@@ -274,9 +279,9 @@ sources:
 
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
-| recognizer             | ☑️       | Recognize section                                                        |
-|   device_name          | ☑️       | Device for network                                                       |
-|   num_requests         | ☑️       | Num of requests for recognize. Usually 4 per one MYRIAD device           |
+| recognizer             | +        | Recognize section                                                        |
+|   device_name          | +        | Device for network                                                       |
+|   num_requests         | +        | Num of requests for recognize. Usually 4 per one MYRIAD device           |
 
 Example for recognizer secton with all options:
 ```yaml
