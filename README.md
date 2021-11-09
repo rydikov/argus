@@ -7,6 +7,8 @@
 | Hardware Used:          | Raspberry Pi B+ |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
+![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
+
 Argus application uses Deep Learning/Machine Learning to recognize objects on sources stream. 
 Sources can be cameras and videos.
 Application save frames with detection objecs and has the ability to telegam alert.
@@ -143,6 +145,10 @@ My private repository contain files:
 * supervisord.conf – On raspberry app started with supervisor
 * loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting. 
 * production.yml - Production config
+
+Grafana looks like:
+
+![Detected](https://github.com/rydikov/argus/raw/main/res/grafana.png)
 
 Nginx exapmle
 ```
