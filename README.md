@@ -24,12 +24,9 @@ OpenVino (OpenVisual Inferencing and Neural Network Optimization) is toolkit to 
 In different threads, frames put to the queue from cameras.
 In the main thread, frames gets from queue and send to asynchronous recognition. Also in main thread results are received and processed.
 
-## Support
-If you have found this useful, you can donate by clicking on the [link ☘️](https://paypal.me/rydikov):
-
 ## Hardware Requirement
 
-- Minimum Intel Gen 6 processors
+- Minimum Intel Gen 6 processors or Raspberry with Neural Compute Stick
 
 ## Installtion for develop
 
@@ -141,7 +138,7 @@ pip3 install -r requirements.txt
 
 10. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
 
-My private repository contains files:
+My private repository contain files:
 * nginx.conf - Nginx to view images
 * supervisord.conf – On raspberry app started with supervisor
 * loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting. 
