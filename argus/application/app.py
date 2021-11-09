@@ -33,6 +33,10 @@ class SnapshotThread(Thread):
         self.frame_grabber = FrameGrabber(config=self.source_config)
 
     def run(self):
+        """
+        Putting QueueItem to the queue in an infinite queue.
+        Queue is global. Thread is unique for every source.
+        """
         while True:
             frame_items_queue.put(QueueItem(
                 self.source_config,
@@ -63,12 +67,13 @@ def run(config):
     else:
         telegram = None
 
+    # Create and start threading for every source
     for source in config['sources']:
         thread = SnapshotThread(source, config)
         thread.start()
         logger.info('Thread %s started' % source)
 
-    last_detection = {}
+    last_detection = {} # Dict with last time detecton for every source
 
     while True:
 
@@ -99,6 +104,8 @@ def run(config):
         if processed_queue_item is not None and processed_queue_item.objects_detected:
             last_detection[processed_queue_item.thread_name] = datetime.now()
             frame_uri = processed_queue_item.save_if_need(forced=True, prefix='detected')
+            
+            # Telegram alerting
             if (
                 processed_queue_item.important_objects_detected and
                 telegram is not None and
