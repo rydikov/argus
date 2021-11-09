@@ -28,7 +28,9 @@ In the main thread, frames gets from queue and send to asynchronous recognition.
 
 ## Hardware Requirement
 
-- Minimum Intel Gen 6 processors or Raspberry with Neural Compute Stick
+- Minimum Intel Gen 6 processors or Raspberry Pi with Neural Compute Stick
+
+![Hardware](https://github.com/rydikov/argus/raw/main/res/hardware.jpg)
 
 ## Installtion for develop
 
@@ -148,7 +150,7 @@ My private repository contain files:
 
 Grafana looks like:
 
-![Detected](https://github.com/rydikov/argus/raw/main/res/grafana.png)
+![Grafana](https://github.com/rydikov/argus/raw/main/res/grafana.png)
 
 Nginx exapmle
 ```
