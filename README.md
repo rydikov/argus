@@ -10,12 +10,12 @@
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
 
 Argus application uses Deep Learning/Machine Learning to recognize objects on sources stream. 
-Sources can be cameras and videos.
-Application save frames with detection objecs and has the ability to telegam alert.
+The Sources can be cameras and videos.
+The Application saves frames with detection objecs and has the ability to telegam alerts.
 
 By utilizing pre-trained models and Intel OpenVINO toolkit with OpenCV. 
 
-This application executes parallel threads for capture frames from sources and make async infer requests for objects detection.
+This application executes parallel threads to capture frames from different sources and make async infer requests for object detections.
 
 **What is OpenVino?**
 
@@ -23,8 +23,8 @@ OpenVino (OpenVisual Inferencing and Neural Network Optimization) is toolkit to 
 
 ## Architecture
 
-In different threads, frames put to the queue from cameras.
-In the main thread, frames gets from queue and send to asynchronous recognition. Also in main thread results are received and processed.
+The frames put to the queue from cameras in different threads.
+In the main thread, the frames get from a queue and send to asynchronous recognition. Also in main thread the results are received and processed.
 
 ## Hardware Requirement
 
@@ -32,7 +32,7 @@ In the main thread, frames gets from queue and send to asynchronous recognition.
 
 ![Hardware](https://github.com/rydikov/argus/raw/main/res/hardware.jpg)
 
-## Installtion for develop
+## Installation for develop
 
 0. Install [Intel OpenVINO ToolKit](https://software.seek.intel.com/openvino-toolkit)
 
