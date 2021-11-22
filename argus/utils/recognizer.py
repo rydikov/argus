@@ -10,7 +10,7 @@ from usb.core import find as finddev
 from argus.utils.timing import timing
 from argus.utils.yolo import get_objects, filter_objects
 
-PROB_THRESHOLD = 0.5
+PROB_THRESHOLD = 0.8
 
 logger = logging.getLogger('json')
 
