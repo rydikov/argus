@@ -20,11 +20,6 @@ class QueueItem:
         self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
         self.max_object_area = source_config['max_object_area']
 
-        if source_config.get('save_every_n_frame'):
-            self.frame_for_save = index_number % source_config['save_every_n_frame'] == 0
-        else:
-            self.frame_for_save = False
-
         self.stills_dir = source_config['stills_dir']
         self.host_stills_uri = source_config['host_stills_uri']
 
@@ -48,7 +43,7 @@ class QueueItem:
                 if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
 
-    def __save(self, prefix):
+    def save(self, prefix=None):
         timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
         if not os.path.exists(self.stills_dir):
@@ -63,7 +58,3 @@ class QueueItem:
             logger.error('Unable to save file: %s' % frame_name)
 
         return '{}/{}'.format(self.host_stills_uri, frame_name)
-
-    def save_if_need(self, forced=False, prefix=None):
-        if self.frame_for_save or forced:
-            return self.__save(prefix)
