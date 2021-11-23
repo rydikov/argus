@@ -34,9 +34,9 @@ class ServerProtocol(asyncio.Protocol):
     def data_received(self, data):
         message = data.decode()
         logger.info('Data received: {!r}'.format(message))
-        
+
         external_alarm_time['time'] = datetime.now()
-        
+
         logger.info('Send: {!r}'.format(message))
         self.transport.write(data)
 
@@ -45,7 +45,7 @@ class ServerProtocol(asyncio.Protocol):
 
 
 class ExternalSignalsReciver(Thread):
-    
+
     def __init__(self, host, port):
         super(ExternalSignalsReciver, self).__init__()
         self.name = "ExternalSignalsReciver"
@@ -56,12 +56,11 @@ class ExternalSignalsReciver(Thread):
         loop = asyncio.get_running_loop()
         server = await loop.create_server(
             lambda: ServerProtocol(),
-            self.host, 
+            self.host,
             self.port
         )
         async with server:
             await server.serve_forever()
-
 
     def run(self):
         asyncio.run(self.serve())
@@ -116,7 +115,8 @@ def run(config):
         thread.start()
         logger.info('Thread %s started' % source)
 
-    last_detection = {} # Dict with last time detecton for every source
+    # Dict with last time detecton for every source
+    last_detection = {}
 
     # Create and start threading for external events
     ExternalSignalsReciver('localhost', 8888).start()
@@ -144,13 +144,13 @@ def run(config):
 
         # Save forced all frames N sec after recived external signal
         need_save_after_external_signal = (
-            external_alarm_time['time'] is not None and 
+            external_alarm_time['time'] is not None and
             external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
         )
 
         # Save every N frame
         need_save_save_by_count = (
-            config['sources'][queue_item.thread_name].get('save_every_n_frame') and 
+            config['sources'][queue_item.thread_name].get('save_every_n_frame') and
             queue_item.index_number % config['sources'][queue_item.thread_name]['save_every_n_frame'] == 0
         )
 
@@ -164,7 +164,7 @@ def run(config):
         if processed_queue_item is not None and processed_queue_item.objects_detected:
             last_detection[processed_queue_item.thread_name] = datetime.now()
             frame_uri = processed_queue_item.save(prefix='detected')
-            
+
             # Telegram alerting
             if (
                 processed_queue_item.important_objects_detected and
