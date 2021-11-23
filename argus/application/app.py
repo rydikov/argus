@@ -118,6 +118,7 @@ def run(config):
 
     last_detection = {} # Dict with last time detecton for every source
 
+    # Create and start threading for external events
     ExternalSignalsReciver('localhost', 8888).start()
 
     while True:
