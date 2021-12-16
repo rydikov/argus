@@ -15,7 +15,11 @@ class FrameGrabber:
 
     def __init__(self, config):
 
-        self.cap = cv2.VideoCapture(config['source'])
+        try:
+            self.cap = cv2.VideoCapture(config['source'])
+        except Exception:
+            logger.exception("Unable to create steam %s" % config['source'])
+            self._exit()
 
         if not self.cap.isOpened():
             logger.error("Could not connect to camera: %s " % config['source'])
