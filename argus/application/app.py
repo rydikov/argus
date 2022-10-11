@@ -3,7 +3,7 @@ import logging
 import threading
 
 from datetime import datetime, timedelta
-from queue import LifoQueue, Empty
+from queue import Queue, Empty
 from threading import Thread
 from time import sleep
 
@@ -22,7 +22,7 @@ SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 
 logger = logging.getLogger('json')
 
-frame_items_queue = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
+frame_items_queue = Queue(maxsize=WARNING_QUEUE_SIZE*2)
 external_alarm_time = {'time': None}
 
 
