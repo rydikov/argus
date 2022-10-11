@@ -15,6 +15,8 @@ class FrameGrabber:
 
     def __init__(self, config):
 
+        self.snapshot_delay = config.get('snapshot_delay')
+
         try:
             self.cap = cv2.VideoCapture(config['source'])
         except Exception:
@@ -36,6 +38,10 @@ class FrameGrabber:
 
     @timing
     def make_snapshot(self):
+        
+        if self.snapshot_delay:
+            sleep(self.snapshot_delay)
+
         try:
             if self.cap.isOpened():
                 __, frame = self.cap.read()
