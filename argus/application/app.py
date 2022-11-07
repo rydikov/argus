@@ -3,7 +3,7 @@ import logging
 import threading
 
 from datetime import datetime, timedelta
-from queue import LifoQueue, Empty
+from queue import Queue, Empty
 from threading import Thread
 from time import sleep
 
@@ -81,7 +81,7 @@ class SnapshotThread(Thread):
         Queue is global. Thread is unique for every source.
         """
         if self.name not in frame_items_queues:
-            frame_items_queues[self.name] = LifoQueue(maxsize=QUEUE_SIZE)
+            frame_items_queues[self.name] = Queue(maxsize=QUEUE_SIZE)
 
 
         while True:
@@ -92,7 +92,9 @@ class SnapshotThread(Thread):
                 self.source_config,
                 self.frame_grabber.make_snapshot(),
                 self.name,
-            ))
+            ),
+            block=False
+            )
 
 
 def check_and_restart_dead_snapshot_threads(config):
