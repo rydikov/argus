@@ -1,11 +1,10 @@
 sources:
   first-cam:
     source: ../res/demo.mov
-    save_every_sec: 1
+    save_every_sec: 10
     stills_dir: ../../Stills
     host_stills_uri: http://localhost/Stills/
     max_object_area: 15000
-    # snapshot_delay: 0.5
     important_objects:
       - person
 
