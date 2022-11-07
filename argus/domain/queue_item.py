@@ -10,12 +10,11 @@ logger = logging.getLogger('json')
 
 
 class QueueItem:
-    def __init__(self, source_config, frame, thread_name, index_number):
+    def __init__(self, source_config, frame, thread_name):
 
         self.frame = frame
         self.thread_name = thread_name
-        self.index_number = index_number
-
+ 
         self.important_objects = source_config['important_objects']
         self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
         self.max_object_area = source_config['max_object_area']

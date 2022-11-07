@@ -23,7 +23,9 @@ SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 logger = logging.getLogger('json')
 
 frame_items_queues = {}
+last_frame_save_time = {}
 external_alarm_time = {'time': None}
+
 
 
 class ServerProtocol(asyncio.Protocol):
@@ -71,7 +73,6 @@ class SnapshotThread(Thread):
         super(SnapshotThread, self).__init__()
         self.name = name
         self.source_config = config['sources'][name]
-        self.frames_count = 0
         self.frame_grabber = FrameGrabber(config=self.source_config)
 
     def run(self):
@@ -91,9 +92,7 @@ class SnapshotThread(Thread):
                 self.source_config,
                 self.frame_grabber.make_snapshot(),
                 self.name,
-                self.frames_count
             ))
-            self.frames_count += 1
 
 
 def check_and_restart_dead_snapshot_threads(config):
@@ -144,10 +143,11 @@ def run(config):
                 continue
 
             # Save forced all frames N sec after objects detection
-            need_save_after_detection = (
-                last_detection.get(queue_item.thread_name) is not None and
-                last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-            )
+            # need_save_after_detection = (
+            #     last_detection.get(queue_item.thread_name) is not None and
+            #     last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+            # )
+            need_save_after_detection = False
 
             # Save forced all frames N sec after recived external signal
             need_save_after_external_signal = (
@@ -155,13 +155,19 @@ def run(config):
                 external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
             )
 
-            # Save every N frame
-            need_save_save_by_count = (
-                config['sources'][queue_item.thread_name].get('save_every_n_frame') and
-                queue_item.index_number % config['sources'][queue_item.thread_name]['save_every_n_frame'] == 0
-            )
+            # Save frame every N sec
+            delta = timedelta(seconds=config['sources'][queue_item.thread_name]['save_every_sec'])
+            
+            if queue_item.thread_name not in last_frame_save_time:
+                last_frame_save_time[queue_item.thread_name] = datetime.now() - delta
 
-            if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_count]):
+            if last_frame_save_time[queue_item.thread_name] + delta < datetime.now():
+                need_save_save_by_time = True
+                last_frame_save_time[queue_item.thread_name] = datetime.now()
+            else:
+                need_save_save_by_time = False
+
+            if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
                 queue_item.save()
 
             request_id = recocnizer.get_request_id()

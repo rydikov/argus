@@ -237,7 +237,7 @@ loki:
 |     important_objects  | +        | Important objects. Mark an Alert if this objects detected on frame       |
 |     other_objects      |          | Other objects. Mark if this objects detected on frame                    |
 |     max_object_area    |          | Max object area for detecton                                             |
-|     save_every_n_frame |          | Save every N frame                                                       |
+|     save_every_sec     |          | Save frame every N sec                                                   |
 |     bfc                |          | Bad frame checker                                                        |
 |       threshold        |          | Threshold for detecton. Set experimentally                               |
 |       coords           |          | Coords for pattern image                                                 |
@@ -250,7 +250,7 @@ Example for sources secton with all options:
 sources:
   first-cam:
     source: ../../demohd.mp4
-    save_every_n_frame: 15
+    save_every_sec: 15
     stills_dir: ../../Stills/first
     host_stills_uri: http://localhost/Stills/first
     bfc:
@@ -263,7 +263,7 @@ sources:
       - person
   second-cam:
     source: ../../demo.mov
-    save_every_n_frame: 0
+    save_every_sec: 0
     stills_dir: ../../Stills/second
     host_stills_uri: http://localhost/Stills/second
     max_object_area: 15000
