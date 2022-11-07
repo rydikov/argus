@@ -16,7 +16,7 @@ from argus.utils.telegram import Telegram
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 
-WARNING_QUEUE_SIZE = 10
+QUEUE_SIZE = 20
 QUEUE_TIMEOUT = 10
 SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 
@@ -80,9 +80,13 @@ class SnapshotThread(Thread):
         Queue is global. Thread is unique for every source.
         """
         if self.name not in frame_items_queues:
-            frame_items_queues[self.name] = LifoQueue(maxsize=WARNING_QUEUE_SIZE*2)
+            frame_items_queues[self.name] = LifoQueue(maxsize=QUEUE_SIZE)
+
 
         while True:
+            if frame_items_queues[self.name].full():
+                frame_items_queues[self.name].get()
+
             frame_items_queues[self.name].put(QueueItem(
                 self.source_config,
                 self.frame_grabber.make_snapshot(),
@@ -138,13 +142,6 @@ def run(config):
                     )
                 sleep(SLEEP_TIME_IF_QUEUE_IS_EMPTY)
                 continue
-
-            queue_size = frame_items_queue.qsize()
-            if queue_size > WARNING_QUEUE_SIZE:
-                logger.warning(
-                    'Warning queue size: %s' % queue_size, 
-                    extra={'queue_size': queue_size, 'queue_name': frame_items_queue_name}
-                )
 
             # Save forced all frames N sec after objects detection
             need_save_after_detection = (
