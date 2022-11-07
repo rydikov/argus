@@ -143,11 +143,10 @@ def run(config):
                 continue
 
             # Save forced all frames N sec after objects detection
-            # need_save_after_detection = (
-            #     last_detection.get(queue_item.thread_name) is not None and
-            #     last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-            # )
-            need_save_after_detection = False
+            need_save_after_detection = (
+                last_detection.get(queue_item.thread_name) is not None and
+                last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+            )
 
             # Save forced all frames N sec after recived external signal
             need_save_after_external_signal = (
