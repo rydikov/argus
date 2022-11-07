@@ -9,7 +9,7 @@ from time import sleep
 
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
-from argus.utils.recognizer import OpenVinoRecognizer
+# from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
 
 
@@ -108,7 +108,7 @@ def check_and_restart_dead_snapshot_threads(config):
 
 def run(config):
 
-    recocnizer = OpenVinoRecognizer(config['recognizer'])
+    # recocnizer = OpenVinoRecognizer(config['recognizer'])
 
     silent_notify_until_time = datetime.now()
 
@@ -171,19 +171,19 @@ def run(config):
             if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
                 queue_item.save()
 
-            request_id = recocnizer.get_request_id()
-            processed_queue_item = recocnizer.get_result(request_id)
-            recocnizer.send_to_recocnize(queue_item, request_id)
+            # request_id = recocnizer.get_request_id()
+            # processed_queue_item = recocnizer.get_result(request_id)
+            # recocnizer.send_to_recocnize(queue_item, request_id)
 
-            if processed_queue_item is not None and processed_queue_item.objects_detected:
-                last_detection[processed_queue_item.thread_name] = datetime.now()
-                frame_uri = processed_queue_item.save(prefix='detected')
+            # if processed_queue_item is not None and processed_queue_item.objects_detected:
+            #     last_detection[processed_queue_item.thread_name] = datetime.now()
+            #     frame_uri = processed_queue_item.save(prefix='detected')
 
-                # Telegram alerting
-                if (
-                    processed_queue_item.important_objects_detected and
-                    telegram is not None and
-                    last_detection[processed_queue_item.thread_name] > silent_notify_until_time
-                ):
-                    telegram.send_message('Objects detected: %s' % frame_uri)
-                    silent_notify_until_time = datetime.now() + SILENT_TIME
+            #     # Telegram alerting
+            #     if (
+            #         processed_queue_item.important_objects_detected and
+            #         telegram is not None and
+            #         last_detection[processed_queue_item.thread_name] > silent_notify_until_time
+            #     ):
+            #         telegram.send_message('Objects detected: %s' % frame_uri)
+            #         silent_notify_until_time = datetime.now() + SILENT_TIME
