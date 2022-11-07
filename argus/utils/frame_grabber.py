@@ -16,35 +16,24 @@ class FrameGrabber:
     def __init__(self, config):
 
         self.snapshot_delay = config.get('snapshot_delay')
-
-        try:
-            self.cap = cv2.VideoCapture(config['source'])
-        except Exception:
-            logger.exception("Unable to create steam %s" % config['source'])
-            self._exit()
-
-        if not self.cap.isOpened():
-            logger.error("Could not connect to camera: %s " % config['source'])
-            self._exit()
+        self.source = config['source']
 
         if 'bfc' in config:
             self.bfc = BadFrameChecker(config['bfc'])
         else:
             self.bfc = None
 
-    def _exit(self):
-        sleep(RECONNECT_SLEEP_TIME)
-        sys.exit(1)
-
     @timing
     def make_snapshot(self):
+
+        cap = cv2.VideoCapture(self.source)
         
         if self.snapshot_delay:
             sleep(self.snapshot_delay)
 
         try:
-            if self.cap.isOpened():
-                __, frame = self.cap.read()
+            if cap.isOpened():
+                __, frame = cap.read()
             else:
                 logger.error("Cap is closed")
                 self._exit()
@@ -58,5 +47,12 @@ class FrameGrabber:
 
         if self.bfc is not None and self.bfc.check(frame):
             return self.make_snapshot()
+        
+        cap.release()
 
         return frame
+
+    def _exit(self):
+        sleep(RECONNECT_SLEEP_TIME)
+        sys.exit(1)
+
