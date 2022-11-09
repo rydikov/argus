@@ -17,8 +17,6 @@ SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 
 QUEUE_SIZE = 20
-QUEUE_TIMEOUT = 10
-SLEEP_TIME_IF_QUEUE_IS_EMPTY = 5
 
 logger = logging.getLogger('json')
 
@@ -83,10 +81,10 @@ class SnapshotThread(Thread):
         if self.name not in frame_items_queues:
             frame_items_queues[self.name] = Queue(maxsize=QUEUE_SIZE)
 
-
         while True:
             if frame_items_queues[self.name].full():
                 frame_items_queues[self.name].get()
+                print('!!!!!!')
 
             frame_items_queues[self.name].put(QueueItem(
                 self.source_config,
@@ -133,15 +131,10 @@ def run(config):
 
         check_and_restart_dead_snapshot_threads(config)
 
-        for frame_items_queue_name, frame_items_queue in frame_items_queues.items():
+        for frame_items_queue in frame_items_queues.values():
             try:
-                queue_item = frame_items_queue.get(timeout=QUEUE_TIMEOUT)
+                queue_item = frame_items_queue.get(block=False)
             except Empty:
-                logger.error(
-                    "Queue %s is empty for %s sec." % QUEUE_TIMEOUT, 
-                    extra={'queue_name': frame_items_queue_name}
-                    )
-                sleep(SLEEP_TIME_IF_QUEUE_IS_EMPTY)
                 continue
 
             # Save forced all frames N sec after objects detection
