@@ -318,3 +318,7 @@ telegram_bot:
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-raspebrry-pi-4
 
+
+
+
+../.env/bin/mo --input_model /Users/rydikov/Projects/OTHER/ML/yolov7/yolov7.onnx --model_name yolov7 -s 255 --reverse_input_channels --output /model.105/m.0/Conv,/model.105/m.1/Conv,/model.105/m.2/Conv

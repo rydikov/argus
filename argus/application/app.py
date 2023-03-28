@@ -84,7 +84,6 @@ class SnapshotThread(Thread):
         while True:
             if frame_items_queues[self.name].full():
                 frame_items_queues[self.name].get()
-                print('!!!!!!')
 
             frame_items_queues[self.name].put(QueueItem(
                 self.source_config,

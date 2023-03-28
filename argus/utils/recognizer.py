@@ -3,6 +3,7 @@ import logging
 import ngraph as ng
 import os
 import sys
+import numpy as np
 
 from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
@@ -13,6 +14,48 @@ from argus.utils.yolo import get_objects, filter_objects
 PROB_THRESHOLD = 0.8
 
 logger = logging.getLogger('json')
+
+
+def letterbox(img, size=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
+    # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
+    shape = img.shape[:2]  # current shape [height, width]
+    w, h = size
+
+    # Scale ratio (new / old)
+    r = min(h / shape[0], w / shape[1])
+    if not scaleup:  # only scale down, do not scale up (for better test mAP)
+        r = min(r, 1.0)
+
+    # Compute padding
+    ratio = r, r  # width, height ratios
+    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+    dw, dh = w - new_unpad[0], h - new_unpad[1]  # wh padding
+    if auto:  # minimum rectangle
+        dw, dh = np.mod(dw, 64), np.mod(dh, 64)  # wh padding
+    elif scaleFill:  # stretch
+        dw, dh = 0.0, 0.0
+        new_unpad = (w, h)
+        ratio = w / shape[1], h / shape[0]  # width, height ratios
+
+    dw /= 2  # divide padding into 2 sides
+    dh /= 2
+
+    if shape[::-1] != new_unpad:  # resize
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
+
+    top2, bottom2, left2, right2 = 0, 0, 0, 0
+    if img.shape[0] != h:
+        top2 = (h - img.shape[0])//2
+        bottom2 = top2
+        img = cv2.copyMakeBorder(img, top2, bottom2, left2, right2, cv2.BORDER_CONSTANT, value=color)  # add border
+    elif img.shape[1] != w:
+        left2 = (w - img.shape[1])//2
+        right2 = left2
+        img = cv2.copyMakeBorder(img, top2, bottom2, left2, right2, cv2.BORDER_CONSTANT, value=color)  # add border
+    return img
 
 
 class OpenVinoRecognizer:
@@ -26,15 +69,15 @@ class OpenVinoRecognizer:
 
         ie = IECore()
         self.net = ie.read_network(
-            os.path.join(models_path, 'frozen_darknet_yolov4_model.xml'),
-            os.path.join(models_path, 'frozen_darknet_yolov4_model.bin')
+            os.path.join(models_path, 'yolov7.xml'),
+            os.path.join(models_path, 'yolov7.bin')
         )
 
         self.function_from_cnn = ng.function_from_cnn(self.net)
 
         # Extract network params
         self.input_blob = next(iter(self.net.input_info))
-        _, _, self.h, self.w = self.net.input_info[self.input_blob].input_data.shape
+        self.n, self.c, self.h, self.w = self.net.input_info[self.input_blob].input_data.shape
 
         self.exec_net = ie.load_network(
             network=self.net,
@@ -64,13 +107,13 @@ class OpenVinoRecognizer:
 
         self.frame_buffer[request_id] = queue_item
 
-        proc_frame = cv2.resize(
+        proc_frame = letterbox(
             queue_item.frame,
-            (self.h, self.w),
-            interpolation=cv2.INTER_LINEAR
+            (self.h, self.w)
         )
         # Change data layout from HWC to CHW
         proc_frame = proc_frame.transpose((2, 0, 1))
+        proc_frame = proc_frame.reshape((self.n, self.c, self.h, self.w))
 
         try:
             self.exec_net.requests[request_id].async_infer({self.input_blob: proc_frame})

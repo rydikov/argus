@@ -1,32 +1,20 @@
 # From examles
+import numpy as np
+
 from math import exp as exp
 
 
 class YoloParams:
     # ------------------------------------------- Extracting layer parameters ------------------------------------------
     # Magic numbers are copied from yolo samples
-    def __init__(self, param, side):
-        self.num = 3 if 'num' not in param else int(param['num'])
-        self.coords = 4 if 'coords' not in param else int(param['coords'])
-        self.classes = 80 if 'classes' not in param else int(param['classes'])
+    def __init__(self,  side):
+        self.num = 3
+        self.coords = 4
+        self.classes = 80
         self.side = side
-
         self.anchors = [10.0, 13.0, 16.0, 30.0, 33.0, 23.0, 30.0, 61.0, 62.0, 45.0, 59.0, 119.0, 116.0, 90.0, 156.0,
                         198.0,
-                        373.0, 326.0] if 'anchors' not in param else param['anchors']
-
-        self.isYoloV3 = False
-
-        if param.get('mask'):
-            mask = param['mask']
-            self.num = len(mask)
-
-            maskedAnchors = []
-            for idx in mask:
-                maskedAnchors += [self.anchors[idx * 2], self.anchors[idx * 2 + 1]]
-            self.anchors = maskedAnchors
-
-            self.isYoloV3 = True  # Weak way to determine but the only one.
+                        373.0, 326.0]
 
 
 def entry_index(side, coord, classes, location, entry):
@@ -36,17 +24,29 @@ def entry_index(side, coord, classes, location, entry):
     return int(side_power_2 * (n * (coord + classes + 1) + entry) + loc)
 
 
-def scale_bbox(x, y, h, w, class_id, confidence, h_scale, w_scale):
-    xmin = int((x - w / 2) * w_scale)
-    ymin = int((y - h / 2) * h_scale)
-    xmax = int(xmin + w * w_scale)
-    ymax = int(ymin + h * h_scale)
-    return dict(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, class_id=class_id, confidence=confidence)
+def scale_bbox(x, y, height, width, class_id, confidence, im_h, im_w, resized_im_h=640, resized_im_w=640):
+    gain = min(resized_im_w / im_w, resized_im_h / im_h)  # gain  = old / new
+    pad = (resized_im_w - im_w * gain) / 2, (resized_im_h - im_h * gain) / 2  # wh padding
+    x = int((x - pad[0])/gain)
+    y = int((y - pad[1])/gain)
+
+    w = int(width/gain)
+    h = int(height/gain)
+ 
+    xmin = max(0, int(x - w / 2))
+    ymin = max(0, int(y - h / 2))
+    xmax = min(im_w, int(xmin + w))
+    ymax = min(im_h, int(ymin + h))
+    # Method item() used here to convert NumPy types to native types for compatibility with functions, which don't
+    # support Numpy types (e.g., cv2.rectangle doesn't support int64 in color parameter)
+    return dict(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, class_id=class_id.item(), confidence=confidence.item())
 
 
 def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, threshold):
-    # ------------------------------------------ Validating output parameters ------------------------------------------
-    _, _, out_blob_h, out_blob_w = blob.shape
+    # ------------------------------------------ Validating output parameters ------------------------------------------    
+    out_blob_n, out_blob_c, out_blob_h, out_blob_w = blob.shape
+    predictions = 1.0/(1.0+np.exp(-blob)) 
+                   
     assert out_blob_w == out_blob_h, "Invalid size of output blob. It sould be in NCHW layout and height should " \
                                      "be equal to width. Current height = {}, current width = {}" \
                                      "".format(out_blob_h, out_blob_w)
@@ -55,41 +55,49 @@ def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, thre
     orig_im_h, orig_im_w = original_im_shape
     resized_image_h, resized_image_w = resized_image_shape
     objects = list()
-    predictions = blob.flatten()
+ 
     side_square = params.side * params.side
 
     # ------------------------------------------- Parsing YOLO Region output -------------------------------------------
-    for i in range(side_square):
-        row = i // params.side
-        col = i % params.side
-        for n in range(params.num):
-            obj_index = entry_index(params.side, params.coords, params.classes, n * side_square + i, params.coords)
-            scale = predictions[obj_index]
-            if scale < threshold:
-                continue
-            box_index = entry_index(params.side, params.coords, params.classes, n * side_square + i, 0)
-            # Network produces location predictions in absolute coordinates of feature maps.
-            # Scale it to relative coordinates.
-            x = (col + predictions[box_index + 0 * side_square]) / params.side
-            y = (row + predictions[box_index + 1 * side_square]) / params.side
-            # Value for exp is very big number in some cases so following construction is using here
-            try:
-                w_exp = exp(predictions[box_index + 2 * side_square])
-                h_exp = exp(predictions[box_index + 3 * side_square])
-            except OverflowError:
-                continue
-            # Depends on topology we need to normalize sizes by feature maps (up to YOLOv3) or by input shape (YOLOv3)
-            w = w_exp * params.anchors[2 * n] / (resized_image_w if params.isYoloV3 else params.side)
-            h = h_exp * params.anchors[2 * n + 1] / (resized_image_h if params.isYoloV3 else params.side)
-            for j in range(params.classes):
-                class_index = entry_index(params.side, params.coords, params.classes, n * side_square + i,
-                                          params.coords + 1 + j)
-                confidence = scale * predictions[class_index]
-                if confidence < threshold:
-                    continue
-                objects.append(scale_bbox(x=x, y=y, h=h, w=w, class_id=j, confidence=confidence,
-                                          h_scale=orig_im_h, w_scale=orig_im_w))
+    bbox_size = int(out_blob_c/params.num) #4+1+num_classes
+
+    for row, col, n in np.ndindex(params.side, params.side, params.num):
+        bbox = predictions[0, n*bbox_size:(n+1)*bbox_size, row, col]
+        
+        x, y, width, height, object_probability = bbox[:5]
+        class_probabilities = bbox[5:]
+        if object_probability < threshold:
+            continue
+        x = (2*x - 0.5 + col)*(resized_image_w/out_blob_w)
+        y = (2*y - 0.5 + row)*(resized_image_h/out_blob_h)
+        if int(resized_image_w/out_blob_w) == 8 & int(resized_image_h/out_blob_h) == 8: #80x80, 
+            idx = 0
+        elif int(resized_image_w/out_blob_w) == 16 & int(resized_image_h/out_blob_h) == 16: #40x40
+            idx = 1
+        elif int(resized_image_w/out_blob_w) == 32 & int(resized_image_h/out_blob_h) == 32: # 20x20
+            idx = 2
+
+        width = (2*width)**2* params.anchors[idx * 6 + 2 * n]
+        height = (2*height)**2 * params.anchors[idx * 6 + 2 * n + 1]
+        class_id = np.argmax(class_probabilities)
+        confidence = object_probability
+        objects.append(scale_bbox(x=x, y=y, height=height, width=width, class_id=class_id, confidence=confidence,
+                                  im_h=orig_im_h, im_w=orig_im_w, resized_im_h=resized_image_h, resized_im_w=resized_image_w))
     return objects
+
+def intersection_over_union(box_1, box_2):
+    width_of_overlap_area = min(box_1['xmax'], box_2['xmax']) - max(box_1['xmin'], box_2['xmin'])
+    height_of_overlap_area = min(box_1['ymax'], box_2['ymax']) - max(box_1['ymin'], box_2['ymin'])
+    if width_of_overlap_area < 0 or height_of_overlap_area < 0:
+        area_of_overlap = 0
+    else:
+        area_of_overlap = width_of_overlap_area * height_of_overlap_area
+    box_1_area = (box_1['ymax'] - box_1['ymin']) * (box_1['xmax'] - box_1['xmin'])
+    box_2_area = (box_2['ymax'] - box_2['ymin']) * (box_2['xmax'] - box_2['xmin'])
+    area_of_union = box_1_area + box_2_area - area_of_overlap
+    if area_of_union == 0:
+        return 0
+    return area_of_overlap / area_of_union
 
 
 def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold, function):
@@ -97,11 +105,11 @@ def get_objects(output, net, new_frame_height_width, source_height_width, prob_t
     objects = list()
 
     for layer_name, out_blob in output.items():
-        out_blob = out_blob.buffer.reshape(net.outputs[layer_name].shape)
-        params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
-        layer_params = YoloParams(params, out_blob.shape[2])
+        # out_blob = out_blob.buffer.reshape(net.outputs[layer_name].shape)
+        # params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
+        layer_params = YoloParams(side=out_blob.buffer.shape[2])
         objects += parse_yolo_region(
-            out_blob,
+            out_blob.buffer,
             new_frame_height_width,
             source_height_width,
             layer_params,
@@ -122,25 +130,3 @@ def filter_objects(objects, iou_threshold, prob_threshold):
                 objects[j]['confidence'] = 0
 
     return tuple(obj for obj in objects if obj['confidence'] >= prob_threshold)
-
-
-def intersection_over_union(box_1, box_2):  # add DIOU-NMS support
-    width_of_overlap_area = min(box_1['xmax'], box_2['xmax']) - max(box_1['xmin'], box_2['xmin'])
-    height_of_overlap_area = min(box_1['ymax'], box_2['ymax']) - max(box_1['ymin'], box_2['ymin'])
-
-    cw = max(box_1['xmax'], box_2['xmax']) - min(box_1['xmin'], box_2['xmin'])
-    ch = max(box_1['ymax'], box_2['ymax']) - min(box_1['ymin'], box_2['ymin'])
-    c_area = cw**2+ch**2+1e-16
-    rh02 = ((box_2['xmax'] + box_2['xmin']) - (box_1['xmax'] + box_1['xmin'])) ** 2/4 \
-        + ((box_2['ymax'] + box_2['ymin']) - (box_1['ymax'] + box_1['ymin'])) ** 2/4
-
-    if width_of_overlap_area < 0 or height_of_overlap_area < 0:
-        area_of_overlap = 0
-    else:
-        area_of_overlap = width_of_overlap_area * height_of_overlap_area
-    box_1_area = (box_1['ymax'] - box_1['ymin']) * (box_1['xmax'] - box_1['xmin'])
-    box_2_area = (box_2['ymax'] - box_2['ymin']) * (box_2['xmax'] - box_2['xmin'])
-    area_of_union = box_1_area + box_2_area - area_of_overlap
-    if area_of_union == 0:
-        return 0
-    return area_of_overlap / area_of_union-pow(rh02/c_area, 0.6)
