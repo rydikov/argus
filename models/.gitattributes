@@ -1,0 +1,2 @@
+yolov7.bin filter=lfs diff=lfs merge=lfs -text
+yolov7.xml filter=lfs diff=lfs merge=lfs -text
