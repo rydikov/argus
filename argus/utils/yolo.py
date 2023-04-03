@@ -100,13 +100,12 @@ def intersection_over_union(box_1, box_2):
     return area_of_overlap / area_of_union
 
 
-def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold, function):
+def get_objects(output, net, new_frame_height_width, source_height_width, prob_threshold):
 
     objects = list()
 
-    for layer_name, out_blob in output.items():
-        # out_blob = out_blob.buffer.reshape(net.outputs[layer_name].shape)
-        # params = [x._get_attributes() for x in function.get_ordered_ops() if x.get_friendly_name() == layer_name][0]
+    for _, out_blob in output.items():
+        
         layer_params = YoloParams(side=out_blob.buffer.shape[2])
         objects += parse_yolo_region(
             out_blob.buffer,
