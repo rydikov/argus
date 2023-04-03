@@ -3,9 +3,11 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Programming Language:   |[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://software.intel.com/content/www/us/en/develop/tools/openvino-toolkit/choose-download.html)|
+| Intel OpenVINO ToolKit: |[![OpenVINO 2021.4.2](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html)|
 | Hardware Used:          | Raspberry Pi B+ |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
+
+Intel® Movidius ™ VPU based products, including Intel® Neural Compute Stick 2 (NCS2) are not supported in the latest release, OpenVINO 2022.3.1, but it will be added back in a future OpenVINO 2022.3.1 LTS update.
 
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
 
@@ -52,7 +54,7 @@ pip3 install -r requirements.txt
 Run application with example config
 ```bash
 export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
-source /opt/intel/openvino_2021.3.394/bin/setupvars.sh
+source /opt/intel/openvino_2021/bin/setupvars.sh
 python run.py development.yml
 ```
 
@@ -65,82 +67,22 @@ python run.py development.yml
 sudo apt update && sudo apt upgrade -y
 sudo apt install build-essential
 ```
-2. Install CMake from source
-```bash
-cd ~/
-wget https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4.tar.gz
-tar xvzf cmake-3.14.4.tar.gz
-cd ~/cmake-3.14.4
-./bootstrap
-make -j4 && sudo make install
-```
-3. Install OpenCV from source
-```bash
-sudo apt install git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev python3-scipy libatlas-base-dev
-cd ~/
-git clone --depth 1 --branch 4.5.2 https://github.com/opencv/opencv.git
-cd opencv && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make -j4 && sudo make install
-```
-4. Download source code and install dependencies
-```bash
-cd ~/
-git clone --depth 1 --branch 2021.3 https://github.com/openvinotoolkit/openvino.git
-cd ~/openvino
-git submodule update --init --recursive
-sh ./install_build_dependencies.sh
-cd ~/openvino/inference-engine/ie_bridges/python/
-pip3 install -r requirements.txt
-```
-5. Start CMake build
-```bash
-export OpenCV_DIR=/usr/local/lib/cmake/opencv4
-cd ~/openvino
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_INSTALL_PREFIX=/home/pi/openvino_dist \
--DENABLE_MKL_DNN=OFF \
--DENABLE_CLDNN=OFF \
--DENABLE_GNA=OFF \
--DENABLE_SSE42=OFF \
--DTHREADING=SEQ \
--DENABLE_OPENCV=OFF \
--DNGRAPH_PYTHON_BUILD_ENABLE=ON \
--DNGRAPH_ONNX_IMPORT_ENABLE=ON \
--DENABLE_PYTHON=ON \
--DPYTHON_EXECUTABLE=$(which python3.7) \
--DPYTHON_LIBRARY=/usr/lib/arm-linux-gnueabihf/libpython3.7m.so \
--DPYTHON_INCLUDE_DIR=/usr/include/python3.7 \
--DWITH_GSTREAMER=ON \
--DCMAKE_CXX_FLAGS=-latomic ..
-make -j4 && sudo make install
-```
-6. Configure the Intel® Neural Compute Stick 2 Linux USB Driver
-```bash
-sudo usermod -a -G users "$(whoami)"
-source /home/pi/openvino_dist/bin/setupvars.sh
-sh /home/pi/openvino_dist/install_dependencies/install_NCS_udev_rules.sh
-```
-7. Verify nGraph module binding to Python
-```bash
-cd /home/pi/openvino_dist/deployment_tools/inference_engine/samples/python/object_detection_sample_ssd
-python3 object_detection_sample_ssd.py -h
-```
+2. Install OpenVINO
+https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html
 
-8. Clone project
+3. Clone project
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
 git lfs pull
 ```
 
-9. Install dependencies
+4. Install dependencies
 ```bash
 pip3 install -r requirements.txt
 ```
 
-10. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
+5. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
 
 My private repository contain files:
 * nginx.conf - Nginx to view images
