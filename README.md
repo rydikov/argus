@@ -1,13 +1,13 @@
-# Object detecton using OpenVINO and YOLO v4
+# Argus
 
 | Details                 |               |
 |-------------------------|---------------|
-| Programming Language:   |[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
+| Neural network:         |[![YOLOv7](https://img.shields.io/badge/yolo-7m-blue)](https://github.com/WongKinYiu/yolov7) |
 | Intel OpenVINO ToolKit: |[![OpenVINO 2021.4.2](https://img.shields.io/badge/openvino-2021.4-blue.svg)](https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html)|
 | Hardware Used:          | Raspberry Pi B+ |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
-Intel® Movidius ™ VPU based products, including Intel® Neural Compute Stick 2 (NCS2) are not supported in the latest release, OpenVINO 2022.3.1, but it will be added back in a future OpenVINO 2022.3.1 LTS update.
+*Intel® Movidius ™ VPU based products, including Intel® Neural Compute Stick 2 (NCS2) are not supported in the latest release, OpenVINO 2022.3.1, but it will be added back in a future OpenVINO 2022.3.1 LTS update.*
 
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
 
