@@ -1,6 +1,5 @@
 import cv2
 import logging
-import ngraph as ng
 import os
 import sys
 import numpy as np
@@ -11,7 +10,7 @@ from usb.core import find as finddev
 from argus.utils.timing import timing
 from argus.utils.yolo import get_objects, filter_objects
 
-PROB_THRESHOLD = 0.8
+PROB_THRESHOLD = 0.7
 
 logger = logging.getLogger('json')
 
@@ -72,8 +71,6 @@ class OpenVinoRecognizer:
             os.path.join(models_path, 'yolov7.xml'),
             os.path.join(models_path, 'yolov7.bin')
         )
-
-        self.function_from_cnn = ng.function_from_cnn(self.net)
 
         # Extract network params
         self.input_blob = next(iter(self.net.input_info))
@@ -152,7 +149,6 @@ class OpenVinoRecognizer:
             (self.h, self.w),
             (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
             PROB_THRESHOLD,
-            self.function_from_cnn
         )
 
         objects = filter_objects(

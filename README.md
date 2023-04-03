@@ -3,7 +3,7 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Programming Language:   |[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2020.3](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://software.intel.com/content/www/us/en/develop/tools/openvino-toolkit/choose-download.html)|
+| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://software.intel.com/content/www/us/en/develop/tools/openvino-toolkit/choose-download.html)|
 | Hardware Used:          | Raspberry Pi B+ |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
@@ -315,10 +315,8 @@ telegram_bot:
 ## Credit
 
 - AlexeyAB/darknet: [https://github.com/AlexeyAB/darknet](https://github.com/AlexeyAB/darknet)
+- WongKinYiu: [https://github.com/WongKinYiu/yolov7] (https://github.com/WongKinYiu/yolov7)
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-raspebrry-pi-4
-
-
-
-
-../.env/bin/mo --input_model /Users/rydikov/Projects/OTHER/ML/yolov7/yolov7.onnx --model_name yolov7 -s 255 --reverse_input_channels --output /model.105/m.0/Conv,/model.105/m.1/Conv,/model.105/m.2/Conv
+- https://github.com/openvinotoolkit/openvino/blob/master/docs/dev/build_raspbian.md
+- https://github.com/bethusaisampath/YOLOs_OpenVINO/tree/main/YOLOv7
