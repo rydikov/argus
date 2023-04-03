@@ -3,7 +3,7 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Programming Language:   |[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2021.4.2](https://img.shields.io/badge/openvino-2020.3-blue.svg)](https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html)|
+| Intel OpenVINO ToolKit: |[![OpenVINO 2021.4.2](https://img.shields.io/badge/openvino-2021.4-blue.svg)](https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html)|
 | Hardware Used:          | Raspberry Pi B+ |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
