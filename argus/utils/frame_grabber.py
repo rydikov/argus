@@ -16,7 +16,10 @@ class FrameGrabber:
     def __init__(self, config):
 
         try:
-            self.cap = cv2.VideoCapture(config['source'], cv2.CAP_GSTREAMER)
+            if 'rtsp' in config['source']:
+                self.cap = cv2.VideoCapture(config['source'], cv2.CAP_GSTREAMER)
+            else:
+                self.cap = cv2.VideoCapture(config['source'])
         except Exception:
             logger.exception("Unable to create steam %s" % config['source'])
             self._exit()

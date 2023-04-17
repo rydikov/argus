@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import threading
+import copy 
 
 from datetime import datetime, timedelta
-from queue import Queue, Empty
+from queue import LifoQueue, Empty
 from threading import Thread
 from time import sleep
 
@@ -11,12 +12,13 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
+from argus.utils.timing import timing
 
 
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 
-QUEUE_SIZE = 20
+QUEUE_SIZE = 3
 
 logger = logging.getLogger('json')
 
@@ -79,7 +81,7 @@ class SnapshotThread(Thread):
         Queue is global. Thread is unique for every source.
         """
         if self.name not in frame_items_queues:
-            frame_items_queues[self.name] = Queue(maxsize=QUEUE_SIZE)
+            frame_items_queues[self.name] = LifoQueue(maxsize=QUEUE_SIZE)
 
         while True:
             if frame_items_queues[self.name].full():
@@ -101,7 +103,6 @@ def check_and_restart_dead_snapshot_threads(config):
             thread = SnapshotThread(thread_name, config)
             thread.start()
             logger.warning('Thread %s restarted' % thread_name)
-
 
 def run(config):
 
@@ -132,7 +133,7 @@ def run(config):
 
         for frame_items_queue in frame_items_queues.values():
             try:
-                queue_item = frame_items_queue.get(block=False)
+                queue_item = copy.deepcopy(frame_items_queue.get(block=False))
             except Empty:
                 continue
 
@@ -163,10 +164,11 @@ def run(config):
             if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
                 queue_item.save()
 
+            
             request_id = recocnizer.get_request_id()
             processed_queue_item = recocnizer.get_result(request_id)
             recocnizer.send_to_recocnize(queue_item, request_id)
-
+            
             if processed_queue_item is not None and processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()
                 frame_uri = processed_queue_item.save(prefix='detected')

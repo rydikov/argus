@@ -257,7 +257,7 @@ telegram_bot:
 ## Credit
 
 - AlexeyAB/darknet: [https://github.com/AlexeyAB/darknet](https://github.com/AlexeyAB/darknet)
-- WongKinYiu: [https://github.com/WongKinYiu/yolov7] (https://github.com/WongKinYiu/yolov7)
+- WongKinYiu: [https://github.com/WongKinYiu/yolov7](https://github.com/WongKinYiu/yolov7)
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-raspebrry-pi-4
 - https://github.com/openvinotoolkit/openvino/blob/master/docs/dev/build_raspbian.md
