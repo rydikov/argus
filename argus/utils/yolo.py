@@ -89,13 +89,7 @@ def parse_yolo_region_legacy(blob, resized_image_shape, original_im_shape, param
 
 
 @timing
-def parse_yolo_region(
-    blob: np.ndarray,
-    resized_image_shape: tuple[int, int],
-    original_im_shape: tuple[int, int],
-    params,
-    threshold: float
-):
+def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, threshold):
     # Vector optimization
     out_blob_n, out_blob_c, out_blob_h, out_blob_w = blob.shape
     predictions = 1.0 / (1.0 + np.exp(-blob))
