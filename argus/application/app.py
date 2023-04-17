@@ -104,6 +104,15 @@ def check_and_restart_dead_snapshot_threads(config):
             thread.start()
             logger.warning('Thread %s restarted' % thread_name)
 
+
+@timing
+def get_and_set(recocnizer, queue_item):
+    request_id = recocnizer.get_request_id()
+    processed_queue_item = recocnizer.get_result(request_id)
+    recocnizer.send_to_recocnize(queue_item, request_id)
+    return processed_queue_item
+
+
 def run(config):
 
     recocnizer = OpenVinoRecognizer(config['recognizer'])
@@ -167,9 +176,7 @@ def run(config):
                 queue_item.save()
 
             
-            request_id = recocnizer.get_request_id()
-            processed_queue_item = recocnizer.get_result(request_id)
-            recocnizer.send_to_recocnize(queue_item, request_id)
+            processed_queue_item = get_and_set(recocnizer, queue_item)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()
