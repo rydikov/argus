@@ -88,7 +88,6 @@ def parse_yolo_region_legacy(blob, resized_image_shape, original_im_shape, param
     return objects
 
 
-@timing
 def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, threshold):
     # Vector optimization
     out_blob_n, out_blob_c, out_blob_h, out_blob_w = blob.shape
