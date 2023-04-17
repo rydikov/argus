@@ -2,6 +2,7 @@
 import numpy as np
 
 from math import exp as exp
+from argus.utils.timing import timing
 
 
 class YoloParams:
@@ -42,7 +43,8 @@ def scale_bbox(x, y, height, width, class_id, confidence, im_h, im_w, resized_im
     return dict(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, class_id=class_id.item(), confidence=confidence.item())
 
 
-def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, threshold):
+@timing
+def parse_yolo_region_legacy(blob, resized_image_shape, original_im_shape, params, threshold):
     # ------------------------------------------ Validating output parameters ------------------------------------------    
     out_blob_n, out_blob_c, out_blob_h, out_blob_w = blob.shape
     predictions = 1.0/(1.0+np.exp(-blob)) 
@@ -81,6 +83,62 @@ def parse_yolo_region(blob, resized_image_shape, original_im_shape, params, thre
         height = (2*height)**2 * params.anchors[idx * 6 + 2 * n + 1]
         class_id = np.argmax(class_probabilities)
         confidence = object_probability
+        objects.append(scale_bbox(x=x, y=y, height=height, width=width, class_id=class_id, confidence=confidence,
+                                  im_h=orig_im_h, im_w=orig_im_w, resized_im_h=resized_image_h, resized_im_w=resized_image_w))
+    return objects
+
+
+@timing
+def parse_yolo_region(
+    blob: np.ndarray,
+    resized_image_shape: tuple[int, int],
+    original_im_shape: tuple[int, int],
+    params,
+    threshold: float
+):
+    # Vector optimization
+    out_blob_n, out_blob_c, out_blob_h, out_blob_w = blob.shape
+    predictions = 1.0 / (1.0 + np.exp(-blob))
+    predictions = predictions.squeeze()
+
+    assert out_blob_w == out_blob_h, "Invalid size of output blob. It sould be in NCHW layout and height should " \
+                                     "be equal to width. Current height = {}, current width = {}" \
+                                     "".format(out_blob_h, out_blob_w)
+
+    # ------------------------------------------ Extracting layer parameters -------------------------------------------
+    orig_im_h, orig_im_w = original_im_shape
+    resized_image_h, resized_image_w = resized_image_shape
+    objects = list()
+    # ------------------------------------------- Parsing YOLO Region output -------------------------------------------
+    assert out_blob_c % params.num == 0
+    bbox_size = int(out_blob_c / params.num)  # 4+1+num_classes
+
+    predictions = np.transpose(predictions, (1, 2, 0))
+    indexes = [n * bbox_size + 4 for n in range(params.num)]
+    matched_idexes = np.nonzero(predictions[:, :, indexes] >= threshold)
+    
+    for row, col, n in zip(*matched_idexes):
+        bbox = predictions[row, col, n * bbox_size:(n + 1) * bbox_size]
+        x, y, width, height, object_probability = bbox[:5]
+        class_probabilities = bbox[5:]
+
+        x = (2 * x - 0.5 + col) * (resized_image_w / out_blob_w)
+        y = (2 * y - 0.5 + row) * (resized_image_h / out_blob_h)
+        if int(resized_image_w / out_blob_w) == 8 & int(
+                resized_image_h / out_blob_h) == 8:  # 80x80,
+            idx = 0
+        elif int(resized_image_w / out_blob_w) == 16 & int(
+                resized_image_h / out_blob_h) == 16:  # 40x40
+            idx = 1
+        elif int(resized_image_w / out_blob_w) == 32 & int(
+                resized_image_h / out_blob_h) == 32:  # 20x20
+            idx = 2
+
+        width = (2 * width) ** 2 * params.anchors[idx * 6 + 2 * n]
+        height = (2 * height) ** 2 * params.anchors[idx * 6 + 2 * n + 1]
+        class_id = np.argmax(class_probabilities)
+        confidence = object_probability
+
         objects.append(scale_bbox(x=x, y=y, height=height, width=width, class_id=class_id, confidence=confidence,
                                   im_h=orig_im_h, im_w=orig_im_w, resized_im_h=resized_image_h, resized_im_w=resized_image_w))
     return objects

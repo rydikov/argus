@@ -142,6 +142,8 @@ def run(config):
                 last_detection.get(queue_item.thread_name) is not None and
                 last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
             )
+            #FIXME: Move to params
+            need_save_after_detection = False
 
             # Save forced all frames N sec after recived external signal
             need_save_after_external_signal = (
