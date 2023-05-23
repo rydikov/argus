@@ -108,16 +108,16 @@ def check_and_restart_dead_snapshot_threads(config):
 def get_and_set(recocnizer, queue_item):
     request_id = recocnizer.get_request_id()
     if request_id is None:
-        logger.warning('Skip frame from %s thread' % queue_item.thread_name)
         return None
     processed_queue_item = recocnizer.get_result(request_id)
     recocnizer.send_to_recocnize(queue_item, request_id)
+    logger.info('Recognized frame getted and frame from %s thread sended' % queue_item.thread_name)
     return processed_queue_item
 
 
 def run(config):
 
-    recocnizer = OpenVinoRecognizer(config['recognizer'])
+    recognizer = OpenVinoRecognizer(config['recognizer'])
 
     silent_notify_until_time = datetime.now()
 
@@ -178,7 +178,7 @@ def run(config):
                 queue_item.save()
 
             
-            processed_queue_item = get_and_set(recocnizer, queue_item)
+            processed_queue_item = get_and_set(recognizer, queue_item)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()
