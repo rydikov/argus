@@ -113,9 +113,10 @@ def get_and_set(recocnizer, queue_item):
     recocnizer.send_to_recocnize(queue_item, request_id)
     if processed_queue_item is not None:
         logger.info(
-            'Recognized frame getted from {} thread and frame from {} thread sended'.format(
+            'Recognized frame getted from {} and frame from {} sended. RID: {}'.format(
                 processed_queue_item.thread_name, 
-                queue_item.thread_name
+                queue_item.thread_name,
+                request_id
             ), 
             extra={'thread_name': queue_item.thread_name}
         )
