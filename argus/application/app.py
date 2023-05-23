@@ -105,9 +105,11 @@ def check_and_restart_dead_snapshot_threads(config):
             logger.warning('Thread %s restarted' % thread_name)
 
 
-@timing
 def get_and_set(recocnizer, queue_item):
     request_id = recocnizer.get_request_id()
+    if request_id is None:
+        logger.warning('Skip frame from %s thread' % queue_item.thread_name)
+        return None
     processed_queue_item = recocnizer.get_result(request_id)
     recocnizer.send_to_recocnize(queue_item, request_id)
     return processed_queue_item
