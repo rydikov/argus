@@ -89,15 +89,21 @@ class OpenVinoRecognizer:
     def wait(self):
         return self.exec_net.wait(num_requests=1)
 
-    def get_request_id(self):
+    def get_request_id(self, need_wait=False):
+        """
+        If need_wait is True – we wait for the result. Else noblock skip.
+        """
         infer_request_id = self.exec_net.get_idle_request_id()
         if infer_request_id < 0:
-            status = self.wait()
-            if status != StatusCode.OK:
-                raise Exception("Wait for idle request failed!")
-            infer_request_id = self.exec_net.get_idle_request_id()
-            if infer_request_id < 0:
-                raise Exception("Invalid request id!")
+            if need_wait:
+                status = self.wait()
+                if status != StatusCode.OK:
+                    raise Exception("Wait for idle request failed!")
+                infer_request_id = self.exec_net.get_idle_request_id()
+                if infer_request_id < 0:
+                    raise Exception("Invalid request id!")
+            else:
+                return None
         return infer_request_id
 
     def send_to_recocnize(self, queue_item, request_id):
