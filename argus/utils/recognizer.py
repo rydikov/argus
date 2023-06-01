@@ -66,8 +66,8 @@ class OpenVinoRecognizer:
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
 
-        ie = IECore()
-        self.net = ie.read_network(
+        self.ie = IECore()
+        self.net = self.ie.read_network(
             os.path.join(models_path, 'yolov7.xml'),
             os.path.join(models_path, 'yolov7.bin')
         )
@@ -76,14 +76,22 @@ class OpenVinoRecognizer:
         self.input_blob = next(iter(self.net.input_info))
         self.n, self.c, self.h, self.w = self.net.input_info[self.input_blob].input_data.shape
 
-        self.exec_net = ie.load_network(
+        self.exec_net = self.ie.load_network(
             network=self.net,
             device_name=self.net_config['device_name'],
             num_requests=self.net_config['num_requests'],
         )
 
+        self._thermal_metric_support = 'DEVICE_THERMAL' in self.ie.get_metric(self.net_config['device_name'], 'SUPPORTED_METRICS')
+
         with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
+
+    def get_temperature(self):
+        if self._thermal_metric_support:
+            return self.ie.get_metric(self.net_config['device_name'], 'DEVICE_THERMAL')
+        else:
+            return 0
 
     @timing
     def wait(self):
@@ -136,6 +144,8 @@ class OpenVinoRecognizer:
             sys.exit(0)
 
     def get_result(self, request_id):
+
+        logger.info("Myriad themperature: {}".format(self.get_temperature()))
 
         infer_status = self.exec_net.requests[request_id].wait(0)
 
