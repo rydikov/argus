@@ -2,6 +2,7 @@ import asyncio
 import logging
 import threading
 import copy 
+import sys
 
 from datetime import datetime, timedelta
 from queue import LifoQueue, Empty
@@ -17,6 +18,8 @@ from argus.utils.timing import timing
 
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
+REDUCE_CPU_USAGE_SEC = 0.1
+LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
 
@@ -128,6 +131,7 @@ def run(config):
     recognizer = OpenVinoRecognizer(config['recognizer'])
 
     silent_notify_until_time = datetime.now()
+    last_log_temperature_time = datetime.now()
 
     if 'telegram_bot' in config:
         telegram = Telegram(config['telegram_bot'])
@@ -148,7 +152,7 @@ def run(config):
 
     while True:
 
-        sleep(0.1)
+        sleep(REDUCE_CPU_USAGE_SEC)
 
         check_and_restart_dead_snapshot_threads(config)
 
@@ -187,10 +191,15 @@ def run(config):
             if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
                 queue_item.save()
 
+            # Log temperature every LOG_TEMPERATURE_TIME
+            if last_log_temperature_time + LOG_TEMPERATURE_TIME < datetime.now():
+                recognizer.log_temperature()
+                last_log_temperature_time = datetime.now()
+
             try:
                 processed_queue_item = get_and_set(recognizer, queue_item)
-            except Exception:
-                logger.warning('Has exception in main thread')
+            except Exception as e:
+                logger.warning('An exception occurred in the main thread %s' % e.message)
                 sys.exit(1)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
