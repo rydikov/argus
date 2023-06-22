@@ -87,11 +87,21 @@ class OpenVinoRecognizer:
         with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
-    def get_temperature(self):
-        temperature = {}
-        for device in ['MYRIAD.2.2-ma2480', 'MYRIAD.2.4-ma2480']:
-            temperature[device] = self.ie.get_metric(device, 'DEVICE_THERMAL')
-        return temperature
+    def log_temperature(self):
+
+        devices = []
+        if 'MULTI' in self.net_config['device_name']:
+            _, devices = self.net_config['device_name'].split(':')
+            devices = devices.split(',')
+        elif 'MYRIAD' in self.net_config['device_name']:
+            devices = self.net_config['device_name']
+       
+        for device in devices:
+            themperature = self.ie.get_metric(device, 'DEVICE_THERMAL')
+            logger.info(
+                "Device {} themperature: {}".format(device, themperature), 
+                extra={'device': device, 'themperature': themperature}
+            )
 
     @timing
     def wait(self):
@@ -144,9 +154,6 @@ class OpenVinoRecognizer:
             sys.exit(0)
 
     def get_result(self, request_id):
-
-        if request_id == 0:
-            logger.info("Myriad themperature: {}".format(self.get_temperature()))
 
         infer_status = self.exec_net.requests[request_id].wait(0)
 
