@@ -10,7 +10,7 @@ from usb.core import find as finddev
 from argus.utils.timing import timing
 from argus.utils.yolo import get_objects, filter_objects
 
-PROB_THRESHOLD = 0.7
+PROB_THRESHOLD = 0.85
 
 logger = logging.getLogger('json')
 
@@ -82,16 +82,16 @@ class OpenVinoRecognizer:
             num_requests=self.net_config['num_requests'],
         )
 
-        self._thermal_metric_support = 'DEVICE_THERMAL' in self.ie.get_metric(self.net_config['device_name'], 'SUPPORTED_METRICS')
+        #self._thermal_metric_support = 'DEVICE_THERMAL' in self.ie.get_metric(self.net_config['device_name'], 'SUPPORTED_METRICS')
 
         with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
     def get_temperature(self):
-        if self._thermal_metric_support:
-            return self.ie.get_metric(self.net_config['device_name'], 'DEVICE_THERMAL')
-        else:
-            return 0
+        temperature = {}
+        for device in ['MYRIAD.2.2-ma2480', 'MYRIAD.2.4-ma2480']:
+            temperature[device] = self.ie.get_metric(device, 'DEVICE_THERMAL')
+        return temperature
 
     @timing
     def wait(self):
@@ -145,7 +145,8 @@ class OpenVinoRecognizer:
 
     def get_result(self, request_id):
 
-        logger.info("Myriad themperature: {}".format(self.get_temperature()))
+        if request_id == 0:
+            logger.info("Myriad themperature: {}".format(self.get_temperature()))
 
         infer_status = self.exec_net.requests[request_id].wait(0)
 

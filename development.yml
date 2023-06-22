@@ -9,5 +9,5 @@ sources:
       - person
 
 recognizer:
-  device_name: CPU
+  device_name: MYRIAD
   num_requests: 4
