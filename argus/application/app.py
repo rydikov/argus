@@ -148,6 +148,8 @@ def run(config):
 
     while True:
 
+        sleep(0.1)
+
         check_and_restart_dead_snapshot_threads(config)
 
         for frame_items_queue in frame_items_queues.values():
@@ -185,8 +187,11 @@ def run(config):
             if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
                 queue_item.save()
 
-            
-            processed_queue_item = get_and_set(recognizer, queue_item)
+            try:
+                processed_queue_item = get_and_set(recognizer, queue_item)
+            except Exception:
+                logger.warning('Has exception in main thread')
+                sys.exit(1)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()
