@@ -16,7 +16,7 @@ class FrameGrabber:
     def __init__(self, config):
 
         try:
-            if 'rtsp' in config['source']:
+            if 'rtspsrc' in config['source']:
                 self.cap = cv2.VideoCapture(config['source'], cv2.CAP_GSTREAMER)
             else:
                 self.cap = cv2.VideoCapture(config['source'])
