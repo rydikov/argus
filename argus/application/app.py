@@ -73,7 +73,7 @@ class ExternalSignalsReciver(Thread):
 
 class SnapshotThread(Thread):
     def __init__(self, name, config):
-        super(SnapshotThread, self).__init__()
+        super(SnapshotThread, self).__init__(daemon=True)
         self.name = name
         self.source_config = config['sources'][name]
         self.frame_grabber = FrameGrabber(config=self.source_config)
