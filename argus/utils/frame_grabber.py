@@ -33,7 +33,7 @@ class FrameGrabber:
         else:
             self.bfc = None
 
-    @timing
+    # @timing
     def make_snapshot(self):
         try:
             if self.cap.isOpened():

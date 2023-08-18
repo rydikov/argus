@@ -68,8 +68,8 @@ class OpenVinoRecognizer:
 
         self.ie = IECore()
         self.net = self.ie.read_network(
-            os.path.join(models_path, 'yolov7.xml'),
-            os.path.join(models_path, 'yolov7.bin')
+            os.path.join(models_path, 'yolov8n.xml'),
+            os.path.join(models_path, 'yolov8n.bin')
         )
 
         # Extract network params
@@ -128,16 +128,17 @@ class OpenVinoRecognizer:
 
         self.frame_buffer[request_id] = queue_item
 
-        proc_frame = letterbox(
-            queue_item.frame,
-            (self.h, self.w)
-        )
-        # Change data layout from HWC to CHW
-        proc_frame = proc_frame.transpose((2, 0, 1))
-        proc_frame = proc_frame.reshape((self.n, self.c, self.h, self.w))
+        frame = queue_item.frame
+
+        height, width, _ = frame.shape
+        length = max((height, width))
+        image = np.zeros((length, length, 3), np.uint8)
+        image[0:height, 0:width] = frame
+
+        blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(640, 640), swapRB=True)
 
         try:
-            self.exec_net.requests[request_id].async_infer({self.input_blob: proc_frame})
+            self.exec_net.requests[request_id].async_infer({self.input_blob: blob})
         except Exception:
             logger.exception("Exec Network is down")
             # Reset usb device. Find ids with lsusb
@@ -152,6 +153,13 @@ class OpenVinoRecognizer:
                 )
                 dev.reset()
             sys.exit(0)
+
+
+    def draw_bounding_box(self, img, class_id, confidence, x, y, x_plus_w, y_plus_h):
+        label = f'{self.labels_map[class_id]} ({confidence:.2f})'
+        color = (255,255,255)
+        cv2.rectangle(img, (x, y), (x_plus_w, y_plus_h), color, 1)
+        cv2.putText(img, label, (x - 10, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.4, color, 1)
 
     def get_result(self, request_id):
 
@@ -168,20 +176,75 @@ class OpenVinoRecognizer:
 
         buffer_item = self.frame_buffer.pop(request_id)
 
-        objects = get_objects(
-            result,
-            self.net,
-            (self.h, self.w),
-            (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
-            PROB_THRESHOLD,
-        )
+        ##
 
-        objects = filter_objects(
-            objects,
-            iou_threshold=0.4,
-            prob_threshold=PROB_THRESHOLD
-        )
+        outputs = result['output0'].buffer
 
-        buffer_item.map_objects_to_frame(objects, self.labels_map)
+        outputs = np.array([cv2.transpose(outputs[0])])
+        
+        rows = outputs.shape[1]
+
+        boxes = []
+        scores = []
+        class_ids = []
+
+        for i in range(rows):
+            classes_scores = outputs[0][i][4:]
+            (minScore, maxScore, minClassLoc, (x, maxClassIndex)) = cv2.minMaxLoc(classes_scores)
+            if maxScore >= 0.25:
+                box = [
+                    outputs[0][i][0] - (0.5 * outputs[0][i][2]), outputs[0][i][1] - (0.5 * outputs[0][i][3]),
+                    outputs[0][i][2], outputs[0][i][3]]
+                boxes.append(box)
+                scores.append(maxScore)
+                class_ids.append(maxClassIndex)
+
+        result_boxes = cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45, 0.5)
+
+        detections = []
+
+        height, width, _ = buffer_item.frame.shape
+        length = max((height, width))
+        scale = length/640
+
+        for i in range(len(result_boxes)):
+            index = result_boxes[i]
+            box = boxes[index]
+            detection = {
+                'class_id': class_ids[index],
+                'class_name': self.labels_map[class_ids[index]],
+                'confidence': scores[index],
+                'box': box,
+                'scale': scale}
+            detections.append(detection)
+
+            self.draw_bounding_box(
+                buffer_item.frame, 
+                class_ids[index], 
+                scores[index], 
+                round(box[0] * scale), 
+                round(box[1] * scale),
+                round((box[0] + box[2]) * scale), 
+                round((box[1] + box[3]) * scale)
+            )
+
+        # objects = get_objects(
+        #     result,
+        #     self.net,
+        #     (self.h, self.w),
+        #     (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
+        #     PROB_THRESHOLD,
+        # )
+
+        # objects = filter_objects(
+        #     objects,
+        #     iou_threshold=0.4,
+        #     prob_threshold=PROB_THRESHOLD
+        # )
+
+        # buffer_item.map_objects_to_frame(objects, self.labels_map)
+        if detections:
+            buffer_item.objects_detected = True
+            buffer_item.important_objects_detected = True
 
         return buffer_item
