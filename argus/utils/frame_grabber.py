@@ -33,7 +33,7 @@ class FrameGrabber:
         else:
             self.bfc = None
 
-    # @timing
+    @timing
     def make_snapshot(self):
         try:
             if self.cap.isOpened():
@@ -52,8 +52,8 @@ class FrameGrabber:
         if self.bfc is not None and self.bfc.check(frame):
             return self.make_snapshot()
 
-        return cv2.imread("/Users/rydikov/Projects/OTHER/RASPBERRY/UPDATE/YOLO8/yolov8_openvino/test.jpeg")
-        # return frame
+        # return cv2.imread("/Users/rydikov/Projects/OTHER/RASPBERRY/UPDATE/YOLO8/yolov8_openvino/test.jpeg")
+        return frame
 
     def _exit(self):
         sleep(RECONNECT_SLEEP_TIME)
