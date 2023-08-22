@@ -2,12 +2,11 @@
 
 | Details                 |               |
 |-------------------------|---------------|
-| Neural network:         |[![YOLOv7](https://img.shields.io/badge/yolo-7m-blue)](https://github.com/WongKinYiu/yolov7) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2021.4.2](https://img.shields.io/badge/openvino-2021.4-blue.svg)](https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html)|
-| Hardware Used:          | Raspberry Pi B+ |
+| Neural network:         |[![YOLOv8](https://img.shields.io/badge/yolo-8-blue)](https://github.com/ultralytics/ultralytics) |
+| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.1](https://img.shields.io/badge/openvino-2022.4-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
+| Hardware Used:          | Mini PC       |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 
-*Intel® Movidius ™ VPU based products, including Intel® Neural Compute Stick 2 (NCS2) are not supported in the latest release, OpenVINO 2022.3.1, but it will be added back in a future OpenVINO 2022.3.1 LTS update.*
 
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
 
@@ -54,13 +53,12 @@ pip3 install -r requirements.txt
 Run application with example config
 ```bash
 export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
-source /opt/intel/openvino_2021/bin/setupvars.sh
+source /opt/intel/openvino_2022/bin/setupvars.sh
 python run.py development.yml
 ```
 
-## Installation OpenVINO on Raspbery Pi
+## Installation OpenVINO on Production
 
-!!! Precompiled toolkit for Raspbian don't support ngraph and you must install OpenVINO manually. !!!
 
 1. Set up build environment and install build tools
 ```bash
@@ -68,7 +66,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install build-essential
 ```
 2. Install OpenVINO
-https://docs.openvino.ai/2021.4/openvino_docs_install_guides_installing_openvino_raspbian.html
+https://docs.openvino.ai/2022.3/openvino_docs_install_guides_install_dev_tools.html
 
 3. Clone project
 ```bash
@@ -256,9 +254,5 @@ telegram_bot:
 
 ## Credit
 
-- AlexeyAB/darknet: [https://github.com/AlexeyAB/darknet](https://github.com/AlexeyAB/darknet)
-- WongKinYiu: [https://github.com/WongKinYiu/yolov7](https://github.com/WongKinYiu/yolov7)
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
-- https://stackoverflow.com/questions/66831806/loading-openvino-python-library-on-raspebrry-pi-4
-- https://github.com/openvinotoolkit/openvino/blob/master/docs/dev/build_raspbian.md
-- https://github.com/bethusaisampath/YOLOs_OpenVINO/tree/main/YOLOv7
+- [Yolov8](https://github.com/ultralytics/ultralytics)
