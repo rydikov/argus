@@ -216,17 +216,20 @@ class OpenVinoRecognizer:
                 'confidence': scores[index],
                 'box': box,
                 'scale': scale}
-            detections.append(detection)
+            
+            if class_ids[index] in [0, 2]:
 
-            self.draw_bounding_box(
-                buffer_item.frame, 
-                class_ids[index], 
-                scores[index], 
-                round(box[0] * scale), 
-                round(box[1] * scale),
-                round((box[0] + box[2]) * scale), 
-                round((box[1] + box[3]) * scale)
-            )
+                detections.append(detection)
+
+                self.draw_bounding_box(
+                    buffer_item.frame, 
+                    class_ids[index], 
+                    scores[index], 
+                    round(box[0] * scale), 
+                    round(box[1] * scale),
+                    round((box[0] + box[2]) * scale), 
+                    round((box[1] + box[3]) * scale)
+                )
 
         # objects = get_objects(
         #     result,
