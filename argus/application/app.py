@@ -193,7 +193,11 @@ def run(config):
 
             # Log temperature every LOG_TEMPERATURE_TIME
             if last_log_temperature_time + LOG_TEMPERATURE_TIME < datetime.now():
-                recognizer.log_temperature()
+                try:
+                    recognizer.log_temperature()
+                except Exception as e:
+                    logger.warning('An exception occurred in the main thread %s' % e.message)
+                    sys.exit(1)
                 last_log_temperature_time = datetime.now()
 
             try:
