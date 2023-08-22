@@ -137,16 +137,6 @@ class OpenVinoRecognizer:
 
         blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(self.h, self.w), swapRB=True)
 
-        # import pdb; pdb.set_trace()
-
-        # blob = letterbox(
-        #     queue_item.frame,
-        #     (self.h, self.w)
-        # )
-        # Change data layout from HWC to CHW
-        # blob = blob.transpose((2, 0, 1))
-        # blob = blob.reshape((self.n, self.c, self.h, self.w))
-
         try:
             self.exec_net.requests[request_id].async_infer({self.input_blob: blob})
         except Exception:
@@ -186,7 +176,6 @@ class OpenVinoRecognizer:
 
         buffer_item = self.frame_buffer.pop(request_id)
 
-        ##
 
         detections = []
 
@@ -224,44 +213,16 @@ class OpenVinoRecognizer:
                 box = boxes[index]
                 detection = {
                     'class_id': class_ids[index],
-                    'class_name': self.labels_map[class_ids[index]],
+                    'label': self.labels_map[class_ids[index]],
                     'confidence': scores[index],
-                    'box': box,
-                    'scale': scale}
-                
-                if class_ids[index] in [0, 2]:
+                    'xmin': round(box[0] * scale), 
+                    'ymin': round(box[1] * scale),
+                    'xmax': round((box[0] + box[2]) * scale), 
+                    'ymax': round((box[1] + box[3]) * scale)
+                }
 
-                    detections.append(detection)
+                detections.append(detection)
 
-                    self.draw_bounding_box(
-                        buffer_item.frame, 
-                        class_ids[index], 
-                        scores[index], 
-                        round(box[0] * scale), 
-                        round(box[1] * scale),
-                        round((box[0] + box[2]) * scale), 
-                        round((box[1] + box[3]) * scale)
-                    )
-
-        import pdb; pdb.set_trace()
-
-        # objects = get_objects(
-        #     result,
-        #     self.net,
-        #     (self.h, self.w),
-        #     (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
-        #     PROB_THRESHOLD,
-        # )
-
-        # objects = filter_objects(
-        #     objects,
-        #     iou_threshold=0.4,
-        #     prob_threshold=PROB_THRESHOLD
-        # )
-
-        # buffer_item.map_objects_to_frame(objects, self.labels_map)
-        if detections:
-            buffer_item.objects_detected = True
-            buffer_item.important_objects_detected = True
+        buffer_item.map_detections_to_frame(detections)
 
         return buffer_item

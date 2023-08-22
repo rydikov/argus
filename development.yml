@@ -7,6 +7,7 @@ sources:
     max_object_area: 15000
     important_objects:
       - person
+      - car
 
 recognizer:
   device_name: CPU
