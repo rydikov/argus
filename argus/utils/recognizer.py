@@ -10,7 +10,7 @@ from usb.core import find as finddev
 from argus.utils.timing import timing
 from argus.utils.yolo import get_objects, filter_objects
 
-PROB_THRESHOLD = 0.85
+PROB_THRESHOLD = 0.35
 
 logger = logging.getLogger('json')
 
@@ -135,7 +135,17 @@ class OpenVinoRecognizer:
         image = np.zeros((length, length, 3), np.uint8)
         image[0:height, 0:width] = frame
 
-        blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(640, 640), swapRB=True)
+        blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(self.h, self.w), swapRB=True)
+
+        # import pdb; pdb.set_trace()
+
+        # blob = letterbox(
+        #     queue_item.frame,
+        #     (self.h, self.w)
+        # )
+        # Change data layout from HWC to CHW
+        # blob = blob.transpose((2, 0, 1))
+        # blob = blob.reshape((self.n, self.c, self.h, self.w))
 
         try:
             self.exec_net.requests[request_id].async_infer({self.input_blob: blob})
@@ -178,58 +188,62 @@ class OpenVinoRecognizer:
 
         ##
 
-        outputs = result['output0'].buffer
-
-        outputs = np.array([cv2.transpose(outputs[0])])
-        
-        rows = outputs.shape[1]
-
-        boxes = []
-        scores = []
-        class_ids = []
-
-        for i in range(rows):
-            classes_scores = outputs[0][i][4:]
-            (minScore, maxScore, minClassLoc, (x, maxClassIndex)) = cv2.minMaxLoc(classes_scores)
-            if maxScore >= 0.25:
-                box = [
-                    outputs[0][i][0] - (0.5 * outputs[0][i][2]), outputs[0][i][1] - (0.5 * outputs[0][i][3]),
-                    outputs[0][i][2], outputs[0][i][3]]
-                boxes.append(box)
-                scores.append(maxScore)
-                class_ids.append(maxClassIndex)
-
-        result_boxes = cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45, 0.5)
-
         detections = []
 
-        height, width, _ = buffer_item.frame.shape
-        length = max((height, width))
-        scale = length/640
+        for _, out_blob in result.items():
 
-        for i in range(len(result_boxes)):
-            index = result_boxes[i]
-            box = boxes[index]
-            detection = {
-                'class_id': class_ids[index],
-                'class_name': self.labels_map[class_ids[index]],
-                'confidence': scores[index],
-                'box': box,
-                'scale': scale}
-            
-            if class_ids[index] in [0, 2]:
+            outputs = np.array([cv2.transpose(out_blob.buffer[0])])
+            rows = outputs.shape[1]
 
-                detections.append(detection)
+            boxes = []
+            scores = []
+            class_ids = []
 
-                self.draw_bounding_box(
-                    buffer_item.frame, 
-                    class_ids[index], 
-                    scores[index], 
-                    round(box[0] * scale), 
-                    round(box[1] * scale),
-                    round((box[0] + box[2]) * scale), 
-                    round((box[1] + box[3]) * scale)
-                )
+            for i in range(rows):
+                classes_scores = outputs[0][i][4:]
+                (minScore, maxScore, minClassLoc, (x, maxClassIndex)) = cv2.minMaxLoc(classes_scores)
+                if maxScore >= PROB_THRESHOLD:
+                    box = [
+                        outputs[0][i][0] - (0.5 * outputs[0][i][2]), 
+                        outputs[0][i][1] - (0.5 * outputs[0][i][3]),
+                        outputs[0][i][2], 
+                        outputs[0][i][3]
+                    ]
+                    boxes.append(box)
+                    scores.append(maxScore)
+                    class_ids.append(maxClassIndex)
+
+            result_boxes = cv2.dnn.NMSBoxes(boxes, scores, PROB_THRESHOLD, nms_threshold=0.45, eta=0.5)
+
+            height, width, _ = buffer_item.frame.shape
+            length = max((height, width))
+            scale = length / self.w
+
+            for i in range(len(result_boxes)):
+                index = result_boxes[i]
+                box = boxes[index]
+                detection = {
+                    'class_id': class_ids[index],
+                    'class_name': self.labels_map[class_ids[index]],
+                    'confidence': scores[index],
+                    'box': box,
+                    'scale': scale}
+                
+                if class_ids[index] in [0, 2]:
+
+                    detections.append(detection)
+
+                    self.draw_bounding_box(
+                        buffer_item.frame, 
+                        class_ids[index], 
+                        scores[index], 
+                        round(box[0] * scale), 
+                        round(box[1] * scale),
+                        round((box[0] + box[2]) * scale), 
+                        round((box[1] + box[3]) * scale)
+                    )
+
+        import pdb; pdb.set_trace()
 
         # objects = get_objects(
         #     result,
