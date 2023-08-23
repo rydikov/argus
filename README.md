@@ -256,3 +256,4 @@ telegram_bot:
 
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - [Yolov8](https://github.com/ultralytics/ultralytics)
+- https://github.com/openvino-book/yolov8_openvino
