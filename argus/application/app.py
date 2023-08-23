@@ -2,7 +2,6 @@ import asyncio
 import copy 
 import logging
 import os
-import sys
 import threading
 
 from datetime import datetime, timedelta
@@ -19,7 +18,7 @@ from argus.utils.timing import timing
 
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
-REDUCE_CPU_USAGE_SEC = 0.1
+REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
