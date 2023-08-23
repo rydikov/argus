@@ -195,15 +195,16 @@ def run(config):
             if last_log_temperature_time + LOG_TEMPERATURE_TIME < datetime.now():
                 try:
                     recognizer.log_temperature()
-                except Exception as e:
-                    logger.warning('An exception occurred in the main thread %s' % e.message)
+                except RuntimeError as e:
+                    logger.warning(f'An exception occurred in the main thread {e}')
                     sys.exit(1)
-                last_log_temperature_time = datetime.now()
+                else:
+                    last_log_temperature_time = datetime.now()
 
             try:
                 processed_queue_item = get_and_set(recognizer, queue_item)
-            except Exception as e:
-                logger.warning('An exception occurred in the main thread %s' % e.message)
+            except RuntimeError as e:
+                logger.warning(f'An exception occurred in the main thread {e}')
                 sys.exit(1)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
