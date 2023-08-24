@@ -1,8 +1,8 @@
 import asyncio
-import logging
-import threading
 import copy 
-import sys
+import logging
+import os
+import threading
 
 from datetime import datetime, timedelta
 from queue import LifoQueue, Empty
@@ -18,7 +18,7 @@ from argus.utils.timing import timing
 
 SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
-REDUCE_CPU_USAGE_SEC = 0.1
+REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
@@ -73,7 +73,7 @@ class ExternalSignalsReciver(Thread):
 
 class SnapshotThread(Thread):
     def __init__(self, name, config):
-        super(SnapshotThread, self).__init__(daemon=True)
+        super(SnapshotThread, self).__init__()
         self.name = name
         self.source_config = config['sources'][name]
         self.frame_grabber = FrameGrabber(config=self.source_config)
@@ -87,6 +87,7 @@ class SnapshotThread(Thread):
             frame_items_queues[self.name] = LifoQueue(maxsize=QUEUE_SIZE)
 
         while True:
+
             if frame_items_queues[self.name].full():
                 frame_items_queues[self.name].get()
 
@@ -193,14 +194,19 @@ def run(config):
 
             # Log temperature every LOG_TEMPERATURE_TIME
             if last_log_temperature_time + LOG_TEMPERATURE_TIME < datetime.now():
-                recognizer.log_temperature()
-                last_log_temperature_time = datetime.now()
+                try:
+                    recognizer.log_temperature()
+                except RuntimeError as e:
+                    logger.warning(f'An exception occurred in the main thread {e}')
+                    os._exit(0)
+                else:
+                    last_log_temperature_time = datetime.now()
 
             try:
                 processed_queue_item = get_and_set(recognizer, queue_item)
-            except Exception as e:
-                logger.warning('An exception occurred in the main thread %s' % e.message)
-                sys.exit(1)
+            except RuntimeError as e:
+                logger.warning(f'An exception occurred in the main thread {e}')
+                os._exit(0)
             
             if processed_queue_item is not None and processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()

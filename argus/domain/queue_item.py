@@ -26,16 +26,15 @@ class QueueItem:
         self.important_objects_detected = False
 
     def __mark_object(self, obj):
-        label = '{}: {} %'.format(obj['label'], round(obj['confidence'] * 100, 1))
+        # label = '{}: {} %'.format(obj['label'], round(obj['confidence'] * 100, 1))
+        label = f"{obj['label']} ({obj['confidence']:.2f})"
         label_position = (obj['xmin'], obj['ymin'] - 7)
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
-    def map_objects_to_frame(self, objects, labels):
-        for obj in objects:
-            obj['label'] = labels[obj['class_id']]
-            obj_area = (obj['ymax'] - obj['ymin']) * (obj['xmax'] - obj['xmin'])
-            if obj['label'] in self.detectable_objects and obj_area < self.max_object_area:
+    def map_detections_to_frame(self, detection):
+        for obj in detection:
+            if obj['label'] in self.detectable_objects:
                 self.objects_detected = True
                 self.__mark_object(obj)
                 logger.warning('Object detected', extra=obj)

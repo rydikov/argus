@@ -35,6 +35,7 @@ class FrameGrabber:
 
     @timing
     def make_snapshot(self):
+        # sleep(1)
         try:
             if self.cap.isOpened():
                 __, frame = self.cap.read()

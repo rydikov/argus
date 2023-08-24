@@ -8,53 +8,11 @@ from openvino.inference_engine import IECore, StatusCode
 from usb.core import find as finddev
 
 from argus.utils.timing import timing
-from argus.utils.yolo import get_objects, filter_objects
 
-PROB_THRESHOLD = 0.85
+PROB_THRESHOLD = 0.35
+MODEL = 'yolov8s'
 
 logger = logging.getLogger('json')
-
-
-def letterbox(img, size=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
-    # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
-    shape = img.shape[:2]  # current shape [height, width]
-    w, h = size
-
-    # Scale ratio (new / old)
-    r = min(h / shape[0], w / shape[1])
-    if not scaleup:  # only scale down, do not scale up (for better test mAP)
-        r = min(r, 1.0)
-
-    # Compute padding
-    ratio = r, r  # width, height ratios
-    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
-    dw, dh = w - new_unpad[0], h - new_unpad[1]  # wh padding
-    if auto:  # minimum rectangle
-        dw, dh = np.mod(dw, 64), np.mod(dh, 64)  # wh padding
-    elif scaleFill:  # stretch
-        dw, dh = 0.0, 0.0
-        new_unpad = (w, h)
-        ratio = w / shape[1], h / shape[0]  # width, height ratios
-
-    dw /= 2  # divide padding into 2 sides
-    dh /= 2
-
-    if shape[::-1] != new_unpad:  # resize
-        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-
-    top2, bottom2, left2, right2 = 0, 0, 0, 0
-    if img.shape[0] != h:
-        top2 = (h - img.shape[0])//2
-        bottom2 = top2
-        img = cv2.copyMakeBorder(img, top2, bottom2, left2, right2, cv2.BORDER_CONSTANT, value=color)  # add border
-    elif img.shape[1] != w:
-        left2 = (w - img.shape[1])//2
-        right2 = left2
-        img = cv2.copyMakeBorder(img, top2, bottom2, left2, right2, cv2.BORDER_CONSTANT, value=color)  # add border
-    return img
 
 
 class OpenVinoRecognizer:
@@ -68,8 +26,8 @@ class OpenVinoRecognizer:
 
         self.ie = IECore()
         self.net = self.ie.read_network(
-            os.path.join(models_path, 'yolov7.xml'),
-            os.path.join(models_path, 'yolov7.bin')
+            os.path.join(models_path, f'{MODEL}.xml'),
+            os.path.join(models_path, f'{MODEL}.bin')
         )
 
         # Extract network params
@@ -81,8 +39,6 @@ class OpenVinoRecognizer:
             device_name=self.net_config['device_name'],
             num_requests=self.net_config['num_requests'],
         )
-
-        #self._thermal_metric_support = 'DEVICE_THERMAL' in self.ie.get_metric(self.net_config['device_name'], 'SUPPORTED_METRICS')
 
         with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
@@ -128,16 +84,17 @@ class OpenVinoRecognizer:
 
         self.frame_buffer[request_id] = queue_item
 
-        proc_frame = letterbox(
-            queue_item.frame,
-            (self.h, self.w)
-        )
-        # Change data layout from HWC to CHW
-        proc_frame = proc_frame.transpose((2, 0, 1))
-        proc_frame = proc_frame.reshape((self.n, self.c, self.h, self.w))
+        frame = queue_item.frame
+
+        height, width, _ = frame.shape
+        length = max((height, width))
+        image = np.zeros((length, length, 3), np.uint8)
+        image[0:height, 0:width] = frame
+
+        blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(self.h, self.w), swapRB=True)
 
         try:
-            self.exec_net.requests[request_id].async_infer({self.input_blob: proc_frame})
+            self.exec_net.requests[request_id].async_infer({self.input_blob: blob})
         except Exception:
             logger.exception("Exec Network is down")
             # Reset usb device. Find ids with lsusb
@@ -152,6 +109,7 @@ class OpenVinoRecognizer:
                 )
                 dev.reset()
             sys.exit(0)
+
 
     def get_result(self, request_id):
 
@@ -168,20 +126,52 @@ class OpenVinoRecognizer:
 
         buffer_item = self.frame_buffer.pop(request_id)
 
-        objects = get_objects(
-            result,
-            self.net,
-            (self.h, self.w),
-            (buffer_item.frame.shape[0], buffer_item.frame.shape[1]),
-            PROB_THRESHOLD,
-        )
+        detections = []
 
-        objects = filter_objects(
-            objects,
-            iou_threshold=0.4,
-            prob_threshold=PROB_THRESHOLD
-        )
+        for _, out_blob in result.items():
 
-        buffer_item.map_objects_to_frame(objects, self.labels_map)
+            outputs = np.array([cv2.transpose(out_blob.buffer[0])])
+            rows = outputs.shape[1]
+
+            boxes = []
+            scores = []
+            class_ids = []
+
+            for i in range(rows):
+                classes_scores = outputs[0][i][4:]
+                (minScore, maxScore, minClassLoc, (x, maxClassIndex)) = cv2.minMaxLoc(classes_scores)
+                if maxScore >= PROB_THRESHOLD:
+                    box = [
+                        outputs[0][i][0] - (0.5 * outputs[0][i][2]), 
+                        outputs[0][i][1] - (0.5 * outputs[0][i][3]),
+                        outputs[0][i][2], 
+                        outputs[0][i][3]
+                    ]
+                    boxes.append(box)
+                    scores.append(maxScore)
+                    class_ids.append(maxClassIndex)
+
+            result_boxes = cv2.dnn.NMSBoxes(boxes, scores, PROB_THRESHOLD, nms_threshold=0.45, eta=0.5)
+
+            height, width, _ = buffer_item.frame.shape
+            length = max((height, width))
+            scale = length / self.w
+
+            for i in range(len(result_boxes)):
+                index = result_boxes[i]
+                box = boxes[index]
+                detection = {
+                    'class_id': class_ids[index],
+                    'label': self.labels_map[class_ids[index]],
+                    'confidence': scores[index],
+                    'xmin': round(box[0] * scale), 
+                    'ymin': round(box[1] * scale),
+                    'xmax': round((box[0] + box[2]) * scale), 
+                    'ymax': round((box[1] + box[3]) * scale)
+                }
+
+                detections.append(detection)
+
+        buffer_item.map_detections_to_frame(detections)
 
         return buffer_item
