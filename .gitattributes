@@ -1,3 +1,8 @@
 models/frozen_darknet_yolov4_model.bin filter=lfs diff=lfs merge=lfs -text
 models/frozen_darknet_yolov4_model.xml filter=lfs diff=lfs merge=lfs -text
 res/demo.mov filter=lfs diff=lfs merge=lfs -text
+models/yolov8n.xml filter=lfs diff=lfs merge=lfs -text
+models/yolov8x.bin filter=lfs diff=lfs merge=lfs -text
+models/yolov8x.xml filter=lfs diff=lfs merge=lfs -text
+models/yolov8n.bin filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
