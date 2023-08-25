@@ -5,7 +5,7 @@ import sys
 from time import sleep
 
 from argus.utils.timing import timing
-from argus.utils.bad_frame_checker import BadFrameChecker
+
 
 RECONNECT_SLEEP_TIME = 1
 logger = logging.getLogger('json')
@@ -28,11 +28,6 @@ class FrameGrabber:
             logger.error("Could not connect to camera: %s " % config['source'])
             self._exit()
 
-        if 'bfc' in config:
-            self.bfc = BadFrameChecker(config['bfc'])
-        else:
-            self.bfc = None
-
     @timing
     def make_snapshot(self):
         # sleep(1)
@@ -49,9 +44,6 @@ class FrameGrabber:
         if frame is None:
             logger.error('Empty frame. Exit from thread')
             self._exit()
-
-        if self.bfc is not None and self.bfc.check(frame):
-            return self.make_snapshot()
 
         return frame
 

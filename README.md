@@ -176,13 +176,7 @@ loki:
 |     host_stills_uri    | +        | Web link to folder with frames                                           |
 |     important_objects  | +        | Important objects. Mark an Alert if this objects detected on frame       |
 |     other_objects      |          | Other objects. Mark if this objects detected on frame                    |
-|     max_object_area    |          | Max object area for detecton                                             |
 |     save_every_sec     |          | Save frame every N sec                                                   |
-|     bfc                |          | Bad frame checker                                                        |
-|       threshold        |          | Threshold for detecton. Set experimentally                               |
-|       coords           |          | Coords for pattern image                                                 |
-|       reverse_pixel    |          | Analyzed pixel. If Pixel is black - revert image                         |
-|       template_path    |          | Template with pattern for analyze                                        |
 
 
 Example for sources secton with all options:
@@ -193,12 +187,6 @@ sources:
     save_every_sec: 15
     stills_dir: ../../Stills/first
     host_stills_uri: http://localhost/Stills/first
-    bfc:
-      threshold: 17900000
-      coords: [64, 104, 324, 352]
-      reverse_pixel: [39, 0]
-      template_path: ../../argus-production-config/res/2.jpg
-    max_object_area: 15000
     important_objects:
       - person
   second-cam:
@@ -206,7 +194,6 @@ sources:
     save_every_sec: 0
     stills_dir: ../../Stills/second
     host_stills_uri: http://localhost/Stills/second
-    max_object_area: 15000
     important_objects:
       - person
       - car
@@ -225,12 +212,14 @@ sources:
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
 | recognizer             | +        | Recognize section                                                        |
+|   model                |          | Model (yolov8n, yolov8s (default), yolov8m, yolov8x)                     |
 |   device_name          | +        | Device for network                                                       |
 |   num_requests         | +        | Num of requests for recognize. Usually 4 per one MYRIAD device           |
 
 Example for recognizer secton with all options:
 ```yaml
 recognizer:
+  model: yolov8m
   device_name: MYRIAD
   num_requests: 4
 ```
