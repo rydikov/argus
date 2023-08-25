@@ -13,7 +13,6 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
-from argus.utils.timing import timing
 
 
 SILENT_TIME = timedelta(minutes=30)
@@ -197,8 +196,7 @@ def run(config):
                 try:
                     recognizer.log_temperature()
                 except RuntimeError as e:
-                    logger.warning(f'An exception occurred in the main thread {e}')
-                    os._exit(0)
+                    logger.warning(f'Unable to get device temperature {e}')
                 else:
                     last_log_temperature_time = datetime.now()
 

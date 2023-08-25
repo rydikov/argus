@@ -17,7 +17,6 @@ class QueueItem:
  
         self.important_objects = source_config['important_objects']
         self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
-        self.max_object_area = source_config['max_object_area']
 
         self.stills_dir = source_config['stills_dir']
         self.host_stills_uri = source_config['host_stills_uri']
@@ -26,7 +25,6 @@ class QueueItem:
         self.important_objects_detected = False
 
     def __mark_object(self, obj):
-        # label = '{}: {} %'.format(obj['label'], round(obj['confidence'] * 100, 1))
         label = f"{obj['label']} ({obj['confidence']:.2f})"
         label_position = (obj['xmin'], obj['ymin'] - 7)
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)

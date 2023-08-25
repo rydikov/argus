@@ -10,7 +10,6 @@ from usb.core import find as finddev
 from argus.utils.timing import timing
 
 PROB_THRESHOLD = 0.35
-MODEL = 'yolov8s'
 
 logger = logging.getLogger('json')
 
@@ -23,11 +22,12 @@ class OpenVinoRecognizer:
         self.frame_buffer = {}
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
+        model = self.net_config.get('model', 'yolov8s')
 
         self.ie = IECore()
         self.net = self.ie.read_network(
-            os.path.join(models_path, f'{MODEL}.xml'),
-            os.path.join(models_path, f'{MODEL}.bin')
+            os.path.join(models_path, f'{model}.xml'),
+            os.path.join(models_path, f'{model}.bin')
         )
 
         # Extract network params
