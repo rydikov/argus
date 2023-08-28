@@ -162,35 +162,6 @@ def run(config):
             except Empty:
                 continue
 
-            # Save forced all frames N sec after objects detection
-            need_save_after_detection = (
-                last_detection.get(queue_item.thread_name) is not None and
-                last_detection[queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-            )
-            #FIXME: Move to params
-            need_save_after_detection = False
-
-            # Save forced all frames N sec after recived external signal
-            need_save_after_external_signal = (
-                external_alarm_time['time'] is not None and
-                external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-            )
-
-            # Save frame every N sec
-            delta = timedelta(seconds=config['sources'][queue_item.thread_name]['save_every_sec'])
-            
-            if queue_item.thread_name not in last_frame_save_time:
-                last_frame_save_time[queue_item.thread_name] = datetime.now() - delta
-
-            if last_frame_save_time[queue_item.thread_name] + delta < datetime.now():
-                need_save_save_by_time = True
-                last_frame_save_time[queue_item.thread_name] = datetime.now()
-            else:
-                need_save_save_by_time = False
-
-            if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
-                queue_item.save()
-
             # Log temperature every LOG_TEMPERATURE_TIME
             if last_log_temperature_time + LOG_TEMPERATURE_TIME < datetime.now():
                 try:
@@ -200,13 +171,17 @@ def run(config):
                 else:
                     last_log_temperature_time = datetime.now()
 
+            # Get recognized frame and send frame from buffer to recognize
             try:
                 processed_queue_item = get_and_set(recognizer, queue_item)
             except RuntimeError as e:
                 logger.warning(f'An exception occurred in the main thread {e}')
                 os._exit(0)
-            
-            if processed_queue_item is not None and processed_queue_item.objects_detected:
+
+            if processed_queue_item is None:
+                continue
+
+            elif processed_queue_item.objects_detected:
                 last_detection[processed_queue_item.thread_name] = datetime.now()
                 frame_uri = processed_queue_item.save(prefix='detected')
 
@@ -218,3 +193,32 @@ def run(config):
                 ):
                     telegram.send_message('Objects detected: %s' % frame_uri)
                     silent_notify_until_time = datetime.now() + SILENT_TIME
+
+            else:
+                # Save forced all frames N sec after objects detection
+                need_save_after_detection = (
+                    last_detection.get(processed_queue_item.thread_name) is not None and
+                    last_detection[processed_queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+                )
+
+                # Save forced all frames N sec after recived external signal
+                need_save_after_external_signal = (
+                    external_alarm_time['time'] is not None and
+                    external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+                )
+
+                # Save frame every N sec
+                delta = timedelta(seconds=config['sources'][processed_queue_item.thread_name]['save_every_sec'])
+                
+                if processed_queue_item.thread_name not in last_frame_save_time:
+                    last_frame_save_time[processed_queue_item.thread_name] = datetime.now() - delta
+
+                if last_frame_save_time[processed_queue_item.thread_name] + delta < datetime.now():
+                    need_save_save_by_time = True
+                    last_frame_save_time[processed_queue_item.thread_name] = datetime.now()
+                else:
+                    need_save_save_by_time = False
+
+                if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
+                    processed_queue_item.save()
+
