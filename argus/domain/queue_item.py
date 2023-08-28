@@ -30,6 +30,9 @@ class QueueItem:
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
+    def put_text(self):
+        cv2.putText(self.frame, "Recognized", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
+
     def map_detections_to_frame(self, detection):
         for obj in detection:
             if obj['label'] in self.detectable_objects:
