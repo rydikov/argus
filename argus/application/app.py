@@ -196,7 +196,7 @@ def run(config):
 
             else:
                 # Save forced all frames N sec after objects detection
-                need_save_after_detection = (
+                need_save_after_detection = ( 
                     last_detection.get(processed_queue_item.thread_name) is not None and
                     last_detection[processed_queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
                 )
