@@ -21,13 +21,15 @@ REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
+DEFAULT_SERVER_RESPONSE = 'OK'
 
 logger = logging.getLogger('json')
 
 frame_items_queues = {}
 last_frame_save_time = {}
+last_detection = {}
+send_frames_after_signal = []
 external_alarm_time = {'time': None}
-
 
 
 class ServerProtocol(asyncio.Protocol):
@@ -37,12 +39,20 @@ class ServerProtocol(asyncio.Protocol):
 
     def data_received(self, data):
         message = data.decode()
-        logger.info('Data received: {!r}'.format(message))
+        logger.info(f'Data received: {message}')
 
-        external_alarm_time['time'] = datetime.now()
+        if message == 'restart':
+            self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
+            self.transport.close()
+            os._exit(0)
+        elif message == 'alarm':
+            external_alarm_time['time'] = datetime.now()
+        elif message == 'reset':
+            last_detection.clear()
+        elif message == 'get_photos':
+            send_frames_after_signal.extend(list(frame_items_queues.keys()))
 
-        logger.info('Send: {!r}'.format(message))
-        self.transport.write(data)
+        self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
 
         logger.info('Close the client socket')
         self.transport.close()
@@ -144,8 +154,6 @@ def run(config):
         thread.start()
         logger.info('Thread %s started' % source)
 
-    # Dict with last time detecton for every source
-    last_detection = {}
 
     # Create and start threading for external events
     ExternalSignalsReciver('localhost', 8888).start()
@@ -192,7 +200,7 @@ def run(config):
                     telegram is not None and
                     last_detection[processed_queue_item.thread_name] > silent_notify_until_time
                 ):
-                    telegram.send_message('Objects detected: %s' % frame_uri)
+                    telegram.send_message(f'Objects detected: {frame_uri}')
                     silent_notify_until_time = datetime.now() + SILENT_TIME
 
             else:
@@ -221,5 +229,8 @@ def run(config):
                     need_save_save_by_time = False
 
                 if any([need_save_after_detection, need_save_after_external_signal, need_save_save_by_time]):
-                    processed_queue_item.save()
+                    frame_uri = processed_queue_item.save()
 
+            if send_frames_after_signal and telegram is not None:
+                send_frames_after_signal.remove(processed_queue_item.thread_name)
+                telegram.send_message(f'Photo from cam {processed_queue_item.thread_name}: {frame_uri}')
