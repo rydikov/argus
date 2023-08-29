@@ -119,7 +119,7 @@ class OpenVinoRecognizer:
             infer_status == StatusCode.RESULT_NOT_READY
             or self.frame_buffer.get(request_id) is None
         ):
-            logger.warn("Unable to get result for {}, status {}".format(request_id, infer_status))
+            logger.warning("Unable to get result for {}, status {}".format(request_id, infer_status))
             return None
 
         result = self.exec_net.requests[request_id].output_blobs
