@@ -168,6 +168,7 @@ def run(config):
                     recognizer.log_temperature()
                 except RuntimeError as e:
                     logger.warning(f'Unable to get device temperature {e}')
+                    os._exit(0)
                 else:
                     last_log_temperature_time = datetime.now()
 
@@ -196,7 +197,7 @@ def run(config):
 
             else:
                 # Save forced all frames N sec after objects detection
-                need_save_after_detection = ( 
+                need_save_after_detection = (
                     last_detection.get(processed_queue_item.thread_name) is not None and
                     last_detection[processed_queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
                 )
