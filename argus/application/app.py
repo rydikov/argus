@@ -25,10 +25,19 @@ DEFAULT_SERVER_RESPONSE = 'OK'
 
 logger = logging.getLogger('json')
 
+# Dict of frame Queues
 frame_items_queues = {}
+
+# Last time when frame has been saved
 last_frame_save_time = {}
-last_detection = {}
+
+# No telegram alerting on silent time after detection
+silent_notify_until_time = {}
+
+# List for frames to be sent after an external signal
 send_frames_after_signal = []
+
+# Force saved all frames (SAVE_FRAMES_AFTER_DETECT_OBJECTS) after external signal
 external_alarm_time = {'time': None}
 
 
@@ -48,7 +57,7 @@ class ServerProtocol(asyncio.Protocol):
         elif message == 'alarm':
             external_alarm_time['time'] = datetime.now()
         elif message == 'reset':
-            last_detection.clear()
+            silent_notify_until_time.clear()
         elif message == 'get_photos':
             send_frames_after_signal.extend(list(frame_items_queues.keys()))
 
@@ -140,7 +149,7 @@ def run(config):
 
     recognizer = OpenVinoRecognizer(config['recognizer'])
 
-    silent_notify_until_time = datetime.now()
+    last_detection = {}
     last_log_temperature_time = datetime.now()
 
     if 'telegram_bot' in config:
@@ -189,25 +198,27 @@ def run(config):
 
             if processed_queue_item is None:
                 continue
+            else:
+                thread_name = processed_queue_item.thread_name
 
-            elif processed_queue_item.objects_detected:
-                last_detection[processed_queue_item.thread_name] = datetime.now()
+            if processed_queue_item.objects_detected:
+                last_detection[thread_name] = datetime.now()
                 frame_uri = processed_queue_item.save(prefix='detected')
 
                 # Telegram alerting
                 if (
                     processed_queue_item.important_objects_detected and
                     telegram is not None and
-                    last_detection[processed_queue_item.thread_name] > silent_notify_until_time
+                    last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
                 ):
                     telegram.send_message(f'Objects detected: {frame_uri}')
-                    silent_notify_until_time = datetime.now() + SILENT_TIME
+                    silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
 
             else:
                 # Save forced all frames N sec after objects detection
                 need_save_after_detection = (
-                    last_detection.get(processed_queue_item.thread_name) is not None and
-                    last_detection[processed_queue_item.thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
+                    last_detection.get(thread_name) is not None and
+                    last_detection[thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
                 )
 
                 # Save forced all frames N sec after recived external signal
@@ -217,14 +228,14 @@ def run(config):
                 )
 
                 # Save frame every N sec
-                delta = timedelta(seconds=config['sources'][processed_queue_item.thread_name]['save_every_sec'])
+                delta = timedelta(seconds=config['sources'][thread_name]['save_every_sec'])
                 
-                if processed_queue_item.thread_name not in last_frame_save_time:
-                    last_frame_save_time[processed_queue_item.thread_name] = datetime.now() - delta
+                if thread_name not in last_frame_save_time:
+                    last_frame_save_time[thread_name] = datetime.now() - delta
 
-                if last_frame_save_time[processed_queue_item.thread_name] + delta < datetime.now():
+                if last_frame_save_time[thread_name] + delta < datetime.now():
                     need_save_save_by_time = True
-                    last_frame_save_time[processed_queue_item.thread_name] = datetime.now()
+                    last_frame_save_time[thread_name] = datetime.now()
                 else:
                     need_save_save_by_time = False
 
@@ -235,7 +246,7 @@ def run(config):
                 ]):
                     frame_uri = processed_queue_item.save()
 
-            if processed_queue_item.thread_name in send_frames_after_signal and telegram is not None:
-                send_frames_after_signal.remove(processed_queue_item.thread_name)
-                telegram.send_frame(processed_queue_item.frame, f'Photo from {processed_queue_item.thread_name}')
+            if thread_name in send_frames_after_signal and telegram is not None:
+                send_frames_after_signal.remove(thread_name)
+                telegram.send_frame(processed_queue_item.frame, f'Photo from {thread_name}')
 
