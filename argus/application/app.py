@@ -215,7 +215,6 @@ def run(config):
                     external_alarm_time['time'] is not None and
                     external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
                 )
-                need_save_after_get_photos_external_signal = processed_queue_item.thread_name in send_frames_after_signal
 
                 # Save frame every N sec
                 delta = timedelta(seconds=config['sources'][processed_queue_item.thread_name]['save_every_sec'])
@@ -233,10 +232,10 @@ def run(config):
                     need_save_after_detection, 
                     need_save_after_alarm_external_signal, 
                     need_save_save_by_time, 
-                    need_save_after_get_photos_external_signal
                 ]):
                     frame_uri = processed_queue_item.save()
 
-            if need_save_after_get_photos_external_signal and telegram is not None:
+            if processed_queue_item.thread_name in send_frames_after_signal and telegram is not None:
                 send_frames_after_signal.remove(processed_queue_item.thread_name)
-                telegram.send_message(f'Photo from cam {processed_queue_item.thread_name}: {frame_uri}')
+                telegram.send_frame(processed_queue_item.frame, f'Photo from {processed_queue_item.thread_name}')
+
