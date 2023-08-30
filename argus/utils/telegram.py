@@ -1,3 +1,4 @@
+import cv2
 import requests
 
 
@@ -14,3 +15,11 @@ class Telegram:
         )
         response = requests.get(send_text)
         return response.json()
+
+    def send_frame(self, frame, message):
+        _, img = cv2.imencode('.JPEG', frame)
+        data = {"chat_id": self.bot_chat_id, "caption": message}
+        url = f'https://api.telegram.org/bot{self.bot_token}/sendPhoto'
+        response = requests.post(url, data=data, files={'photo': img.tobytes()})
+        return response.json()
+
