@@ -19,6 +19,8 @@ SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
+LOG_RECOGNIZE_RPS_TIME = timedelta(seconds=15)
+LOG_SOURCE_FPS_TIME = timedelta(seconds=15)
 
 QUEUE_SIZE = 3
 DEFAULT_SERVER_RESPONSE = 'OK'
@@ -39,6 +41,12 @@ send_frames_after_signal = []
 
 # Force saved all frames (SAVE_FRAMES_AFTER_DETECT_OBJECTS) after external signal
 external_alarm_time = {'time': None}
+
+# Recognize RPS
+recognize_rps = {'count': 0, 'time': datetime.now()}
+
+# Source FPS
+source_fps = {}
 
 
 class ServerProtocol(asyncio.Protocol):
@@ -106,6 +114,7 @@ class SnapshotThread(Thread):
 
         while True:
 
+            # Remove old item from queue if it is full
             if frame_items_queues[self.name].full():
                 frame_items_queues[self.name].get()
 
@@ -116,6 +125,19 @@ class SnapshotThread(Thread):
             ),
             block=False
             )
+
+            # Log FPS to logs
+            if self.name in source_fps:
+                source_fps[self.name]['count'] += 1
+                now = datetime.now()
+                if source_fps[self.name]['time'] + LOG_SOURCE_FPS_TIME < now:
+                    delta = now - source_fps[self.name]['time']
+                    fps = source_fps[self.name]['count'] / delta.seconds
+                    source_fps[self.name]['time'] = now
+                    source_fps[self.name]['count'] = 0
+                    logger.info(f'FPS from {self.name}: {fps}', extra={'fps': fps, 'source': self.name})
+            else:
+                source_fps[self.name] = {'count': 0, 'time': datetime.now()}
 
 
 def check_and_restart_dead_snapshot_threads(config):
@@ -134,14 +156,17 @@ def get_and_set(recocnizer, queue_item):
     processed_queue_item = recocnizer.get_result(request_id)
     recocnizer.send_to_recocnize(queue_item, request_id)
     if processed_queue_item is not None:
-        logger.info(
-            'Recognized frame getted from {} and frame from {} sended. RID: {}'.format(
-                processed_queue_item.thread_name, 
-                queue_item.thread_name,
-                request_id
-            ), 
-            extra={'thread_name': queue_item.thread_name}
-        )
+
+        # Write RPS to logs
+        recognize_rps['count'] += 1
+        now = datetime.now()
+        if recognize_rps['time'] + LOG_RECOGNIZE_RPS_TIME < now:
+            delta = now - recognize_rps['time']
+            rps = recognize_rps['count'] / delta.seconds
+            recognize_rps['time'] = now
+            recognize_rps['count'] = 0
+            logger.info(f'Recognized RPS: {rps}', extra={'rps': rps})
+
     return processed_queue_item
 
 
