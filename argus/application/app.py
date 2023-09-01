@@ -19,8 +19,8 @@ SILENT_TIME = timedelta(minutes=30)
 SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
-LOG_RECOGNIZE_RPS_TIME = timedelta(seconds=15)
-LOG_SOURCE_FPS_TIME = timedelta(seconds=15)
+LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
+LOG_SOURCE_FPS_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
 DEFAULT_SERVER_RESPONSE = 'OK'
