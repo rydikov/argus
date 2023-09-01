@@ -28,9 +28,9 @@ class FrameGrabber:
             logger.error("Could not connect to camera: %s " % config['source'])
             self._exit()
 
-    @timing
+    # @timing
     def make_snapshot(self):
-        # sleep(1)
+        # sleep(0.1)
         try:
             if self.cap.isOpened():
                 __, frame = self.cap.read()
