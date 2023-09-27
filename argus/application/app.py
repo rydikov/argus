@@ -38,9 +38,6 @@ silent_notify_until_time = {}
 # List for frames to be sent after an external signal
 send_frames_after_signal = []
 
-# Force saved all frames (SAVE_FRAMES_AFTER_DETECT_OBJECTS) after external signal
-external_alarm_time = {'time': None}
-
 # Recognize RPS
 recognize_rps = {'count': 0, 'time': datetime.now()}
 
@@ -61,8 +58,6 @@ class ServerProtocol(asyncio.Protocol):
             self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
             self.transport.close()
             os._exit(0)
-        elif message == 'alarm':
-            external_alarm_time['time'] = datetime.now()
         elif message == 'reset':
             silent_notify_until_time.clear()
         elif message == 'get_photos':
