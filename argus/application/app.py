@@ -16,7 +16,6 @@ from argus.utils.telegram import Telegram
 
 
 SILENT_TIME = timedelta(minutes=30)
-SAVE_FRAMES_AFTER_DETECT_OBJECTS = timedelta(seconds=15)
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
@@ -227,30 +226,26 @@ def run(config):
                 thread_name = processed_queue_item.thread_name
 
             if processed_queue_item.objects_detected:
+                
+                previous_last_detection = last_detection.get(thread_name)
                 last_detection[thread_name] = datetime.now()
-                frame_uri = processed_queue_item.save(prefix='detected')
 
-                # Telegram alerting
+                # Save detected frames no more than once per second
                 if (
-                    processed_queue_item.important_objects_detected and
-                    telegram is not None and
-                    last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
+                    previous_last_detection is not None 
+                    and last_detection[thread_name] - previous_last_detection > timedelta(seconds=1)
                 ):
-                    telegram.send_message(f'Objects detected: {frame_uri}')
-                    silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
+                    frame_uri = processed_queue_item.save(prefix='detected')
+                    # Telegram alerting
+                    if (
+                        processed_queue_item.important_objects_detected and
+                        telegram is not None and
+                        last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
+                    ):
+                        telegram.send_message(f'Objects detected: {frame_uri}')
+                        silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
 
             else:
-                # Save forced all frames N sec after objects detection
-                need_save_after_detection = (
-                    last_detection.get(thread_name) is not None and
-                    last_detection[thread_name] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-                )
-
-                # Save forced all frames N sec after recived external signal
-                need_save_after_alarm_external_signal = (
-                    external_alarm_time['time'] is not None and
-                    external_alarm_time['time'] + SAVE_FRAMES_AFTER_DETECT_OBJECTS > datetime.now()
-                )
 
                 # Save frame every N sec
                 delta = timedelta(seconds=config['sources'][thread_name]['save_every_sec'])
@@ -259,17 +254,9 @@ def run(config):
                     last_frame_save_time[thread_name] = datetime.now() - delta
 
                 if last_frame_save_time[thread_name] + delta < datetime.now():
-                    need_save_save_by_time = True
+                    processed_queue_item.save()
                     last_frame_save_time[thread_name] = datetime.now()
-                else:
-                    need_save_save_by_time = False
 
-                if any([
-                    need_save_after_detection, 
-                    need_save_after_alarm_external_signal, 
-                    need_save_save_by_time, 
-                ]):
-                    frame_uri = processed_queue_item.save()
 
             if thread_name in send_frames_after_signal and telegram is not None:
                 send_frames_after_signal.remove(thread_name)
