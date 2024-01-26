@@ -3,7 +3,7 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Neural network:         |[![YOLOv8](https://img.shields.io/badge/yolo-8-blue)](https://github.com/ultralytics/ultralytics) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.1](https://img.shields.io/badge/openvino-2022.4-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
+| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.1](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
 | Hardware Used:          | Mini PC       |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
 

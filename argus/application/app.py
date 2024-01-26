@@ -184,7 +184,7 @@ def run(config):
 
 
     # Create and start threading for external events
-    ExternalSignalsReciver('localhost', 8888).start()
+    ExternalSignalsReciver('127.0.0.1', 8888).start()
 
     while True:
 
