@@ -1,8 +1,8 @@
 sources:
   first-cam:
-    source: ../res/demo.mov
+    source: /app/res/demo.mov
     save_every_sec: 3600
-    stills_dir: ../../Stills
+    stills_dir: /app/Stills
     host_stills_uri: http://localhost/Stills/
     max_object_area: 15000
     important_objects:

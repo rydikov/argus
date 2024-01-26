@@ -1,0 +1,14 @@
+version: '3.7'
+
+
+services:
+  app:
+    build: .
+    image: argus:latest
+    ports:
+      - 8888:8888
+    volumes:
+      - ./argus:/app/argus
+      - ./development.yml:/app/development.yml
+      - ../Stills:/app/Stills
+    command: /usr/bin/python3.8 /app/argus/run.py /app/development.yml
