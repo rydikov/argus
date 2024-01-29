@@ -15,11 +15,11 @@ class QueueItem:
         self.frame = frame
         self.thread_name = thread_name
  
-        self.important_objects = source_config['important_objects']
+        self.important_objects = source_config.get('important_objects', ['person'])
         self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
 
         self.stills_dir = source_config['stills_dir']
-        self.host_stills_uri = source_config['host_stills_uri']
+        self.host_stills_uri = source_config.get('host_stills_uri')
 
         self.objects_detected = False
         self.important_objects_detected = False

@@ -24,13 +24,22 @@ class FrameGrabber:
             logger.exception("Unable to create steam %s" % config['source'])
             self._exit()
 
+        # Sleep if source is video. 
+        # Without sleeping grabbing run very fast.
+        # Recognizer does not have time to process the frames. 
+        if not 'rtsp' in config['source']:
+            self.grab_delay = True
+
         if not self.cap.isOpened():
             logger.error("Could not connect to camera: %s " % config['source'])
             self._exit()
 
-    # @timing
+
     def make_snapshot(self):
-        # sleep(0.1)
+
+        if self.grab_delay:
+            sleep(0.1)
+
         try:
             if self.cap.isOpened():
                 __, frame = self.cap.read()

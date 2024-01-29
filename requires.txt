@@ -1,5 +1,5 @@
-requests
-pyyaml
-pyusb
-python-json-logger
-opencv-python
+requests == 2.31.0
+pyyaml == 6.0.1
+pyusb == 1.2.1
+python-json-logger == 2.0.7
+opencv-python == 4.9.0.80

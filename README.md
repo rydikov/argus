@@ -44,17 +44,14 @@ cd argus
 git lfs pull
 ```
 
-2. Install dependencies
+2. Build docker image
 ```bash
-cd argus
-pip3 install -r requirements.txt
+docker-compose build
 ```
 
-Run application with example config
+Run application
 ```bash
-export PYTHONPATH=$PYTHONPATH:/PROJECT_PWD/argus
-source /opt/intel/openvino_2022/bin/setupvars.sh
-python run.py development.yml
+docker-compose up
 ```
 
 ## Installation OpenVINO on Production
@@ -83,31 +80,11 @@ pip3 install -r requirements.txt
 5. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
 
 My private repository contain files:
-* nginx.conf - Nginx to view images
-* supervisord.conf – On raspberry app started with supervisor
-* loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting. 
 * production.yml - Production config
+* supervisord.conf – On raspberry app started with supervisor
+* nginx.conf - Nginx to view images (optional)
+* loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting (optional)
 
-Grafana looks like:
-
-![Grafana](https://github.com/rydikov/argus/raw/main/res/grafana.png)
-
-Nginx exapmle
-```
-server {
-    listen   8080 default;
-	server_name  localhost;
-
-	access_log  /var/log/nginx/localhost.access.log;
-
-	location / {
-		root   /home/pi/timelapse/;
-		autoindex  on;
-		autoindex_localtime on;
-                autoindex_exact_size off;
-  }
-}
-```
 
 Supervisor exapmle
 ```
@@ -125,6 +102,28 @@ autorestart=true
 user=pi
 environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus"
 ```
+
+
+Nginx exapmle
+```
+server {
+    listen   8080 default;
+	server_name  localhost;
+
+	access_log  /var/log/nginx/localhost.access.log;
+
+	location / {
+		root   /home/pi/timelapse/;
+		autoindex  on;
+		autoindex_localtime on;
+    autoindex_exact_size off;
+  }
+}
+```
+
+Grafana looks like:
+
+![Grafana](https://github.com/rydikov/argus/raw/main/res/grafana.png)
 
 Loki exapmle
 ```
@@ -163,20 +162,21 @@ loki:
 
 11. Reload supervisor
 
+
 ### App Config options
 
 #### Sources secton
 
-| Option                 | Required | Description                                                              |
-|------------------------|----------|--------------------------------------------------------------------------|
-| sources                | +        | Set of data sources                                                      |
-|   source-name          | +        | Source name                                                              |
-|     source             | +        | Source                                                                   |
-|     stills_dir         | +        | Direcrory for saved frames                                               |
-|     host_stills_uri    | +        | Web link to folder with frames                                           |
-|     important_objects  | +        | Important objects. Mark an Alert if this objects detected on frame       |
-|     other_objects      |          | Other objects. Mark if this objects detected on frame                    |
-|     save_every_sec     |          | Save frame every N sec                                                   |
+| Option                 | Required | Description                                                                                |
+|------------------------|----------|--------------------------------------------------------------------------------------------|
+| sources                | +        | Set of data sources                                                                        |
+|   source-name          | +        | Source name                                                                                |
+|     source             | +        | Source                                                                                     |
+|     stills_dir         | +        | Direcrory for saved frames                                                                 |
+|     host_stills_uri    |          | Web link to folder with frames                                                             |
+|     important_objects  |          | Important objects. Mark an Alert if this objects detected on frame. Default: person        |
+|     other_objects      |          | Other objects. Mark if this objects detected on frame                                      |
+|     save_every_sec     |          | Save frame every N sec                                                                     |
 
 
 Example for sources secton with all options:
@@ -224,7 +224,7 @@ recognizer:
   num_requests: 4
 ```
 
-#### Telegram secton
+#### Telegram secton (optional)
 
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
