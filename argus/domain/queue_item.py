@@ -23,6 +23,7 @@ class QueueItem:
 
         self.objects_detected = False
         self.important_objects_detected = False
+        self.frame_filename = None
 
     def __mark_object(self, obj):
         label = f"{obj['label']} ({obj['confidence']:.2f})"
@@ -30,7 +31,7 @@ class QueueItem:
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
-    def put_text(self):
+    def mark_as_recognized(self):
         cv2.putText(self.frame, "Recognized", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
 
     def map_detections_to_frame(self, detection):
@@ -42,18 +43,27 @@ class QueueItem:
                 if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
 
+    @property
+    def url(self):
+        if self.frame_filename is None:
+            raise Exception('Frame was not saved')
+        elif self.host_stills_uri is None:
+            raise Exception('Host url does not specify')
+        else:
+            return '{}/{}'.format(self.host_stills_uri, self.frame_filename)
+            
     def save(self, prefix=None):
-        timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
         if not os.path.exists(self.stills_dir):
             os.makedirs(self.stills_dir)
 
+        timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
+
         if prefix is None:
-            frame_name = '{}.jpg'.format(timestamp)
+            self.frame_filename = '{}.jpg'.format(timestamp)
         else:
-            frame_name = '{}-{}.jpg'.format(timestamp, prefix)
+            self.frame_filename = '{}-{}.jpg'.format(timestamp, prefix)
 
-        if not cv2.imwrite(os.path.join(self.stills_dir, frame_name), self.frame):
-            logger.error('Unable to save file: %s' % frame_name)
+        if not cv2.imwrite(os.path.join(self.stills_dir, self.frame_filename), self.frame):
+            logger.error('Unable to save file: %s' % self.frame_filename)
 
-        return '{}/{}'.format(self.host_stills_uri, frame_name)

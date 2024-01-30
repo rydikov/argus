@@ -173,6 +173,6 @@ class OpenVinoRecognizer:
                 detections.append(detection)
 
         buffer_item.map_detections_to_frame(detections)
-        buffer_item.put_text()
+        buffer_item.mark_as_recognized()
 
         return buffer_item

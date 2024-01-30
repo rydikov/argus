@@ -149,9 +149,9 @@ def get_and_set(recocnizer, queue_item):
         return None
     processed_queue_item = recocnizer.get_result(request_id)
     recocnizer.send_to_recocnize(queue_item, request_id)
-    if processed_queue_item is not None:
 
-        # Write RPS to logs
+    # Write RPS to logs    
+    if processed_queue_item is not None:
         recognize_rps['count'] += 1
         now = datetime.now()
         if recognize_rps['time'] + LOG_RECOGNIZE_RPS_TIME < now:
@@ -190,12 +190,11 @@ def run(config):
 
         sleep(REDUCE_CPU_USAGE_SEC)
 
-        check_and_restart_dead_snapshot_threads(config)
-
         for frame_items_queue in frame_items_queues.values():
             try:
                 queue_item = copy.deepcopy(frame_items_queue.get(block=False))
             except Empty:
+                check_and_restart_dead_snapshot_threads(config)
                 continue
 
             # Log temperature every LOG_TEMPERATURE_TIME
@@ -221,7 +220,7 @@ def run(config):
                 thread_name = processed_queue_item.thread_name
 
             if processed_queue_item.objects_detected:
-                
+
                 previous_last_detection = last_detection.get(thread_name)
                 last_detection[thread_name] = datetime.now()
 
@@ -230,14 +229,14 @@ def run(config):
                     previous_last_detection is not None 
                     and last_detection[thread_name] - previous_last_detection > timedelta(seconds=1)
                 ):
-                    frame_uri = processed_queue_item.save(prefix='detected')
+                    processed_queue_item.save(prefix='detected')
                     # Telegram alerting
                     if (
                         processed_queue_item.important_objects_detected and
                         telegram is not None and
                         last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
                     ):
-                        telegram.send_message(f'Objects detected: {frame_uri}')
+                        telegram.send_message(f'Objects detected: {processed_queue_item.url}')
                         silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
 
             else:
