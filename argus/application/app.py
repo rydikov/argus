@@ -215,9 +215,11 @@ def run(config):
                 os._exit(0)
 
             if processed_queue_item is None:
+                # First results (num_requests) is empty
+                # We try get results async
                 continue
-            else:
-                thread_name = processed_queue_item.thread_name
+            
+            thread_name = processed_queue_item.thread_name
 
             if processed_queue_item.objects_detected:
 
@@ -241,7 +243,7 @@ def run(config):
 
             else:
 
-                # Save frame every N sec
+                # Save frame every N (save_every_sec) sec
                 delta = timedelta(seconds=config['sources'][thread_name]['save_every_sec'])
                 
                 if thread_name not in last_frame_save_time:
@@ -251,7 +253,7 @@ def run(config):
                     processed_queue_item.save()
                     last_frame_save_time[thread_name] = datetime.now()
 
-
+            # Send frame to telegram after external signal
             if thread_name in send_frames_after_signal and telegram is not None:
                 send_frames_after_signal.remove(thread_name)
                 telegram.send_frame(processed_queue_item.frame, f'Photo from {thread_name}')
