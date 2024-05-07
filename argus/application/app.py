@@ -242,7 +242,6 @@ def run(config):
                         silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
 
             else:
-
                 # Save frame every N (save_every_sec) sec
                 delta = timedelta(seconds=config['sources'][thread_name]['save_every_sec'])
                 
@@ -257,4 +256,3 @@ def run(config):
             if thread_name in send_frames_after_signal and telegram is not None:
                 send_frames_after_signal.remove(thread_name)
                 telegram.send_frame(processed_queue_item.frame, f'Photo from {thread_name}')
-
