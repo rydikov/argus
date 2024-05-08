@@ -22,12 +22,11 @@ class OpenVinoRecognizer:
         self.frame_buffer = {}
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
-        model = self.net_config.get('model', 'yolov8s')
+        model = self.net_config.get('model', 'yolov9c')
 
         self.ie = IECore()
         self.net = self.ie.read_network(
-            os.path.join(models_path, f'{model}.xml'),
-            os.path.join(models_path, f'{model}.bin')
+            os.path.join(models_path, f'{model}.onnx')
         )
 
         # Extract network params
