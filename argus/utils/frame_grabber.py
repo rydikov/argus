@@ -27,8 +27,8 @@ class FrameGrabber:
         # Sleep if source is video. 
         # Without sleeping grabbing run very fast.
         # Recognizer does not have time to process the frames. 
-        if not 'rtsp' in config['source']:
-            self.grab_delay = True
+        self.grab_delay = not 'rtsp' in config['source']
+        
 
         if not self.cap.isOpened():
             logger.error("Could not connect to camera: %s " % config['source'])

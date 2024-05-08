@@ -9,7 +9,7 @@ from usb.core import find as finddev
 
 from argus.utils.timing import timing
 
-PROB_THRESHOLD = 0.35
+PROB_THRESHOLD = 0.25
 
 logger = logging.getLogger('json')
 
