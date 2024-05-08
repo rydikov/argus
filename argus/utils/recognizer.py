@@ -26,7 +26,7 @@ class OpenVinoRecognizer:
 
         self.ie = IECore()
         self.net = self.ie.read_network(
-            os.path.join(models_path, f'{model}.onnx')
+            os.path.join(models_path, f'{model}.xml')
         )
 
         # Extract network params
