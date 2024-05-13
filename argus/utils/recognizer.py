@@ -22,7 +22,7 @@ class OpenVinoRecognizer:
         self.frame_buffer = {}
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
-        model = self.net_config.get('model', 'yolov9c')
+        model = self.net_config.get('model', 'yolov8s')
 
         self.ie = IECore()
         self.net = self.ie.read_network(

@@ -1,4 +1,4 @@
-FROM openvino/ubuntu20_runtime:2022.3.2
+FROM openvino/ubuntu20_runtime:2022.3.1
 
 WORKDIR /app
 
