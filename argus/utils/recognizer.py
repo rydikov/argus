@@ -4,34 +4,41 @@ import os
 import sys
 import numpy as np
 
+from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
 from usb.core import find as finddev
 
 from argus.utils.timing import timing
+from argus.globals import (
+    SILENT_TIME, 
+    last_detection, 
+    last_frame_save_time, 
+    silent_notify_until_time,
+    send_frames_after_signal
+)
 
-PROB_THRESHOLD = 0.25
+PROB_THRESHOLD = 0.35
 
 logger = logging.getLogger('json')
 
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config):
+    def __init__(self, net_config, telegram):
         self.net_config = net_config
-
-        self.frame_buffer = {}
+        self.telegram = telegram
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolov8s')
 
-        core = Core()
-        model = core.read_model(os.path.join(models_path, f'{model_name}.xml'))
+        self.core = Core()
+        model = self.core.read_model(os.path.join(models_path, f'{model_name}.xml'))
 
         # Extract network params
         self.input_layer_ir = model.input(0)
         self.n, self.c, self.h, self.w = self.input_layer_ir.shape
 
-        compiled_model = core.compile_model(model, self.net_config['device_name'])
+        compiled_model = self.core.compile_model(model, self.net_config['device_name'])
         self.ireqs = AsyncInferQueue(compiled_model, self.net_config['num_requests'])
         self.ireqs.set_callback(self.process_frame)
 
@@ -48,36 +55,13 @@ class OpenVinoRecognizer:
             devices = self.net_config['device_name']
        
         for device in devices:
-            themperature = self.ie.get_metric(device, 'DEVICE_THERMAL')
+            themperature = self.core.get_metric(device, 'DEVICE_THERMAL')
             logger.info(
                 "Device {} themperature: {}".format(device, themperature), 
                 extra={'device': device, 'themperature': themperature}
             )
 
-    # @timing
-    # def wait(self):
-    #     return self.exec_net.wait(num_requests=1)
-
-    # def get_request_id(self, need_wait=False):
-    #     """
-    #     If need_wait is True – we wait for the result. Else noblock skip.
-    #     """
-    #     infer_request_id = self.exec_net.get_idle_request_id()
-    #     if infer_request_id < 0:
-    #         if need_wait:
-    #             status = self.wait()
-    #             if status != StatusCode.OK:
-    #                 raise Exception("Wait for idle request failed!")
-    #             infer_request_id = self.exec_net.get_idle_request_id()
-    #             if infer_request_id < 0:
-    #                 raise Exception("Invalid request id!")
-    #         else:
-    #             return None
-    #     return infer_request_id
-
     def send_to_recocnize(self, queue_item):
-
-        # self.frame_buffer[request_id] = queue_item
 
         frame = queue_item.frame
 
@@ -89,7 +73,6 @@ class OpenVinoRecognizer:
         blob = cv2.dnn.blobFromImage(image, scalefactor=1/255, size=(self.h, self.w), swapRB=True)
 
         try:
-            # self.exec_net.requests[request_id].async_infer({self.input_blob: blob})
             self.ireqs.start_async({self.input_layer_ir.any_name: blob}, queue_item)
         except Exception:
             logger.exception("Exec Network is down")
@@ -108,7 +91,6 @@ class OpenVinoRecognizer:
 
 
     def process_frame(self, infer_request, queue_item):
-
         
         result = infer_request.get_output_tensor(0).data
 
@@ -160,7 +142,38 @@ class OpenVinoRecognizer:
             queue_item.map_detections_to_frame(detections)
             queue_item.mark_as_recognized()
 
-        if queue_item.important_objects_detected:
-            queue_item.save(prefix='detected')
+        thread_name = queue_item.thread_name
 
-        return queue_item
+        if queue_item.important_objects_detected:
+            previous_last_detection = last_detection.get(queue_item.thread_name)
+            last_detection[thread_name] = datetime.now()
+
+            # Save detected frames no more than once per second
+            if (
+                previous_last_detection is not None 
+                and last_detection[thread_name] - previous_last_detection > timedelta(seconds=1)
+            ):
+                queue_item.save(prefix='detected')
+                # Telegram alerting
+                if (
+                    queue_item.important_objects_detected and
+                    self.telegram is not None and
+                    last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
+                ):
+                    self.telegram.send_message(f'Objects detected: {queue_item.url}')
+                    silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
+        else:
+            # Save frame every N (save_every_sec) sec
+            delta = timedelta(seconds=queue_item.save_every_sec)
+            
+            if thread_name not in last_frame_save_time:
+                last_frame_save_time[thread_name] = datetime.now() - delta
+
+            if last_frame_save_time[thread_name] + delta < datetime.now():
+                queue_item.save()
+                last_frame_save_time[thread_name] = datetime.now()
+
+        # Send frame to telegram after external signal
+        if thread_name in send_frames_after_signal and self.telegram is not None:
+            send_frames_after_signal.remove(thread_name)
+            self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')

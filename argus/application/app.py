@@ -13,9 +13,8 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
+from argus.globals import silent_notify_until_time, send_frames_after_signal
 
-
-SILENT_TIME = timedelta(minutes=30)
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
@@ -28,15 +27,6 @@ logger = logging.getLogger('json')
 
 # Dict of frame Queues
 frame_items_queues = {}
-
-# Last time when frame has been saved
-last_frame_save_time = {}
-
-# No telegram alerting on silent time after detection
-silent_notify_until_time = {}
-
-# List for frames to be sent after an external signal
-send_frames_after_signal = []
 
 # Recognize RPS
 recognize_rps = {'count': 0, 'time': datetime.now()}
@@ -158,20 +148,18 @@ def get_and_set(recocnizer, queue_item):
             recognize_rps['count'] = 0
             logger.info(f'Recognized RPS: {rps}', extra={'rps': rps})
 
-    return processed_queue_item
-
 
 def run(config):
-
-    recognizer = OpenVinoRecognizer(config['recognizer'])
-
-    last_detection = {}
-    last_log_temperature_time = datetime.now()
 
     if 'telegram_bot' in config:
         telegram = Telegram(config['telegram_bot'])
     else:
         telegram = None
+
+    recognizer = OpenVinoRecognizer(config['recognizer'], telegram)
+
+    
+    last_log_temperature_time = datetime.now()
 
     # Create and start threading for every source
     for source in config['sources']:
@@ -206,50 +194,7 @@ def run(config):
 
             # Get recognized frame and send frame from buffer to recognize
             try:
-                processed_queue_item = get_and_set(recognizer, queue_item)
+                get_and_set(recognizer, queue_item)
             except RuntimeError as e:
                 logger.warning(f'An exception occurred in the main thread {e}')
                 os._exit(0)
-
-            if processed_queue_item is None:
-                # First results (num_requests) is empty
-                # We try get results async
-                continue
-            
-            thread_name = processed_queue_item.thread_name
-
-            if processed_queue_item.objects_detected:
-
-                previous_last_detection = last_detection.get(thread_name)
-                last_detection[thread_name] = datetime.now()
-
-                # Save detected frames no more than once per second
-                if (
-                    previous_last_detection is not None 
-                    and last_detection[thread_name] - previous_last_detection > timedelta(seconds=1)
-                ):
-                    processed_queue_item.save(prefix='detected')
-                    # Telegram alerting
-                    if (
-                        processed_queue_item.important_objects_detected and
-                        telegram is not None and
-                        last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
-                    ):
-                        telegram.send_message(f'Objects detected: {processed_queue_item.url}')
-                        silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
-
-            else:
-                # Save frame every N (save_every_sec) sec
-                delta = timedelta(seconds=config['sources'][thread_name]['save_every_sec'])
-                
-                if thread_name not in last_frame_save_time:
-                    last_frame_save_time[thread_name] = datetime.now() - delta
-
-                if last_frame_save_time[thread_name] + delta < datetime.now():
-                    processed_queue_item.save()
-                    last_frame_save_time[thread_name] = datetime.now()
-
-            # Send frame to telegram after external signal
-            if thread_name in send_frames_after_signal and telegram is not None:
-                send_frames_after_signal.remove(thread_name)
-                telegram.send_frame(processed_queue_item.frame, f'Photo from {thread_name}')

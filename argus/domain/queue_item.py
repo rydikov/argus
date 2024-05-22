@@ -19,6 +19,7 @@ class QueueItem:
         self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
 
         self.stills_dir = source_config['stills_dir']
+        self.save_every_sec = source_config['save_every_sec']
         self.host_stills_uri = source_config.get('host_stills_uri')
 
         self.objects_detected = False
