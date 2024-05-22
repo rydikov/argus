@@ -138,11 +138,14 @@ def check_and_restart_dead_snapshot_threads(config):
 
 
 def get_and_set(recocnizer, queue_item):
-    request_id = recocnizer.get_request_id()
-    if request_id is None:
-        return None
-    processed_queue_item = recocnizer.get_result(request_id)
-    recocnizer.send_to_recocnize(queue_item, request_id)
+    # request_id = recocnizer.get_request_id()
+    # if request_id is None:
+    #     return None
+    # processed_queue_item = recocnizer.get_result(request_id)
+    # recocnizer.send_to_recocnize(queue_item, request_id)
+
+    recocnizer.send_to_recocnize(queue_item)
+    processed_queue_item = None
 
     # Write RPS to logs    
     if processed_queue_item is not None:
@@ -186,7 +189,7 @@ def run(config):
 
         for frame_items_queue in frame_items_queues.values():
             try:
-                queue_item = copy.deepcopy(frame_items_queue.get(block=False))
+                queue_item = copy.deepcopy(frame_items_queue.pop())
             except IndexError:
                 check_and_restart_dead_snapshot_threads(config)
                 continue
