@@ -70,7 +70,7 @@ class OpenVinoRecognizer:
             devices = self.net_config['device_name']
        
         for device in devices:
-            themperature = self.core.get_metric(device, 'DEVICE_THERMAL')
+            themperature = self.core.get_property(device, 'DEVICE_THERMAL')
             logger.info(
                 "Device {} themperature: {}".format(device, themperature), 
                 extra={'device': device, 'themperature': themperature}
