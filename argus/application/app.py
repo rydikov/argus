@@ -17,7 +17,6 @@ from argus.globals import silent_notify_until_time, send_frames_after_signal
 
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
-LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 LOG_SOURCE_FPS_TIME = timedelta(minutes=1)
 
 QUEUE_SIZE = 3
@@ -27,9 +26,6 @@ logger = logging.getLogger('json')
 
 # Dict of frame Queues
 frame_items_queues = {}
-
-# Recognize RPS
-recognize_rps = {'count': 0, 'time': datetime.now()}
 
 # Source FPS
 source_fps = {}
@@ -127,28 +123,6 @@ def check_and_restart_dead_snapshot_threads(config):
             logger.warning('Thread %s restarted' % thread_name)
 
 
-def get_and_set(recocnizer, queue_item):
-    # request_id = recocnizer.get_request_id()
-    # if request_id is None:
-    #     return None
-    # processed_queue_item = recocnizer.get_result(request_id)
-    # recocnizer.send_to_recocnize(queue_item, request_id)
-
-    recocnizer.send_to_recocnize(queue_item)
-    processed_queue_item = None
-
-    # Write RPS to logs    
-    if processed_queue_item is not None:
-        recognize_rps['count'] += 1
-        now = datetime.now()
-        if recognize_rps['time'] + LOG_RECOGNIZE_RPS_TIME < now:
-            delta = now - recognize_rps['time']
-            rps = recognize_rps['count'] / delta.seconds
-            recognize_rps['time'] = now
-            recognize_rps['count'] = 0
-            logger.info(f'Recognized RPS: {rps}', extra={'rps': rps})
-
-
 def run(config):
 
     if 'telegram_bot' in config:
@@ -194,7 +168,7 @@ def run(config):
 
             # Get recognized frame and send frame from buffer to recognize
             try:
-                get_and_set(recognizer, queue_item)
+                recognizer.send_to_recognize(queue_item)
             except RuntimeError as e:
                 logger.warning(f'An exception occurred in the main thread {e}')
                 os._exit(0)

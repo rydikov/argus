@@ -17,9 +17,24 @@ from argus.globals import (
     send_frames_after_signal
 )
 
+LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
+
 PROB_THRESHOLD = 0.35
 
 logger = logging.getLogger('json')
+
+# Recognize RPS
+recognize_rps = {'count': 0, 'time': datetime.now()}
+def up_rps():
+    recognize_rps['count'] += 1
+    now = datetime.now()
+    if recognize_rps['time'] + LOG_RECOGNIZE_RPS_TIME < now:
+        delta = now - recognize_rps['time']
+        rps = recognize_rps['count'] / delta.seconds
+        recognize_rps['time'] = now
+        recognize_rps['count'] = 0
+        logger.info(f'Recognized RPS: {rps}', extra={'rps': rps})
+
 
 
 class OpenVinoRecognizer:
@@ -61,7 +76,7 @@ class OpenVinoRecognizer:
                 extra={'device': device, 'themperature': themperature}
             )
 
-    def send_to_recocnize(self, queue_item):
+    def send_to_recognize(self, queue_item):
 
         frame = queue_item.frame
 
@@ -91,6 +106,8 @@ class OpenVinoRecognizer:
 
 
     def process_frame(self, infer_request, queue_item):
+
+        up_rps()
         
         result = infer_request.get_output_tensor(0).data
 
