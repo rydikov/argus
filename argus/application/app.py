@@ -5,7 +5,7 @@ import os
 import threading
 
 from datetime import datetime, timedelta
-from queue import LifoQueue, Empty
+from collections import deque
 from threading import Thread
 from time import sleep
 
@@ -104,20 +104,14 @@ class SnapshotThread(Thread):
         Queue is global. Thread is unique for every source.
         """
         if self.name not in frame_items_queues:
-            frame_items_queues[self.name] = LifoQueue(maxsize=QUEUE_SIZE)
+            frame_items_queues[self.name] = deque(maxlen=QUEUE_SIZE)
 
         while True:
 
-            # Remove old item from queue if it is full
-            if frame_items_queues[self.name].full():
-                frame_items_queues[self.name].get()
-
-            frame_items_queues[self.name].put(QueueItem(
+            frame_items_queues[self.name].append(QueueItem(
                 self.source_config,
                 self.frame_grabber.make_snapshot(),
-                self.name,
-            ),
-            block=False
+                self.name)
             )
 
             # Log FPS to logs
@@ -193,7 +187,7 @@ def run(config):
         for frame_items_queue in frame_items_queues.values():
             try:
                 queue_item = copy.deepcopy(frame_items_queue.get(block=False))
-            except Empty:
+            except IndexError:
                 check_and_restart_dead_snapshot_threads(config)
                 continue
 

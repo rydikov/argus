@@ -39,7 +39,7 @@ class QueueItem:
             if obj['label'] in self.detectable_objects:
                 self.objects_detected = True
                 self.__mark_object(obj)
-                # logger.warning('Object detected', extra=obj)
+                logger.warning('Object detected', extra=obj)
                 if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
 
