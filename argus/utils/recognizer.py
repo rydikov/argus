@@ -57,6 +57,10 @@ class OpenVinoRecognizer:
         self.ireqs = AsyncInferQueue(compiled_model, self.net_config['num_requests'])
         self.ireqs.set_callback(self.process_frame)
 
+        logger.info(
+            f'OPTIMAL_NUMBER_OF_INFER_REQUESTS: {compiled_model.get_property("OPTIMAL_NUMBER_OF_INFER_REQUESTS")}'
+        )
+
         with open(os.path.join(models_path, 'coco.names'), 'r') as f:
             self.labels_map = [x.strip() for x in f]
 
@@ -161,7 +165,7 @@ class OpenVinoRecognizer:
 
         thread_name = queue_item.thread_name
 
-        if queue_item.important_objects_detected:
+        if queue_item.objects_detected:
             previous_last_detection = last_detection.get(queue_item.thread_name)
             last_detection[thread_name] = datetime.now()
 
