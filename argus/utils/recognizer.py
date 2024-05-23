@@ -10,9 +10,8 @@ from openvino.runtime import Core, AsyncInferQueue
 from argus.utils.timing import timing
 from argus.globals import (
     SILENT_TIME, 
-    last_detection, 
     last_frame_save_time, 
-    silent_notify_until_time,
+    detected_frame_notification_time,
     send_frames_after_signal
 )
 
@@ -155,26 +154,31 @@ class OpenVinoRecognizer:
         thread_name = queue_item.thread_name
 
         if queue_item.objects_detected:
-            # Save detected frame every 1 sec
+            # Save detected frames every 1 sec
             delta = timedelta(seconds=1)
             prefix = 'detected'
-            last_detection[thread_name] = datetime.now()
         else:
-            # Save frame every N (save_every_sec) sec
+            # Save other frames every N (save_every_sec) sec
             delta = timedelta(seconds=queue_item.save_every_sec)
             prefix = None
             
-        if last_frame_save_time.get(thread_name, datetime.now() - delta) + delta <= datetime.now():
+        if (
+            last_frame_save_time.get(thread_name) is None or
+            last_frame_save_time[thread_name] + delta < datetime.now()
+        ):
             queue_item.save(prefix=prefix)
             last_frame_save_time[thread_name] = datetime.now()
-            # Telegram alerting
+            # Telegram alerting for important objects
             if (
                 queue_item.important_objects_detected and
                 self.telegram is not None and
-                last_detection[thread_name] > silent_notify_until_time.get(thread_name, datetime.now() - SILENT_TIME)
+                (
+                    detected_frame_notification_time.get(thread_name) is None or
+                    detected_frame_notification_time[thread_name] + SILENT_TIME < datetime.now()
+                )
             ):
                 self.telegram.send_message(f'Objects detected: {queue_item.url}')
-                silent_notify_until_time[thread_name] = datetime.now() + SILENT_TIME
+                detected_frame_notification_time[thread_name] = datetime.now()
 
         # Send frame to telegram after external signal
         if thread_name in send_frames_after_signal and self.telegram is not None:

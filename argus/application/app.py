@@ -13,7 +13,7 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
-from argus.globals import silent_notify_until_time, send_frames_after_signal
+from argus.globals import detected_frame_notification_time, send_frames_after_signal
 
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
@@ -45,7 +45,7 @@ class ServerProtocol(asyncio.Protocol):
             self.transport.close()
             os._exit(0)
         elif message == 'reset':
-            silent_notify_until_time.clear()
+            detected_frame_notification_time.clear()
         elif message == 'get_photos':
             send_frames_after_signal.extend(list(frame_items_queues.keys()))
 
