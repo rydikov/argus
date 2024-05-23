@@ -6,7 +6,6 @@ import numpy as np
 
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
-from usb.core import find as finddev
 
 from argus.utils.timing import timing
 from argus.globals import (
@@ -95,17 +94,8 @@ class OpenVinoRecognizer:
             self.ireqs.start_async({self.input_layer_ir.any_name: blob}, queue_item)
         except Exception:
             logger.exception("Exec Network is down")
-            # Reset usb device. Find ids with lsusb
-            if (
-                'MYRIAD' in self.net_config['device_name']
-                and self.net_config.get('id_vendor') is not None
-                and self.net_config.get('id_product') is not None
-            ):
-                dev = finddev(
-                    idVendor=self.net_config['id_vendor'],
-                    idProduct=self.net_config['id_product']
-                )
-                dev.reset()
+            if self.telegram is not None:
+                self.telegram.send_message(f'Exec Network is down')
             sys.exit(0)
 
 
@@ -168,6 +158,7 @@ class OpenVinoRecognizer:
             # Save detected frame every 1 sec
             delta = timedelta(seconds=1)
             prefix = 'detected'
+            last_detection[thread_name] = datetime.now()
         else:
             # Save frame every N (save_every_sec) sec
             delta = timedelta(seconds=queue_item.save_every_sec)
