@@ -164,10 +164,7 @@ class OpenVinoRecognizer:
             delta = timedelta(seconds=queue_item.save_every_sec)
             prefix = None
             
-        if thread_name not in last_frame_save_time:
-            last_frame_save_time[thread_name] = datetime.now() - delta
-
-        if last_frame_save_time[thread_name] + delta < datetime.now():
+        if last_frame_save_time.get(thread_name, datetime.now() - delta) + delta <= datetime.now():
             queue_item.save(prefix=prefix)
             last_frame_save_time[thread_name] = datetime.now()
             # Telegram alerting
