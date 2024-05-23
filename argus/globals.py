@@ -2,7 +2,8 @@ from datetime import timedelta
 
 SILENT_TIME = timedelta(minutes=30)
 
-# No telegram alerting on silent time after detection
+# Disable telegram alerting on silent time after detection
+# Last time when notification about detected frame has been sent
 detected_frame_notification_time = {}
 
 # Last time when frame has been saved
