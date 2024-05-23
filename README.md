@@ -2,7 +2,7 @@
 
 | Details                 |               |
 |-------------------------|---------------|
-| Neural network:         |[![YOLOv8](https://img.shields.io/badge/yolo-8-blue)](https://github.com/ultralytics/ultralytics) |
+| Neural network:         |[![YOLOv9](https://img.shields.io/badge/yolo-8-blue)](https://github.com/WongKinYiu/yolov9) |
 | Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.2](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
 | Hardware Used:          | Mini PC       |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
@@ -41,10 +41,11 @@ In the main thread, the frames get from a queue and send to asynchronous recogni
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
-git lfs pull
 ```
 
-2. Build docker image
+2. Copy models to project
+
+3. Build docker image
 ```bash
 docker-compose build
 ```
@@ -65,11 +66,10 @@ sudo apt install build-essential
 2. Install OpenVINO
 https://docs.openvino.ai/2022.3/openvino_docs_install_guides_install_dev_tools.html
 
-3. Clone project
+3. Clone project and save models from release to models folder
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
-git lfs pull
 ```
 
 4. Install dependencies
@@ -212,14 +212,14 @@ sources:
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
 | recognizer             | +        | Recognize section                                                        |
-|   model                |          | Model (yolov8n, yolov8s (default), yolov8m, yolov8x)                     |
+|   model                |          | Model (yolov9c (default))                     |
 |   device_name          | +        | Device for network                                                       |
 |   num_requests         | +        | Num of requests for recognize. Usually 4 per one MYRIAD device           |
 
 Example for recognizer secton with all options:
 ```yaml
 recognizer:
-  model: yolov8m
+  model: yolov9c
   device_name: MYRIAD
   num_requests: 4
 ```
@@ -244,5 +244,4 @@ telegram_bot:
 ## Credit
 
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
-- [Yolov8](https://github.com/ultralytics/ultralytics)
-- https://github.com/openvino-book/yolov8_openvino
+- [Yolov9](https://github.com/WongKinYiu/yolov9)
