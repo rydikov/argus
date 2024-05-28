@@ -91,10 +91,10 @@ class OpenVinoRecognizer:
 
         try:
             self.ireqs.start_async({self.input_layer_ir.any_name: blob}, queue_item)
-        except Exception:
-            logger.exception("Exec Network is down")
+        except Exception as e:
+            logger.exception('Exec Network is down: {e}')
             if self.telegram is not None:
-                self.telegram.send_message(f'Exec Network is down')
+                self.telegram.send_message(f'Exec Network is down: {e}')
             sys.exit(0)
 
 
@@ -151,8 +151,15 @@ class OpenVinoRecognizer:
         if detections:
             queue_item.map_detections_to_frame(detections)   
         queue_item.mark_as_recognized()
+
         thread_name = queue_item.thread_name
 
+        # Send frame to telegram after external signal
+        if thread_name in send_frames_after_signal and self.telegram is not None:
+            send_frames_after_signal.remove(thread_name)
+            self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
+        
+        # Save, alerting, etc
         if queue_item.objects_detected:
             # Save detected frames every 1 sec
             delta = timedelta(seconds=1)
@@ -179,8 +186,3 @@ class OpenVinoRecognizer:
             ):
                 self.telegram.send_message(f'Objects detected: {queue_item.url}')
                 detected_frame_notification_time[thread_name] = datetime.now()
-
-        # Send frame to telegram after external signal
-        if thread_name in send_frames_after_signal and self.telegram is not None:
-            send_frames_after_signal.remove(thread_name)
-            self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')

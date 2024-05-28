@@ -166,9 +166,6 @@ def run(config):
                 else:
                     last_log_temperature_time = datetime.now()
 
-            # Get recognized frame and send frame from buffer to recognize
-            try:
-                recognizer.send_to_recognize(queue_item)
-            except RuntimeError as e:
-                logger.warning(f'An exception occurred in the main thread {e}')
-                os._exit(0)
+            # Send frame from buffer to recognize
+            recognizer.send_to_recognize(queue_item)
+            
