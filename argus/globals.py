@@ -1,4 +1,5 @@
 from datetime import timedelta
+from argus.services.alarm_system import AlarmSystemService
 
 SILENT_TIME = timedelta(minutes=30)
 
@@ -11,3 +12,5 @@ last_frame_save_time = {}
 
 # List for frames to be sent after an external signal
 send_frames_after_signal = []
+
+alarm_system_service = AlarmSystemService()

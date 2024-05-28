@@ -13,7 +13,11 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.recognizer import OpenVinoRecognizer
 from argus.utils.telegram import Telegram
-from argus.globals import detected_frame_notification_time, send_frames_after_signal
+from argus.globals import (
+    detected_frame_notification_time, 
+    send_frames_after_signal, 
+    alarm_system_service
+)
 
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
@@ -39,6 +43,7 @@ class ServerProtocol(asyncio.Protocol):
     def data_received(self, data):
         message = data.decode()
         logger.info(f'Data received: {message}')
+        response = DEFAULT_SERVER_RESPONSE
 
         if message == 'restart':
             self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
@@ -48,8 +53,17 @@ class ServerProtocol(asyncio.Protocol):
             detected_frame_notification_time.clear()
         elif message == 'get_photos':
             send_frames_after_signal.extend(list(frame_items_queues.keys()))
+        elif message == 'arming':
+            alarm_system_service.arming()
+        elif message == 'disarming':
+            alarm_system_service.disarming()
+        elif message ==  'status':
+            if alarm_system_service.is_armed():
+                response = 'The alarm system is armed'  
+            else:
+                response = 'The alarm system is disarmed'
 
-        self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
+        self.transport.write(response.encode())
 
         logger.info('Close the client socket')
         self.transport.close()
