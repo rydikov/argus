@@ -37,9 +37,11 @@ def up_rps():
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config, telegram_service):
+    def __init__(self, net_config, telegram_service, alarm_system_service, aqara_service):
         self.net_config = net_config
         self.telegram  = telegram_service
+        self.alarm_system_service  = alarm_system_service
+        self.aqara_service  = aqara_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolov9c')
@@ -186,3 +188,8 @@ class OpenVinoRecognizer:
             ):
                 self.telegram.send_message(f'Objects detected: {queue_item.url}')
                 detected_frame_notification_time[thread_name] = datetime.now()
+                if (
+                    self.alarm_system_service.is_armed() and
+                    self.aqara_service is not None
+                ):
+                    self.aqara_service.run_scene()

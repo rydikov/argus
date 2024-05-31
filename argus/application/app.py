@@ -16,7 +16,13 @@ from argus.settings import (
     send_frames_after_signal, 
 )
 
-from argus.globals import config, recognizer
+from argus.globals import (
+    config, 
+    recognizer, 
+    telegram_service, 
+    alarm_system_service,
+    aqara_service
+)
 
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
@@ -56,11 +62,9 @@ class ServerProtocol(asyncio.Protocol):
         elif message == 'disarming':
             alarm_system_service.disarming()
         elif message ==  'status':
-            if alarm_system_service.is_armed():
-                response = 'The alarm system is armed'  
-            else:
-                response = 'The alarm system is disarmed'
-            ###
+            telegram_service.send_message(alarm_system_service.status)
+        elif message == 'run_scene':
+            aqara_service.run_scene()
 
         self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
 

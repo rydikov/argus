@@ -10,4 +10,5 @@ services:
       - ./models:/app/models
       - ./res:/app/res
       - ./data/Stills:/app/Stills
+      - ./data/tmp:/tmp/
     command: /usr/bin/python3.8 /app/argus/run.py

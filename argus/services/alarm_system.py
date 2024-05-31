@@ -21,3 +21,7 @@ class AlarmSystemService:
 
     def is_armed(self):
         return os.path.isfile(self.file_path)
+    
+    @property
+    def status(self):
+        return 'The alarm system is armed' if self.is_armed() else 'The alarm system is disarmed'
