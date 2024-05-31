@@ -11,13 +11,12 @@ from time import sleep
 
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
-from argus.utils.recognizer import OpenVinoRecognizer
-from argus.utils.telegram import Telegram
-from argus.globals import (
+from argus.settings import (
     detected_frame_notification_time, 
     send_frames_after_signal, 
-    alarm_system_service
 )
+
+from argus.globals import config, recognizer
 
 REDUCE_CPU_USAGE_SEC = 0.01
 LOG_TEMPERATURE_TIME = timedelta(minutes=1)
@@ -43,7 +42,6 @@ class ServerProtocol(asyncio.Protocol):
     def data_received(self, data):
         message = data.decode()
         logger.info(f'Data received: {message}')
-        response = DEFAULT_SERVER_RESPONSE
 
         if message == 'restart':
             self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
@@ -62,8 +60,9 @@ class ServerProtocol(asyncio.Protocol):
                 response = 'The alarm system is armed'  
             else:
                 response = 'The alarm system is disarmed'
+            ###
 
-        self.transport.write(response.encode())
+        self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
 
         logger.info('Close the client socket')
         self.transport.close()
@@ -92,7 +91,7 @@ class ExternalSignalsReciver(Thread):
 
 
 class SnapshotThread(Thread):
-    def __init__(self, name, config):
+    def __init__(self, name):
         super(SnapshotThread, self).__init__()
         self.name = name
         self.source_config = config['sources'][name]
@@ -128,30 +127,22 @@ class SnapshotThread(Thread):
                 source_fps[self.name] = {'count': 0, 'time': datetime.now()}
 
 
-def check_and_restart_dead_snapshot_threads(config):
+def check_and_restart_dead_snapshot_threads():
     active_threads = [t.name for t in threading.enumerate()]
     for thread_name in config['sources']:
         if thread_name not in active_threads:
-            thread = SnapshotThread(thread_name, config)
+            thread = SnapshotThread(thread_name)
             thread.start()
             logger.warning('Thread %s restarted' % thread_name)
 
 
-def run(config):
+def run():
 
-    if 'telegram_bot' in config:
-        telegram = Telegram(config['telegram_bot'])
-    else:
-        telegram = None
-
-    recognizer = OpenVinoRecognizer(config['recognizer'], telegram)
-
-    
     last_log_temperature_time = datetime.now()
 
     # Create and start threading for every source
     for source in config['sources']:
-        thread = SnapshotThread(source, config)
+        thread = SnapshotThread(source)
         thread.start()
         logger.info('Thread %s started' % source)
 
@@ -167,7 +158,7 @@ def run(config):
             try:
                 queue_item = copy.deepcopy(frame_items_queue.pop())
             except IndexError:
-                check_and_restart_dead_snapshot_threads(config)
+                check_and_restart_dead_snapshot_threads()
                 continue
 
             # Log temperature every LOG_TEMPERATURE_TIME

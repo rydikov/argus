@@ -1,16 +1,25 @@
-from datetime import timedelta
+import os
+import yaml
+
 from argus.services.alarm_system import AlarmSystemService
+from argus.services.telegram import TelegramService
+from argus.services.recognizer import OpenVinoRecognizer
 
-SILENT_TIME = timedelta(minutes=30)
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
-# Disable telegram alerting on silent time after detection
-# Last time when notification about detected frame has been sent
-detected_frame_notification_time = {}
+config_path = os.getenv('CONFIG_PATH', os.path.join(dir_path, '../development.yml'))
 
-# Last time when frame has been saved
-last_frame_save_time = {}
+with open(os.path.join(dir_path, config_path)) as f:
+    config = yaml.safe_load(f)
 
-# List for frames to be sent after an external signal
-send_frames_after_signal = []
+if config.get('telegram') is not None:
+    telegram_service = TelegramService(
+        config['telegram']['bot_token'], 
+        config['telegram']['bot_chat_id']
+    )
+else:
+    telegram_service = None
 
 alarm_system_service = AlarmSystemService()
+
+recognizer = OpenVinoRecognizer(config['recognizer'], telegram_service)

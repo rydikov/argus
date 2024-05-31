@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
 
 from argus.utils.timing import timing
-from argus.globals import (
+from argus.settings import (
     SILENT_TIME, 
     last_frame_save_time, 
     detected_frame_notification_time,
-    send_frames_after_signal
+    send_frames_after_signal,
 )
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
@@ -37,9 +37,9 @@ def up_rps():
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config, telegram):
+    def __init__(self, net_config, telegram_service):
         self.net_config = net_config
-        self.telegram = telegram
+        self.telegram  = telegram_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolov9c')

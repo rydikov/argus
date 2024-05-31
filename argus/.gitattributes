@@ -1,4 +1,0 @@
-../models/yolov8m.bin filter=lfs diff=lfs merge=lfs -text
-../models/yolov8m.xml filter=lfs diff=lfs merge=lfs -text
-../models/yolov8s.bin filter=lfs diff=lfs merge=lfs -text
-../models/yolov8s.xml filter=lfs diff=lfs merge=lfs -text
