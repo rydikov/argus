@@ -21,6 +21,7 @@ class AqaraService:
         self.scene_id = aqara_config['scene_id']
         self.account = aqara_config['account']
         self.code = aqara_config.get('code')
+        self.expiresIn = None
 
 
         self.tokens_file_path = '/tmp/tokens.json'
@@ -101,7 +102,7 @@ class AqaraService:
     
     def _make_request(self, data):
         
-        if self.expiresIn < time.time():
+        if self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
 
         resp = requests.post(
