@@ -27,11 +27,14 @@ class AqaraService:
         self.tokens_file_path = '/tmp/tokens.json'
         if os.path.isfile(self.tokens_file_path):
             self._load_tokens()
+            logger.info(f'Load tokens from file. Acces token  {self.access_token}')
         else:
             self._get_tokens()
+            logger.info(f'Get tokens. Acces token  {self.access_token}')
         
     def _get_tokens(self):
         if self.code is None:
+            logger.info(f'Get tokens. Code is None')
             data = {
                 'intent': 'config.auth.getAuthCode',
                 'data': {
@@ -40,6 +43,7 @@ class AqaraService:
                 }
             }
         else:
+            logger.info(f'Get tokens. Code is {self.code}')
             data = {
 	            'intent': 'config.auth.getToken',
 	            'data': {
@@ -49,6 +53,7 @@ class AqaraService:
                 }
             }
         resp = self._make_request(data)['result']
+        logger.info(f'Get tokens. Resp {resp}')
         if 'accessToken' in resp:
             self._save_tokens(resp)
 
@@ -77,6 +82,7 @@ class AqaraService:
             }
         }
         resp = self._make_request(data)['result']
+        logger.info(f'Refresh tokens. Resp {resp}')
         self._save_tokens(resp)
 
     def _get_headers(self, access_token=''):
@@ -105,11 +111,15 @@ class AqaraService:
         if self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
 
+        headers = self._get_headers(self.access_token)
+        logger.info(f'Make request with headers {headers}')
+
         resp = requests.post(
             BASE_URL, 
-            headers=self._get_headers(self.access_token), 
+            headers=headers, 
             json=data
         ).json()
+        
         logger.info(resp)
         return resp
     
