@@ -1,3 +1,6 @@
+app:
+  state_dir: /app/state
+
 sources:
   first-cam:
     source: /app/res/demo.mov
@@ -11,3 +14,11 @@ sources:
 recognizer:
   device_name: CPU
   num_requests: 4
+
+aqara:
+  scene_id: AL.597859344917472
+  code: 441056
+  app_id: 117663177291510988845f3c
+  app_key: g8oavvlr40z5fmw2ec81zcwbfp0670o4
+  key_id: K.1176631772965441536
+  account: rydikov@gmail.com

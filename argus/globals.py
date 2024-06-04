@@ -13,6 +13,10 @@ config_path = os.getenv('CONFIG_PATH', os.path.join(dir_path, '../development.ym
 with open(os.path.join(dir_path, config_path)) as f:
     config = yaml.safe_load(f)
 
+state_dir = config['app']['state_dir']
+if not os.path.exists(state_dir):
+    os.makedirs(state_dir)
+
 if config.get('telegram_bot') is not None:
     telegram_service = TelegramService(
         config['telegram_bot']['token'], 
@@ -22,11 +26,11 @@ else:
     telegram_service = None
 
 if config.get('aqara'):
-    aqara_service  = AqaraService(config['aqara'])
+    aqara_service  = AqaraService(config['aqara'], state_dir)
 else:
     aqara_service = None
 
-alarm_system_service = AlarmSystemService()
+alarm_system_service = AlarmSystemService(state_dir)
 recognizer = OpenVinoRecognizer(
     config['recognizer'], 
     telegram_service,

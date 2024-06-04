@@ -1,11 +1,10 @@
-import datetime
 import hashlib
 import json
 import logging
+import os.path
 import requests
 import time
 import uuid
-import os.path
 
 BASE_URL = 'https://open-ru.aqara.com/v3.0/open/api'
 
@@ -13,7 +12,7 @@ logger = logging.getLogger('json')
 
 
 class AqaraService:
-    def __init__(self, aqara_config):
+    def __init__(self, aqara_config, state_dir):
         self.access_token = ''
         self.app_id = aqara_config['app_id']
         self.app_key = aqara_config['app_key']
@@ -21,17 +20,13 @@ class AqaraService:
         self.scene_id = aqara_config['scene_id']
         self.account = aqara_config['account']
         self.code = aqara_config.get('code')
+        
+        self.access_token = None
+        self.refresh_token = None
         self.expiresIn = None
 
+        self.tokens_file_path = os.path.join(state_dir, 'tokens.json')
 
-        self.tokens_file_path = '/tmp/tokens.json'
-        if os.path.isfile(self.tokens_file_path):
-            self._load_tokens()
-            logger.info(f'Load tokens from file. Acces token  {self.access_token}')
-        else:
-            self._get_tokens()
-            logger.info(f'Get tokens. Acces token  {self.access_token}')
-        
     def _get_tokens(self):
         if self.code is None:
             logger.info(f'Get tokens. Code is None')
@@ -52,7 +47,7 @@ class AqaraService:
     	            'accountType': 0
                 }
             }
-        resp = self._make_request(data)['result']
+        resp = self._make_request(data, without_acces_token=True)['result']
         logger.info(f'Get tokens. Resp {resp}')
         if 'accessToken' in resp:
             self._save_tokens(resp)
@@ -106,7 +101,18 @@ class AqaraService:
             'Sign': sign
         } 
     
-    def _make_request(self, data):
+    def _make_request(self, data, without_acces_token=False):
+
+        if self.access_token is None and not without_acces_token:
+            if os.path.isfile(self.tokens_file_path):
+                self._load_tokens()
+                logger.info(f'Load tokens from file. Acces token  {self.access_token}')
+            else:
+                self._get_tokens()
+                logger.info(f'Get tokens. Acces token  {self.access_token}')
+                if self.access_token is None:
+                    logger.info(f'Check code on email and set it to config')
+                    return
         
         if self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
@@ -119,7 +125,7 @@ class AqaraService:
             headers=headers, 
             json=data
         ).json()
-        
+
         logger.info(resp)
         return resp
     

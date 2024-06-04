@@ -6,8 +6,8 @@ logger = logging.getLogger('json')
 
 class AlarmSystemService:
 
-    def __init__(self):
-        self.file_path = '/tmp/arming'
+    def __init__(self, state_dir):
+        self.file_path = os.path.join(state_dir, 'arming')
 
     def arming(self):
         with open(self.file_path, 'a'):
