@@ -11,6 +11,10 @@ BASE_URL = 'https://open-ru.aqara.com/v3.0/open/api'
 logger = logging.getLogger('json')
 
 
+class GetTokensError(Exception):
+    pass
+
+
 class AqaraService:
     def __init__(self, aqara_config, state_dir):
         self.access_token = ''
@@ -27,19 +31,25 @@ class AqaraService:
 
         self.tokens_file_path = os.path.join(state_dir, 'tokens.json')
 
-    def _get_tokens(self):
-        if self.code is None:
-            logger.info(f'Get tokens. Code is None')
-            data = {
-                'intent': 'config.auth.getAuthCode',
-                'data': {
-                    'account': self.account,
-                    'accountType': 0,
-                }
+    def _get_code(self):
+        logger.info(f'Get code')
+        data = {
+            'intent': 'config.auth.getAuthCode',
+            'data': {
+                'account': self.account,
+                'accountType': 0,
             }
-        else:
-            logger.info(f'Get tokens. Code is {self.code}')
-            data = {
+        }
+        resp = requests.post(BASE_URL, headers=self._get_headers(), json=data).json()['result']
+        logger.info(f'Get code. Resp {resp}')
+
+    def _get_tokens(self):
+        
+        if self.code is None:
+            raise GetTokensError('Code is None')
+       
+        logger.info(f'Get tokens. Code is {self.code}')
+        data = {
 	            'intent': 'config.auth.getToken',
 	            'data': {
     	            'authCode': self.code,
@@ -47,15 +57,18 @@ class AqaraService:
     	            'accountType': 0
                 }
             }
-        resp = self._make_request(data, without_acces_token=True)['result']
-        logger.info(f'Get tokens. Resp {resp}')
-        if 'accessToken' in resp:
-            self._save_tokens(resp)
+        resp = requests.post(BASE_URL, headers=self._get_headers(), json=data).json()
+        if 'accessToken' in resp['result']:
+            logger.info(f'Get tokens. Resp {resp}')
+            self._save_tokens(resp['result'])
+        else:
+            logger.error(f'Get tokens. Error  {resp}')
+            raise GetTokensError('Api error')
 
     def _load_tokens(self):
         
         with open(self.tokens_file_path, 'r') as f:
-            tokens = json.load(f)['result']
+            tokens = json.load(f)
 
         self.access_token = tokens['accessToken']
         self.refresh_token = tokens['refreshToken']
@@ -103,28 +116,24 @@ class AqaraService:
     
     def _make_request(self, data, without_acces_token=False):
 
-        if self.access_token is None and not without_acces_token:
-            if os.path.isfile(self.tokens_file_path):
-                self._load_tokens()
-                logger.info(f'Load tokens from file. Acces token  {self.access_token}')
-            else:
-                self._get_tokens()
-                logger.info(f'Get tokens. Acces token  {self.access_token}')
-                if self.access_token is None:
-                    logger.info(f'Check code on email and set it to config')
-                    return
-        
+        # First request
+        if self.access_token is None and os.path.isfile(self.tokens_file_path):
+            self._load_tokens()
+        # Exchange code to access token and save tokens to file
+        elif self.code:
+            self._get_tokens()
+        # Get code on email
+        else:
+            self._get_code()
+            return
+            
         if self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
 
         headers = self._get_headers(self.access_token)
         logger.info(f'Make request with headers {headers}')
 
-        resp = requests.post(
-            BASE_URL, 
-            headers=headers, 
-            json=data
-        ).json()
+        resp = requests.post(BASE_URL, headers=headers, json=data).json()
 
         logger.info(resp)
         return resp
