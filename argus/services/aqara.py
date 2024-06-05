@@ -23,13 +23,13 @@ class AqaraService:
         self.key_id = aqara_config['key_id']
         self.scene_id = aqara_config['scene_id']
         self.account = aqara_config['account']
-        self.code = aqara_config.get('code')
         
         self.access_token = None
         self.refresh_token = None
         self.expiresIn = None
 
         self.tokens_file_path = os.path.join(state_dir, 'tokens.json')
+        self.code_file_path  = os.path.join(state_dir, 'code.json')
 
     def _get_code(self):
         logger.info(f'Get code')
@@ -45,14 +45,19 @@ class AqaraService:
 
     def _get_tokens(self):
         
-        if self.code is None:
+        try:
+            with open(self.code_file_path, 'r') as f:
+                code = json.load(f)['code']
+        except Exception:
             raise GetTokensError('Code is None')
+        else:
+            os.remove(self.code_file_path)
        
-        logger.info(f'Get tokens. Code is {self.code}')
+        logger.info(f'Get tokens. Code is {code}')
         data = {
 	            'intent': 'config.auth.getToken',
 	            'data': {
-    	            'authCode': self.code,
+    	            'authCode': code,
     	            'account': self.account,
     	            'accountType': 0
                 }
@@ -66,7 +71,8 @@ class AqaraService:
             raise GetTokensError('Api error')
 
     def _load_tokens(self):
-        
+        logger.info(f'Load tokens')
+
         with open(self.tokens_file_path, 'r') as f:
             tokens = json.load(f)
 
@@ -120,7 +126,7 @@ class AqaraService:
         if self.access_token is None and os.path.isfile(self.tokens_file_path):
             self._load_tokens()
         # Exchange code to access token and save tokens to file
-        elif self.code:
+        elif os.path.isfile(self.code_file_path):
             self._get_tokens()
         # Get code on email
         else:
