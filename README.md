@@ -2,7 +2,7 @@
 
 | Details                 |               |
 |-------------------------|---------------|
-| Neural network:         |[![YOLOv9](https://img.shields.io/badge/yolo-8-blue)](https://github.com/WongKinYiu/yolov9) |
+| Neural network:         |[![YOLOv9](https://img.shields.io/badge/yolo-9-blue)](https://github.com/WongKinYiu/yolov9) |
 | Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.2](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
 | Hardware Used:          | Mini PC       |
 | Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
@@ -89,18 +89,18 @@ My private repository contain files:
 Supervisor exapmle
 ```
 [program:argus]
-command=/bin/bash -c 'source /home/pi/openvino_dist/bin/setupvars.sh && sleep 5 && /usr/bin/python3.7 /home/pi/argus/argus/run.py /home/pi/argus-production-config/production.yml'
-stdout_logfile=/home/pi/timelapse/argus.log
+command=/bin/bash -c 'source /opt/intel/openvino_2022/setupvars.sh && sleep 5 && /home/xcy/argus/.env/bin/python /home/xcy/argus/argus/run.py'
+stdout_logfile=/home/xcy/timelapse/argus.log
 stdout_logfile_maxbytes=1MB
 stdout_logfile_backups=10
-stderr_logfile=/home/pi/timelapse/argus.err
+stderr_logfile=/home/xcy/timelapse/argus.err
 stderr_logfile_maxbytes=1MB 
 stderr_logfile_backups=10
 redirect_stderr=true
 autostart=true
 autorestart=true
 user=pi
-environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus"
+environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus",CONFIG_PATH="/home/xcy/argus-production-config/production.yml"
 ```
 
 
@@ -113,7 +113,7 @@ server {
 	access_log  /var/log/nginx/localhost.access.log;
 
 	location / {
-		root   /home/pi/timelapse/;
+		root   /home/xcy/timelapse/;
 		autoindex  on;
 		autoindex_localtime on;
     autoindex_exact_size off;
@@ -138,7 +138,7 @@ loki:
       - targets: [localhost]
         labels:
           job: argus
-          __path__: /home/pi/timelapse/argus.log
+          __path__: /home/xcy/timelapse/argus.log
       pipeline_stages:
       - json:
           expressions:
@@ -164,6 +164,14 @@ loki:
 
 
 ### App Config options
+
+### App section
+| Option                 | Required | Description                                                                                |
+|------------------------|----------|--------------------------------------------------------------------------------------------|
+| app                    | +        | Main section                                                                               |
+| state_dir              | +        | Path to app state for store tockens etc                                                    |
+
+
 
 #### Sources secton
 
@@ -232,16 +240,32 @@ recognizer:
 |   token                |          | Token                                                                    |
 |   chat_id              |          | ChatId                                                                   |
 
-Example for telegram_bot secton with all options:
+#### Aqara secton (optional)
+
+| Option                 | Required | Description                                                              |
+|------------------------|----------|--------------------------------------------------------------------------|
+| aqara                  |          | Aqara section. Use it for run scenes                                     |
+|   scene_id             |          |                                                                          |
+|   app_id               |          |                                                                          |
+|   app_key              |          |                                                                          |
+|   key_id               |          |                                                                          |
+|   account              |          |                                                                          |
+
+Example for aqara secton with all options:
 
 ```yaml
-telegram_bot:
-  token: __token__
-  chat_id: __chat_id__
+aqara:
+  scene_id: AL.52785555917472
+  app_id: __app_id__
+  app_key: __app_key__
+  key_id: __key_id__
+  account: example@example.com
 ```
+Detail: https://opendoc.aqara.cn/en/docs/developmanual/authManagement/aqaraauthMode.html
 
 
 ## Credit
 
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - [Yolov9](https://github.com/WongKinYiu/yolov9)
+- [Aqara](https://developer.aqara.com/?lang=en)

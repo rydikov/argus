@@ -44,7 +44,7 @@ class OpenVinoRecognizer:
         self.aqara_service  = aqara_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
-        model_name = self.net_config.get('model', 'yolov9m')
+        model_name = self.net_config.get('model', 'yolov9s')
 
         self.core = Core()
         model = self.core.read_model(os.path.join(models_path, f'{model_name}.xml'))

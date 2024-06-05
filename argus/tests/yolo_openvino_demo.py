@@ -4,7 +4,7 @@ import cv2, time
 from openvino.runtime import Core
 
 
-MODEL_NAME = "yolov8s"
+MODEL_NAME = "yolov9s"
 
 with open('/app/models/coco.names', 'r') as f:
     CLASSES = [x.strip() for x in f]
