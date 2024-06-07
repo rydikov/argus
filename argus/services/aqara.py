@@ -17,7 +17,6 @@ class GetTokensError(Exception):
 
 class AqaraService:
     def __init__(self, aqara_config, state_dir):
-        self.access_token = ''
         self.app_id = aqara_config['app_id']
         self.app_key = aqara_config['app_key']
         self.key_id = aqara_config['key_id']
@@ -55,11 +54,11 @@ class AqaraService:
        
         logger.info(f'Get tokens. Code is {code}')
         data = {
-	            'intent': 'config.auth.getToken',
-	            'data': {
-    	            'authCode': code,
-    	            'account': self.account,
-    	            'accountType': 0
+            'intent': 'config.auth.getToken',
+            'data': {
+                'authCode': code,
+                'account': self.account,
+                'accountType': 0
                 }
             }
         resp = requests.post(BASE_URL, headers=self._get_headers(), json=data).json()

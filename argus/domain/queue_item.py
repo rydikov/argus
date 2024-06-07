@@ -24,7 +24,6 @@ class QueueItem:
 
         self.objects_detected = False
         self.important_objects_detected = False
-        self.frame_filename = None
 
     def __mark_object(self, obj):
         label = f"{obj['label']} ({obj['confidence']:.2f})"
@@ -44,15 +43,6 @@ class QueueItem:
                 if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
 
-    @property
-    def url(self):
-        if self.frame_filename is None:
-            raise Exception('Frame was not saved')
-        elif self.host_stills_uri is None:
-            raise Exception('Host url does not specify')
-        else:
-            return '{}/{}'.format(self.host_stills_uri, self.frame_filename)
-            
     def save(self, prefix=None):
 
         if not os.path.exists(self.stills_dir):
@@ -61,10 +51,11 @@ class QueueItem:
         timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
         if prefix is None:
-            self.frame_filename = '{}.jpg'.format(timestamp)
+            frame_filename = '{}.jpg'.format(timestamp)
         else:
-            self.frame_filename = '{}-{}.jpg'.format(timestamp, prefix)
+            frame_filename = '{}-{}.jpg'.format(timestamp, prefix)
 
-        if not cv2.imwrite(os.path.join(self.stills_dir, self.frame_filename), self.frame):
-            logger.error('Unable to save file: %s' % self.frame_filename)
+        if not cv2.imwrite(os.path.join(self.stills_dir, frame_filename), self.frame):
+            logger.error('Unable to save file: %s' % frame_filename)
 
+        return f'{self.host_stills_uri}/{frame_filename}' if self.host_stills_uri is not None else None
