@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 import threading
+import sys
 
 from datetime import datetime, timedelta
 from collections import deque
@@ -133,6 +134,11 @@ class SnapshotThread(Thread):
 
 def check_and_restart_dead_snapshot_threads():
     active_threads = [t.name for t in threading.enumerate()]
+    
+    if 'MainThread' not in active_threads:
+        logger.error('MainThread is not running')
+        sys.exit(1)
+
     for thread_name in config['sources']:
         if thread_name not in active_threads:
             thread = SnapshotThread(thread_name)
