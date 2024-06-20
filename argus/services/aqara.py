@@ -30,6 +30,9 @@ class AqaraService:
         self.tokens_file_path = os.path.join(state_dir, 'tokens.json')
         self.code_file_path  = os.path.join(state_dir, 'code.json')
 
+        if os.path.isfile(self.tokens_file_path):
+            self._load_tokens()
+
     def _get_code(self):
         logger.info(f'Get code')
         data = {
@@ -79,6 +82,10 @@ class AqaraService:
         self.refresh_token = tokens['refreshToken']
         self.expiresIn = int(tokens['expiresIn'])
 
+    def save_code(self, code):
+        with open(self.code_file_path,  'w+') as f:
+            json.dump({'code': code}, f, indent=4)
+
     def _save_tokens(self, tokens):
         self.access_token = tokens['accessToken']
         self.refresh_token = tokens['refreshToken']
@@ -121,19 +128,14 @@ class AqaraService:
     
     def _make_request(self, data, without_acces_token=False):
 
-        # First request
-        if self.access_token is None and os.path.isfile(self.tokens_file_path):
-            self._load_tokens()
-        # Exchange code to access token and save tokens to file
-        elif os.path.isfile(self.code_file_path):
+        if os.path.isfile(self.code_file_path):
             self._get_tokens()
-        # Get code on email
-        else:
+        elif self.access_token is None:
             self._get_code()
-            return
-            
-        if self.expiresIn and self.expiresIn < time.time():
+        elif self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
+        else:
+            raise GetTokensError('No way')
 
         headers = self._get_headers(self.access_token)
         logger.info(f'Make request with headers {headers}')
