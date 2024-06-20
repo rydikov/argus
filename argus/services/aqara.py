@@ -8,6 +8,8 @@ import uuid
 
 BASE_URL = 'https://open-ru.aqara.com/v3.0/open/api'
 
+INCORRECT_REFRESH_TOKEN_CODE = 2006
+
 logger = logging.getLogger('json')
 
 
@@ -102,9 +104,15 @@ class AqaraService:
                 'refreshToken': self.refresh_token
             }
         }
-        resp = self._make_request(data)['result']
+        resp = requests.post(BASE_URL, headers=self._get_headers(), json=data).json()
+
+        if resp['code'] == INCORRECT_REFRESH_TOKEN_CODE:
+            logger.error(f'Refresh tokens. Error {resp}')
+            self.access_token = None
+            raise GetTokensError('Api error')
+
         logger.info(f'Refresh tokens. Resp {resp}')
-        self._save_tokens(resp)
+        self._save_tokens(resp['result'])
 
     def _get_headers(self, access_token=''):
 

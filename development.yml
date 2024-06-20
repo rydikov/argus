@@ -14,3 +14,4 @@ sources:
 recognizer:
   device_name: CPU
   num_requests: 4
+  
