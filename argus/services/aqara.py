@@ -83,6 +83,7 @@ class AqaraService:
         self.expiresIn = int(tokens['expiresIn'])
 
     def save_code(self, code):
+        logger.info(f'Save {code} to {self.code_file_path}')
         with open(self.code_file_path,  'w+') as f:
             json.dump({'code': code}, f, indent=4)
 
@@ -146,6 +147,8 @@ class AqaraService:
         return resp
     
     def run_scene(self):
+        logger.info(f'Run scene')
+
         data = {
             'intent': 'config.scene.run',
             'data': {
