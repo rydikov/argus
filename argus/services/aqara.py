@@ -127,7 +127,7 @@ class AqaraService:
             'Sign': sign
         } 
     
-    def _make_request(self, data, without_acces_token=False):
+    def _make_request(self, data):
 
         if os.path.isfile(self.code_file_path):
             self._get_tokens()

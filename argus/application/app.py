@@ -66,9 +66,11 @@ class ServerProtocol(asyncio.Protocol):
             telegram_service.send_message(alarm_system_service.status)
         elif message == 'run_scene':
             aqara_service.run_scene()
-        elif message.startswith('save_code'):
+        elif message.startswith('set_code'):
             _, code = message.split(':')
             aqara_service.save_code(code)
+        else:
+            logger.info('Unknown command')
 
         self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
 
