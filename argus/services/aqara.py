@@ -143,8 +143,6 @@ class AqaraService:
             self._get_code()
         elif self.expiresIn and self.expiresIn < time.time():
             self._refresh_tokens()
-        else:
-            raise GetTokensError('No way')
 
         headers = self._get_headers(self.access_token)
         logger.info(f'Make request with headers {headers}')
