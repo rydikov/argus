@@ -9,6 +9,7 @@ import uuid
 BASE_URL = 'https://open-ru.aqara.com/v3.0/open/api'
 
 INCORRECT_REFRESH_TOKEN_CODE = 2006
+ACCESSTOKEN_ILLEGAL = 108
 
 logger = logging.getLogger('json')
 
@@ -108,7 +109,7 @@ class AqaraService:
 
         if resp['code'] == INCORRECT_REFRESH_TOKEN_CODE:
             logger.error(f'Refresh tokens. Error {resp}')
-            self.access_token = None
+            self._get_code()
             raise GetTokensError('Api error')
 
         logger.info(f'Refresh tokens. Resp {resp}')
@@ -148,6 +149,10 @@ class AqaraService:
         logger.info(f'Make request with headers {headers}')
 
         resp = requests.post(BASE_URL, headers=headers, json=data).json()
+
+        if resp['code'] == ACCESSTOKEN_ILLEGAL:
+            logger.error(f'AccessToken illegal {resp}')
+            self._get_code()
 
         logger.info(resp)
         return resp
