@@ -161,9 +161,16 @@ class OpenVinoRecognizer:
         
         # Save, alerting, etc
         if queue_item.objects_detected:
-            # Save detected frames every 1 sec
-            delta = timedelta(seconds=1)
             prefix = 'detected'
+            # Save detected frames every 1 sec
+            if (
+                queue_item.important_objects_detected or 
+                (
+                    queue_item.important_armed_objects_detected and 
+                    self.alarm_system_service.is_armed()
+                )
+            ):
+                delta = timedelta(seconds=1)
         else:
             # Save other frames every N (save_every_sec) sec
             delta = timedelta(seconds=queue_item.save_every_sec)
@@ -177,7 +184,11 @@ class OpenVinoRecognizer:
             last_frame_save_time[thread_name] = datetime.now()
             # Telegram alerting for important objects
             if (
-                queue_item.important_objects_detected and
+                queue_item.important_objects_detected or
+                (
+                    queue_item.important_armed_objects_detected and 
+                    self.alarm_system_service.is_armed()
+                ) and
                 self.telegram is not None and
                 (
                     detected_frame_notification_time.get(thread_name) is None or

@@ -16,7 +16,8 @@ class QueueItem:
         self.thread_name = thread_name
  
         self.important_objects = source_config.get('important_objects', ['person'])
-        self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
+        self.important_armed_objects = source_config.get('important_armed_objects', ['car'])
+        self.detectable_objects = self.important_objects + self.important_armed_objects + source_config.get('other_objects', [])
 
         self.stills_dir = source_config['stills_dir']
         self.save_every_sec = source_config['save_every_sec']
@@ -24,6 +25,7 @@ class QueueItem:
 
         self.objects_detected = False
         self.important_objects_detected = False
+        self.important_armed_objects_detected = False
 
     def __mark_object(self, obj):
         label = f"{obj['label']} ({obj['confidence']:.2f})"
@@ -42,6 +44,8 @@ class QueueItem:
                 logger.warning('Object detected', extra=obj)
                 if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
+                if obj['label'] in self.important_armed_objects:
+                    self.important_armed_objects_detected = True
 
     def save(self, prefix=None):
 
