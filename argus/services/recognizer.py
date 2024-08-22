@@ -149,6 +149,7 @@ class OpenVinoRecognizer:
             detections.append(detection)
 
         if detections:
+            queue_item.is_armed = self.alarm_system_service.is_armed()
             queue_item.map_detections_to_frame(detections)   
         queue_item.mark_as_recognized()
 
@@ -165,21 +166,17 @@ class OpenVinoRecognizer:
         if notification_throttlers.get(thread_name) is None:
             notification_throttlers[thread_name] = Throttler()
 
-        def is_important_detection(queue_item, alarm_system_service):
-            return queue_item.important_objects_detected or (queue_item.important_armed_objects_detected and alarm_system_service.is_armed())
-        
-        # Set saving interval on 1 sec
-        save_interval = 1 if is_important_detection(queue_item, self.alarm_system_service) else queue_item.save_every_sec
-            
-        if save_throttlers[thread_name].is_allowed(save_interval):
+
+        if save_throttlers[thread_name].is_allowed(queue_item.save_every_sec):
             frame_url = queue_item.save()
             # Telegram alerting for important objects
             if (
-                is_important_detection(queue_item, self.alarm_system_service) and
+                queue_item.important_objects_detected and
                 notification_throttlers[thread_name].is_allowed(SILENT_TIME) and
                 self.telegram is not None
             ):
                 self.telegram.send_message(f'Objects detected: {frame_url}')
+                # Run scene if armed
                 if (
                     self.alarm_system_service.is_armed() and
                     self.aqara_service is not None

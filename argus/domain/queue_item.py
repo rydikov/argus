@@ -25,7 +25,7 @@ class QueueItem:
 
         self.objects_detected = False
         self.important_objects_detected = False
-        self.important_armed_objects_detected = False
+        self.is_armed = False
 
     def __mark_object(self, obj):
         label = f"{obj['label']} ({obj['confidence']:.2f})"
@@ -42,10 +42,10 @@ class QueueItem:
                 self.objects_detected = True
                 self.__mark_object(obj)
                 logger.warning('Object detected', extra=obj)
-                if obj['label'] in self.important_objects:
+                if obj['label'] in self.important_objects or (obj['label'] in self.important_armed_objects and self.is_armed):
                     self.important_objects_detected = True
-                if obj['label'] in self.important_armed_objects:
-                    self.important_armed_objects_detected = True
+                    self.save_every_sec = 1
+                
 
     def save(self):
 
