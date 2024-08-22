@@ -13,7 +13,7 @@ from time import sleep
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.settings import (
-    detected_frame_notification_time, 
+    notification_throttlers, 
     send_frames_after_signal, 
 )
 
@@ -55,7 +55,7 @@ class ServerProtocol(asyncio.Protocol):
             self.transport.close()
             os._exit(0)
         elif message == 'reset':
-            detected_frame_notification_time.clear()
+            notification_throttlers.clear()
         elif message == 'get_photos':
             send_frames_after_signal.extend(list(frame_items_queues.keys()))
         elif message == 'arming':

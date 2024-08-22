@@ -7,11 +7,11 @@ import numpy as np
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
 
-from argus.utils.timing import timing
+from argus.utils.timing import Throttler
 from argus.settings import (
     SILENT_TIME, 
-    last_frame_save_time, 
-    detected_frame_notification_time,
+    save_throttlers, 
+    notification_throttlers,
     send_frames_after_signal,
 )
 
@@ -159,37 +159,27 @@ class OpenVinoRecognizer:
             send_frames_after_signal.remove(thread_name)
             self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
 
-        # Save other frames every N (save_every_sec) sec
-        delta = timedelta(seconds=queue_item.save_every_sec)
-        prefix = None
+        # Set throttlers for saving and notifications
+        if save_throttlers.get(thread_name) is None:
+            save_throttlers[thread_name] = Throttler()
+        if notification_throttlers.get(thread_name) is None:
+            notification_throttlers[thread_name] = Throttler()
 
         def is_important_detection(queue_item, alarm_system_service):
             return queue_item.important_objects_detected or (queue_item.important_armed_objects_detected and alarm_system_service.is_armed())
         
-        # Save, alerting, etc
-        if queue_item.objects_detected:
-            prefix = 'detected'
-            # Save detected frames every 1 sec
-            if is_important_detection(queue_item, self.alarm_system_service):
-                delta = timedelta(seconds=1)
+        # Set saving interval on 1 sec
+        save_interval = 1 if is_important_detection(queue_item, self.alarm_system_service) else queue_item.save_every_sec
             
-        if (
-            last_frame_save_time.get(thread_name) is None or
-            last_frame_save_time[thread_name] + delta < datetime.now()
-        ):
-            frame_url = queue_item.save(prefix=prefix)
-            last_frame_save_time[thread_name] = datetime.now()
+        if save_throttlers[thread_name].is_allowed(save_interval):
+            frame_url = queue_item.save()
             # Telegram alerting for important objects
             if (
                 is_important_detection(queue_item, self.alarm_system_service) and
-                self.telegram is not None and
-                (
-                    detected_frame_notification_time.get(thread_name) is None or
-                    detected_frame_notification_time[thread_name] + SILENT_TIME < datetime.now()
-                )
+                notification_throttlers[thread_name].is_allowed(SILENT_TIME) and
+                self.telegram is not None
             ):
                 self.telegram.send_message(f'Objects detected: {frame_url}')
-                detected_frame_notification_time[thread_name] = datetime.now()
                 if (
                     self.alarm_system_service.is_armed() and
                     self.aqara_service is not None

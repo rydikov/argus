@@ -47,17 +47,17 @@ class QueueItem:
                 if obj['label'] in self.important_armed_objects:
                     self.important_armed_objects_detected = True
 
-    def save(self, prefix=None):
+    def save(self):
 
         if not os.path.exists(self.stills_dir):
             os.makedirs(self.stills_dir)
 
         timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
-        if prefix is None:
-            frame_filename = '{}.jpg'.format(timestamp)
+        if self.objects_detected:
+            frame_filename = '{}-{}.jpg'.format(timestamp, 'detected')
         else:
-            frame_filename = '{}-{}.jpg'.format(timestamp, prefix)
+            frame_filename = '{}.jpg'.format(timestamp)
 
         if not cv2.imwrite(os.path.join(self.stills_dir, frame_filename), self.frame):
             logger.error('Unable to save file: %s' % frame_filename)

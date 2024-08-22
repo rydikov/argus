@@ -24,3 +24,16 @@ def timing(f):
         )
         return result
     return wrap
+
+
+
+class Throttler:
+    def __init__(self):
+        self.last_time_called = None
+
+    def is_allowed(self, interval):
+        now = time()
+        if self.last_time_called is None or now - self.last_time_called >= interval:
+            self.last_time_called = now
+            return True
+        return False
