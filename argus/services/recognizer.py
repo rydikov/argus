@@ -158,23 +158,20 @@ class OpenVinoRecognizer:
         if thread_name in send_frames_after_signal and self.telegram is not None:
             send_frames_after_signal.remove(thread_name)
             self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
+
+        # Save other frames every N (save_every_sec) sec
+        delta = timedelta(seconds=queue_item.save_every_sec)
+        prefix = None
+
+        def is_important_detection(queue_item, alarm_system_service):
+            return queue_item.important_objects_detected or (queue_item.important_armed_objects_detected and alarm_system_service.is_armed())
         
         # Save, alerting, etc
         if queue_item.objects_detected:
             prefix = 'detected'
             # Save detected frames every 1 sec
-            if (
-                queue_item.important_objects_detected or 
-                (
-                    queue_item.important_armed_objects_detected and 
-                    self.alarm_system_service.is_armed()
-                )
-            ):
+            if is_important_detection(queue_item, self.alarm_system_service):
                 delta = timedelta(seconds=1)
-        else:
-            # Save other frames every N (save_every_sec) sec
-            delta = timedelta(seconds=queue_item.save_every_sec)
-            prefix = None
             
         if (
             last_frame_save_time.get(thread_name) is None or
@@ -184,11 +181,7 @@ class OpenVinoRecognizer:
             last_frame_save_time[thread_name] = datetime.now()
             # Telegram alerting for important objects
             if (
-                queue_item.important_objects_detected or
-                (
-                    queue_item.important_armed_objects_detected and 
-                    self.alarm_system_service.is_armed()
-                ) and
+                is_important_detection(queue_item, self.alarm_system_service) and
                 self.telegram is not None and
                 (
                     detected_frame_notification_time.get(thread_name) is None or
