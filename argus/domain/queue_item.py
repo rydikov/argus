@@ -4,16 +4,20 @@ import os
 
 from datetime import datetime
 
+from argus.globals import config
+
 WHITE_COLOR = (255, 255, 255)
 
 logger = logging.getLogger('json')
 
 
 class QueueItem:
-    def __init__(self, source_config, frame, thread_name):
+    def __init__(self, frame, thread_name):
 
         self.frame = frame
         self.thread_name = thread_name
+
+        source_config = config['sources'][thread_name]
  
         self.important_objects = source_config.get('important_objects', ['person'])
         self.important_armed_objects = source_config.get('important_armed_objects', ['car'])

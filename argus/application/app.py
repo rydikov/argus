@@ -104,8 +104,7 @@ class SnapshotThread(Thread):
     def __init__(self, name):
         super(SnapshotThread, self).__init__()
         self.name = name
-        self.source_config = config['sources'][name]
-        self.frame_grabber = FrameGrabber(config=self.source_config)
+        self.frame_grabber = FrameGrabber(config=config['sources'][name])
 
     def run(self):
         """
@@ -118,7 +117,6 @@ class SnapshotThread(Thread):
         while True:
 
             frame_items_queues[self.name].append(QueueItem(
-                self.source_config,
                 self.frame_grabber.make_snapshot(),
                 self.name)
             )
