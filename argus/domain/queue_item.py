@@ -38,7 +38,7 @@ class QueueItem:
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
     def mark_as_recognized(self):
-        cv2.putText(self.frame, "Recognized", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
+        cv2.putText(self.frame, f"Recognized {self.is_armed}", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
 
     def map_detections_to_frame(self, detection):
         for obj in detection:
