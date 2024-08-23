@@ -7,7 +7,6 @@ import numpy as np
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
 
-from argus.utils.timing import Throttler
 from argus.settings import (
     SILENT_TIME, 
     save_throttlers, 
@@ -148,10 +147,7 @@ class OpenVinoRecognizer:
 
             detections.append(detection)
 
-        if detections:
-            queue_item.is_armed = self.alarm_system_service.is_armed()
-            queue_item.map_detections_to_frame(detections)   
-        queue_item.mark_as_recognized()
+        queue_item.post_process(detections, self.alarm_system_service.is_armed())
 
         thread_name = queue_item.thread_name
 
@@ -159,13 +155,6 @@ class OpenVinoRecognizer:
         if thread_name in send_frames_after_signal and self.telegram is not None:
             send_frames_after_signal.remove(thread_name)
             self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
-
-        # Set throttlers for saving and notifications
-        if save_throttlers.get(thread_name) is None:
-            save_throttlers[thread_name] = Throttler()
-        if notification_throttlers.get(thread_name) is None:
-            notification_throttlers[thread_name] = Throttler()
-
 
         if save_throttlers[thread_name].is_allowed(queue_item.save_every_sec):
             frame_url = queue_item.save()

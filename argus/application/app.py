@@ -10,9 +10,11 @@ from collections import deque
 from threading import Thread
 from time import sleep
 
+from argus.utils.timing import Throttler
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.settings import (
+    save_throttlers,
     notification_throttlers, 
     send_frames_after_signal, 
 )
@@ -158,6 +160,10 @@ def run():
         thread = SnapshotThread(source)
         thread.start()
         logger.info('Thread %s started' % source)
+        
+        # Set throttlers for saving and notifications
+        save_throttlers[source] = Throttler()
+        notification_throttlers[source] = Throttler()
 
 
     # Create and start threading for external events

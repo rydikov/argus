@@ -37,6 +37,12 @@ class QueueItem:
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
+    def post_process(self, detections, is_armed):
+        self.is_armed = is_armed
+        if detections:
+            self.map_detections_to_frame(detections)
+        self.mark_as_recognized()
+
     def mark_as_recognized(self):
         cv2.putText(self.frame, f"Recognized {self.is_armed}", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
 
