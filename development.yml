@@ -14,4 +14,7 @@ sources:
 recognizer:
   device_name: CPU
   num_requests: 4
-  
+
+mqtt:
+  hostname: host.docker.internal
+  port: 1880

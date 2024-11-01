@@ -5,6 +5,7 @@ from argus.services.alarm_system import AlarmSystemService
 from argus.services.telegram import TelegramService
 from argus.services.recognizer import OpenVinoRecognizer
 from argus.services.aqara import AqaraService
+from argus.services.mqtt import MQTTService
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -25,6 +26,14 @@ if config.get('telegram_bot') is not None:
 else:
     telegram_service = None
 
+if config.get('mqtt') is not None:
+    mqtt_service = MQTTService(
+        config['mqtt']['hostname'], 
+        config['mqtt']['port']
+    )
+else:
+    mqtt_service = None
+
 if config.get('aqara'):
     aqara_service  = AqaraService(config['aqara'], state_dir)
 else:
@@ -35,5 +44,6 @@ recognizer = OpenVinoRecognizer(
     config['recognizer'], 
     telegram_service,
     alarm_system_service,
-    aqara_service
+    aqara_service,
+    mqtt_service
 )

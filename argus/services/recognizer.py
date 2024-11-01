@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import numpy as np
+import json
 
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
@@ -36,11 +37,12 @@ def up_rps():
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config, telegram_service, alarm_system_service, aqara_service):
+    def __init__(self, net_config, telegram_service, alarm_system_service, aqara_service, mqtt_service):
         self.net_config = net_config
         self.telegram  = telegram_service
         self.alarm_system_service  = alarm_system_service
         self.aqara_service  = aqara_service
+        self.mqtt_service = mqtt_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolov9s')
@@ -93,8 +95,8 @@ class OpenVinoRecognizer:
         try:
             self.ireqs.start_async({self.input_layer_ir.any_name: blob}, queue_item)
         except Exception as e:
-            logger.exception('Exec Network is down: {e}')
-            sys.exit(1)
+            logger.exception('Exec Network is down. Restart. {e}')
+            os._exit(0)
 
 
     def process_frame(self, infer_request, queue_item):
@@ -158,6 +160,18 @@ class OpenVinoRecognizer:
 
         if save_throttlers[thread_name].is_allowed(queue_item.save_every_sec):
             frame_url = queue_item.save()
+
+            # Send mqtt message
+            if queue_item.objects_detected and self.mqtt_service is not None:
+                self.mqtt_service.publish(
+                    topic=f"argus/source/{queue_item.thread_name}/detected",
+                    payload=json.dumps({
+                        'important_objects_detected': queue_item.important_objects_detected,
+                        'frame_url': frame_url,
+                        'source': queue_item.thread_name
+                    }),
+                )
+
             # Telegram alerting for important objects
             if (
                 queue_item.important_objects_detected and
