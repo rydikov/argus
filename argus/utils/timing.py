@@ -28,12 +28,13 @@ def timing(f):
 
 
 class Throttler:
-    def __init__(self):
+    def __init__(self, interval):
         self.last_time_called = None
+        self.interval = interval
 
-    def is_allowed(self, interval):
+    def is_allowed(self):
         now = time()
-        if self.last_time_called is None or now - self.last_time_called >= interval:
+        if self.last_time_called is None or now - self.last_time_called >= self.interval:
             self.last_time_called = now
             return True
         return False

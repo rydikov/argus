@@ -24,7 +24,6 @@ class QueueItem:
         self.detectable_objects = self.important_objects + self.important_armed_objects + source_config.get('other_objects', [])
 
         self.stills_dir = source_config['stills_dir']
-        self.save_every_sec = source_config['save_every_sec']
         self.host_stills_uri = source_config.get('host_stills_uri')
 
         self.objects_detected = False
@@ -54,9 +53,7 @@ class QueueItem:
                 logger.warning('Object detected', extra=obj)
                 if obj['label'] in self.important_objects or (obj['label'] in self.important_armed_objects and self.is_armed):
                     self.important_objects_detected = True
-                    self.save_every_sec = 1
                 
-
     def save(self):
 
         if not os.path.exists(self.stills_dir):

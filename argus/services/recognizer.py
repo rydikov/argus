@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
 
 from argus.settings import (
-    SILENT_TIME, 
     save_throttlers, 
     notification_throttlers,
     send_frames_after_signal,
@@ -158,7 +157,12 @@ class OpenVinoRecognizer:
             send_frames_after_signal.remove(thread_name)
             self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
 
-        if save_throttlers[thread_name].is_allowed(queue_item.save_every_sec):
+        if queue_item.important_objects_detected:
+            need_save = save_throttlers[thread_name + '_detected'].is_allowed() # save detected frames every 1 sec
+        else:
+            need_save = save_throttlers[thread_name].is_allowed()
+
+        if need_save:
             frame_url = queue_item.save()
 
             # Send mqtt message
@@ -175,7 +179,7 @@ class OpenVinoRecognizer:
             # Telegram alerting for important objects
             if (
                 queue_item.important_objects_detected and
-                notification_throttlers[thread_name].is_allowed(SILENT_TIME) and
+                notification_throttlers[thread_name].is_allowed() and
                 self.telegram is not None
             ):
                 self.telegram.send_message(f'Objects detected: {frame_url}')

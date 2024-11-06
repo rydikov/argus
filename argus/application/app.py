@@ -14,6 +14,7 @@ from argus.utils.timing import Throttler
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.settings import (
+    SILENT_TIME,
     save_throttlers,
     notification_throttlers, 
     send_frames_after_signal, 
@@ -162,8 +163,9 @@ def run():
         logger.info('Thread %s started' % source)
         
         # Set throttlers for saving and notifications
-        save_throttlers[source] = Throttler()
-        notification_throttlers[source] = Throttler()
+        save_throttlers[source] = Throttler(interval=config['sources'][source]['save_every_sec'])
+        save_throttlers[source + '_detected'] = Throttler(interval=1)
+        notification_throttlers[source] = Throttler(interval=SILENT_TIME)
 
 
     # Create and start threading for external events
