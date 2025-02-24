@@ -148,7 +148,8 @@ class OpenVinoRecognizer:
 
             detections.append(detection)
 
-        queue_item.post_process(detections, self.alarm_system_service.is_armed())
+        is_armed = self.alarm_system_service.is_armed()
+        queue_item.post_process(detections, is_armed)
 
         thread_name = queue_item.thread_name
 
@@ -172,7 +173,8 @@ class OpenVinoRecognizer:
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,
                         'frame_url': frame_url,
-                        'source': queue_item.thread_name
+                        'source': queue_item.thread_name,
+                        'is_armed': is_armed
                     }),
                 )
 

@@ -16,7 +16,7 @@ with open(os.path.join(dir_path, config_path)) as f:
 
 state_dir = config['app']['state_dir']
 if not os.path.exists(state_dir):
-    os.makedirs(state_dir)
+    os.makedirs(state_dir, mode=0o777)
 
 if config.get('telegram_bot') is not None:
     telegram_service = TelegramService(

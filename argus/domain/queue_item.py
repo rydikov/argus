@@ -28,7 +28,6 @@ class QueueItem:
 
         self.objects_detected = False
         self.important_objects_detected = False
-        self.is_armed = False
 
     def __mark_object(self, obj):
         label = f"{obj['label']} ({obj['confidence']:.2f})"
@@ -37,27 +36,26 @@ class QueueItem:
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
     def post_process(self, detections, is_armed):
-        self.is_armed = is_armed
         if detections:
-            self.map_detections_to_frame(detections)
-        self.mark_as_recognized()
+            self.map_detections_to_frame(detections, is_armed)
+        self.mark_as_recognized(is_armed)
 
-    def mark_as_recognized(self):
-        cv2.putText(self.frame, f"Recognized {self.is_armed}", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
+    def mark_as_recognized(self, is_armed):
+        cv2.putText(self.frame, f"Recognized {is_armed}", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
 
-    def map_detections_to_frame(self, detection):
+    def map_detections_to_frame(self, detection, is_armed):
         for obj in detection:
             if obj['label'] in self.detectable_objects:
                 self.objects_detected = True
                 self.__mark_object(obj)
                 logger.warning('Object detected', extra=obj)
-                if obj['label'] in self.important_objects or (obj['label'] in self.important_armed_objects and self.is_armed):
+                if obj['label'] in self.important_objects or (obj['label'] in self.important_armed_objects and is_armed):
                     self.important_objects_detected = True
                 
     def save(self):
 
         if not os.path.exists(self.stills_dir):
-            os.makedirs(self.stills_dir)
+            os.makedirs(self.stills_dir, mode=0o777)
 
         timestamp = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
 
