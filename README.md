@@ -35,15 +35,13 @@ In the main thread, the frames get from a queue and send to asynchronous recogni
 
 ## Installation for develop
 
-0. Install [Intel OpenVINO ToolKit](https://software.seek.intel.com/openvino-toolkit)
-
 1. Clone project and download models
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
 ```
 
-2. Copy models to project
+2. Copy models to project (optional)
 
 3. Build docker image
 ```bash
@@ -55,7 +53,7 @@ Run application
 docker-compose up
 ```
 
-## Installation OpenVINO on Production
+## Installation OpenVINO without Docker
 
 
 1. Set up build environment and install build tools
