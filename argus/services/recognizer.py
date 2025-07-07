@@ -1,9 +1,9 @@
 import cv2
+import json
 import logging
+import numpy as np
 import os
 import sys
-import numpy as np
-import json
 
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
@@ -170,8 +170,7 @@ class OpenVinoRecognizer:
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,
                         'frame_url': frame_url,
-                        'source': queue_item.thread_name,
-                        'is_armed': is_armed
+                        'datetime': datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                     }),
                 )
 
@@ -182,9 +181,3 @@ class OpenVinoRecognizer:
                 self.telegram is not None
             ):
                 self.telegram.send_message(f'Objects detected: {frame_url}')
-                # Run scene if armed
-                if (
-                    self.alarm_system_service.is_armed() and
-                    self.aqara_service is not None
-                ):
-                    self.aqara_service.run_scene()
