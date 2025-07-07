@@ -33,7 +33,7 @@ In the main thread, the frames get from a queue and send to asynchronous recogni
 
 ![Hardware](https://github.com/rydikov/argus/raw/main/res/hardware.jpg)
 
-## Installation for develop
+## Installation with Docker
 
 1. Clone project and download models
 ```bash
@@ -52,6 +52,7 @@ Run application
 ```bash
 docker-compose up
 ```
+
 
 ## Installation OpenVINO without Docker
 
