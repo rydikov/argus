@@ -23,9 +23,7 @@ from argus.settings import (
 from argus.globals import (
     config, 
     recognizer, 
-    telegram_service, 
-    alarm_system_service,
-    aqara_service
+    telegram_service
 )
 
 REDUCE_CPU_USAGE_SEC = 0.01
@@ -61,17 +59,6 @@ class ServerProtocol(asyncio.Protocol):
             notification_throttlers.clear()
         elif message == 'get_photos':
             send_frames_after_signal.extend(list(frame_items_queues.keys()))
-        elif message == 'arming':
-            alarm_system_service.arming()
-        elif message == 'disarming':
-            alarm_system_service.disarming()
-        elif message ==  'status':
-            telegram_service.send_message(alarm_system_service.status)
-        elif message == 'run_scene':
-            aqara_service.run_scene()
-        elif message.startswith('set_code'):
-            _, code = message.split(':')
-            aqara_service.save_code(code)
         else:
             logger.info('Unknown command')
 

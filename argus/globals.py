@@ -1,10 +1,8 @@
 import os
 import yaml
 
-from argus.services.alarm_system import AlarmSystemService
 from argus.services.telegram import TelegramService
 from argus.services.recognizer import OpenVinoRecognizer
-from argus.services.aqara import AqaraService
 from argus.services.mqtt import MQTTService
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -34,16 +32,9 @@ if config.get('mqtt') is not None:
 else:
     mqtt_service = None
 
-if config.get('aqara'):
-    aqara_service  = AqaraService(config['aqara'], state_dir)
-else:
-    aqara_service = None
 
-alarm_system_service = AlarmSystemService(state_dir)
 recognizer = OpenVinoRecognizer(
     config['recognizer'], 
     telegram_service,
-    alarm_system_service,
-    aqara_service,
     mqtt_service
 )

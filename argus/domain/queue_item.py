@@ -20,8 +20,7 @@ class QueueItem:
         source_config = config['sources'][thread_name]
  
         self.important_objects = source_config.get('important_objects', ['person'])
-        self.important_armed_objects = source_config.get('important_armed_objects', ['car'])
-        self.detectable_objects = self.important_objects + self.important_armed_objects + source_config.get('other_objects', [])
+        self.detectable_objects = self.important_objects + source_config.get('other_objects', [])
 
         self.stills_dir = source_config['stills_dir']
         self.host_stills_uri = source_config.get('host_stills_uri')
@@ -35,21 +34,21 @@ class QueueItem:
         cv2.rectangle(self.frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), WHITE_COLOR, 1)
         cv2.putText(self.frame, label, label_position, cv2.FONT_HERSHEY_COMPLEX, 0.4, WHITE_COLOR, 1)
 
-    def post_process(self, detections, is_armed):
+    def post_process(self, detections):
         if detections:
-            self.map_detections_to_frame(detections, is_armed)
-        self.mark_as_recognized(is_armed)
+            self.map_detections_to_frame(detections)
+        self.mark_as_recognized()
 
-    def mark_as_recognized(self, is_armed):
-        cv2.putText(self.frame, f"Recognized {is_armed}", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
+    def mark_as_recognized(self):
+        cv2.putText(self.frame, f"Recognized", (20, 20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255), 1)
 
-    def map_detections_to_frame(self, detection, is_armed):
+    def map_detections_to_frame(self, detection):
         for obj in detection:
             if obj['label'] in self.detectable_objects:
                 self.objects_detected = True
                 self.__mark_object(obj)
                 logger.warning('Object detected', extra=obj)
-                if obj['label'] in self.important_objects or (obj['label'] in self.important_armed_objects and is_armed):
+                if obj['label'] in self.important_objects:
                     self.important_objects_detected = True
                 
     def save(self):

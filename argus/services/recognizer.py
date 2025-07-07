@@ -36,11 +36,9 @@ def up_rps():
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config, telegram_service, alarm_system_service, aqara_service, mqtt_service):
+    def __init__(self, net_config, telegram_service, mqtt_service):
         self.net_config = net_config
         self.telegram  = telegram_service
-        self.alarm_system_service  = alarm_system_service
-        self.aqara_service  = aqara_service
         self.mqtt_service = mqtt_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
@@ -148,8 +146,7 @@ class OpenVinoRecognizer:
 
             detections.append(detection)
 
-        is_armed = self.alarm_system_service.is_armed()
-        queue_item.post_process(detections, is_armed)
+        queue_item.post_process(detections)
 
         thread_name = queue_item.thread_name
 
@@ -169,7 +166,7 @@ class OpenVinoRecognizer:
             # Send mqtt message
             if queue_item.objects_detected and self.mqtt_service is not None:
                 self.mqtt_service.publish(
-                    topic=f"argus/source/{queue_item.thread_name}/detected",
+                    topic=f"/argus/source/{queue_item.thread_name}/",
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,
                         'frame_url': frame_url,

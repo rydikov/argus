@@ -238,32 +238,8 @@ recognizer:
 |   token                |          | Token                                                                    |
 |   chat_id              |          | ChatId                                                                   |
 
-#### Aqara secton (optional)
-
-| Option                 | Required | Description                                                              |
-|------------------------|----------|--------------------------------------------------------------------------|
-| aqara                  |          | Aqara section. Use it for run scenes                                     |
-|   scene_id             |          |                                                                          |
-|   app_id               |          |                                                                          |
-|   app_key              |          |                                                                          |
-|   key_id               |          |                                                                          |
-|   account              |          |                                                                          |
-
-Example for aqara secton with all options:
-
-```yaml
-aqara:
-  scene_id: AL.52785555917472
-  app_id: __app_id__
-  app_key: __app_key__
-  key_id: __key_id__
-  account: example@example.com
-```
-Detail: https://opendoc.aqara.cn/en/docs/developmanual/authManagement/aqaraauthMode.html
-
 
 ## Credit
 
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
 - [Yolov9](https://github.com/WongKinYiu/yolov9)
-- [Aqara](https://developer.aqara.com/?lang=en)
