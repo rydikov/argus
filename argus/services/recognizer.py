@@ -170,6 +170,7 @@ class OpenVinoRecognizer:
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,
                         'frame_url': frame_url,
+                        'detections': detections,
                         'datetime': datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                     }),
                 )
