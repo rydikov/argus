@@ -25,6 +25,9 @@ class QueueItem:
         self.stills_dir = source_config['stills_dir']
         self.host_stills_uri = source_config.get('host_stills_uri')
 
+        self.path = None
+        self.url = None
+
         self.objects_detected = False
         self.important_objects_detected = False
 
@@ -63,7 +66,13 @@ class QueueItem:
         else:
             frame_filename = '{}.jpg'.format(timestamp)
 
-        if not cv2.imwrite(os.path.join(self.stills_dir, frame_filename), self.frame):
-            logger.error('Unable to save file: %s' % frame_filename)
+        path = os.path.join(self.stills_dir, frame_filename)
 
-        return f'{self.host_stills_uri}/{frame_filename}' if self.host_stills_uri is not None else None
+        print(path)
+
+        if not cv2.imwrite(path, self.frame):
+            logger.error('Unable to save file: %s' % frame_filename)
+        else:
+            self.path = path
+            if self.host_stills_uri is not None:
+                self.url = f'{self.host_stills_uri}/{frame_filename}'

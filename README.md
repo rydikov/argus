@@ -3,201 +3,93 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Neural network:         |[![YOLOv9](https://img.shields.io/badge/yolo-9-blue)](https://github.com/WongKinYiu/yolov9) |
-| Intel OpenVINO ToolKit: |[![OpenVINO 2022.3.2](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
-| Hardware Used:          | Mini PC       |
-| Device:                 | CPU or Intel Neural Cumpute Stick 2 or other Intel VPUs devices |
+| CV Framework:           |[![OpenVINO 2022.3.2](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
+| Hardware:               | Минимум Intel CPU 6-го поколения, PC с Intel GPU или Neural Compute Stick. |
 
 
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
 
-Argus application uses Deep Learning/Machine Learning to recognize objects on sources stream. 
-The Sources can be cameras and videos.
-The Application saves frames with detection objecs and has the ability to telegam alerts.
+Argus использует технологии компьютерного зрения для определение объектов.
+В качестве источников могут использоваться RTSP потоки с камер.
+Приложение сохраняет кадры с обнаруженными объектами и отправляет уведомления в Telegram.
 
-By utilizing pre-trained models and Intel OpenVINO toolkit with OpenCV. 
+## Архитектура
 
-This application executes parallel threads to capture frames from different sources and make async infer requests for object detections.
+Кадры с камер добавляются в двухсторонние очереди в отдельных потоках.
+В главном потоке кадры извлекаются из очередей и передаются на асинхронное распознавание. Всегда берется самый свежий кадр.
+Также проверяется – есть ли распознанный кадр. Если есть, то в зависимости от обраруженных на нем объектов он сохраняется или выбрасывается.
+Если были обнаружены important_objects, то происходит оповещение в Telegram. Оповещение происходит не чаще одного раза в 30 минут с каждого потока.
+Если в конфигурации указаны настройки MQTT, то происходит публикация события.
 
-**What is OpenVino?**
+Дополнительно можно настроить сохранение кадров на диск каждые N секунд.
+Список распознаваемых объектов можно посмотреть в [models](models/coco.names)
 
-OpenVino (OpenVisual Inferencing and Neural Network Optimization) is toolkit to develop Deep Learning Application especially for Computer Vision by Intel. OpenVino Enables deep learning inference at the edge and supports heterogeneous execution across computer vision accelerators—CPU, GPU, Intel® Movidius™ Neural Compute Stick, and FPGA—using a common API. [read more](https://docs.openvinotoolkit.org/)
 
-## Architecture
+## Запуск через Docker
 
-The frames put to the queue from cameras in different threads.
-In the main thread, the frames get from a queue and send to asynchronous recognition. Also in main thread the results are received and processed.
+Предполагается, что Docker уже устновлен на хостовой машине.
 
-## Hardware Requirement
-
-- Minimum Intel Gen 6 processors or Raspberry Pi with Neural Compute Stick
-
-![Hardware](https://github.com/rydikov/argus/raw/main/res/hardware.jpg)
-
-## Installation with Docker
-
-1. Clone project and download models
+1. Склонируйте проект и перейдите в него
 ```bash
 git clone git@github.com:rydikov/argus.git
 cd argus
 ```
 
-2. Copy models to project (optional)
-
-3. Build docker image
+2. Запустите сборку
 ```bash
 docker-compose build
 ```
 
-Run application
+3. Запустите проект
 ```bash
 docker-compose up
 ```
 
+По умолчанию проект запускается на модели yolo9s, в качестве потока испльзуется демонстрационное видео в каталоге res.
 
-## Installation OpenVINO without Docker
-
-
-1. Set up build environment and install build tools
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install build-essential
+Для использования собственного файла конфигурации нужно создать файл c названием env и добавить в него переменную: CONFIG_PATH с полным путем к файлу.
+Файл лучше разместить в дирректории data, т.к. она монтируется при запуске.
+Пример:
 ```
-2. Install OpenVINO
-https://docs.openvino.ai/2022.3/openvino_docs_install_guides_install_dev_tools.html
-
-3. Clone project and save models from release to models folder
-```bash
-git clone git@github.com:rydikov/argus.git
-cd argus
+CONFIG_PATH = /app/data/development.override.yml
 ```
 
-4. Install dependencies
-```bash
-pip3 install -r requirements.txt
-```
+Также можно установить приложение сразу на [хостовую машину](res/tips.md). 
 
-5. Add symlinks to supervisor and nginx config. I, also, recommend creating a private repository for production configs.
-
-My private repository contain files:
-* production.yml - Production config
-* supervisord.conf – On raspberry app started with supervisor
-* nginx.conf - Nginx to view images (optional)
-* loki.yml - I'm use Cloud Grafana (free) for visualize metrics and alerting (optional)
-
-
-Supervisor exapmle
-```
-[program:argus]
-command=/bin/bash -c 'source /opt/intel/openvino_2022/setupvars.sh && sleep 5 && /home/xcy/argus/.env/bin/python /home/xcy/argus/argus/run.py'
-stdout_logfile=/home/xcy/timelapse/argus.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=10
-stderr_logfile=/home/xcy/timelapse/argus.err
-stderr_logfile_maxbytes=1MB 
-stderr_logfile_backups=10
-redirect_stderr=true
-autostart=true
-autorestart=true
-user=pi
-environment=PYTHONPATH="$PYTHONPATH:/home/pi/argus",CONFIG_PATH="/home/xcy/argus-production-config/production.yml"
-```
-
-
-Nginx exapmle
-```
-server {
-    listen   8080 default;
-	server_name  localhost;
-
-	access_log  /var/log/nginx/localhost.access.log;
-
-	location / {
-		root   /home/xcy/timelapse/;
-		autoindex  on;
-		autoindex_localtime on;
-    autoindex_exact_size off;
-  }
-}
-```
-
-Grafana looks like:
-
-![Grafana](https://github.com/rydikov/argus/raw/main/res/grafana.png)
-
-Loki exapmle
-```
-loki:
-  configs:
-  - name: integrations
-    positions:
-      filename: /tmp/positions.yaml
-    scrape_configs:
-    - job_name: argus
-      static_configs:
-      - targets: [localhost]
-        labels:
-          job: argus
-          __path__: /home/xcy/timelapse/argus.log
-      pipeline_stages:
-      - json:
-          expressions:
-            func: func
-            loglevel: levelname
-            threadName: threadName
-            timestamp: timestamp
-      - timestamp:
-          format: RFC3339
-          source: timestamp
-      - labels:
-          loglevel:
-          func:
-          threadName:
-    clients:
-    - url: __url__
-      basic_auth:
-        username: __username__
-        password: __password__
-```
-
-11. Reload supervisor
-
-
-### App Config options
+### Настройка
 
 ### App section
 | Option                 | Required | Description                                                                                |
 |------------------------|----------|--------------------------------------------------------------------------------------------|
-| app                    | +        | Main section                                                                               |
-| state_dir              | +        | Path to app state for store tockens etc                                                    |
-
+| app                    | +        | Основная секция                                                                            |
 
 
 #### Sources secton
 
-| Option                 | Required | Description                                                                                |
-|------------------------|----------|--------------------------------------------------------------------------------------------|
-| sources                | +        | Set of data sources                                                                        |
-|   source-name          | +        | Source name                                                                                |
-|     source             | +        | Source                                                                                     |
-|     stills_dir         | +        | Direcrory for saved frames                                                                 |
-|     host_stills_uri    |          | Web link to folder with frames                                                             |
-|     important_objects  |          | Important objects. Mark an Alert if this objects detected on frame. Default: person        |
-|     other_objects      |          | Other objects. Mark if this objects detected on frame                                      |
-|     save_every_sec     |          | Save frame every N sec                                                                     |
+| Option                 | Required | Description                                                                                                                       |
+|------------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------|
+| sources                | +        | Источники кадров.                                                                                                                 |
+|   source-name          | +        | Название                                                                                                                          |
+|     source             | +        | Ссылка на поток, например, rtsp адрес камеры                                                                                      |
+|     stills_dir         | +        | Дирректория, куда будут сохраняться кадры                                                                                         |
+|     host_stills_uri    |          | Ссылка web. Если nginx раздает сохраненные изображения, то в телграмм отправляется она, если не указана, то отправляется сам кадр |
+|     important_objects  |          | Объекты, при обнаружении который будет оповещение в telegram. По умолчани: person.                                                |
+|     other_objects      |          | Объекты, которые будут распозноваться и помечаться на изображении                                                                 |
+|     save_every_sec     |          | Сохранять изображения каждые N секунд, если 0, то будут сохраняться только изображения с important_objects                        |
 
 
-Example for sources secton with all options:
+Пример с двумя камерами и всеми опциями для секций:
+
 ```yaml
 sources:
   first-cam:
-    source: ../../demohd.mp4
+    source: rtsp://login:password@192.168.1.55:554/Streaming/Channels/101
     save_every_sec: 15
-    stills_dir: ../../Stills/first
-    host_stills_uri: http://localhost/Stills/first
+    stills_dir: /../../Stills/first
     important_objects:
       - person
   second-cam:
-    source: ../../demo.mov
+    source: rtsp://login:password@192.168.1.66:554/Streaming/Channels/101
     save_every_sec: 0
     stills_dir: ../../Stills/second
     host_stills_uri: http://localhost/Stills/second
@@ -216,12 +108,12 @@ sources:
 
 #### Recognizer secton
 
-| Option                 | Required | Description                                                              |
-|------------------------|----------|--------------------------------------------------------------------------|
-| recognizer             | +        | Recognize section                                                        |
-|   model                |          | Model (yolov9c (default))                     |
-|   device_name          | +        | Device for network                                                       |
-|   num_requests         | +        | Num of requests for recognize. Usually 4 per one MYRIAD device           |
+| Option                 | Required | Description                                                                               |
+|------------------------|----------|-------------------------------------------------------------------------------------------|
+| recognizer             | +        | Секция распознования                                                                      |
+|   model                |          | Модель (по умолчнанию yolov9s, более точные 9m и 9c можно сказать на вкладыке Releases)   |
+|   device_name          | +        | Устройсто распознования (CPU, GPU, MYRIAD)                                                |
+|   num_requests         | +        | Количество потоков распонования. Оптимально 4 для каждого MYRIAD. Подбирается эмпирически |
 
 Example for recognizer secton with all options:
 ```yaml
@@ -231,13 +123,21 @@ recognizer:
   num_requests: 4
 ```
 
-#### Telegram secton (optional)
+#### Telegram secton (опциональная)
 
 | Option                 | Required | Description                                                              |
 |------------------------|----------|--------------------------------------------------------------------------|
-| telegram_bot           |          | Telegram section. Use it for alarming                                    |
-|   token                |          | Token                                                                    |
-|   chat_id              |          | ChatId                                                                   |
+| telegram_bot           |          | Telegram секция для опещения                                             |
+|   token                |          | Токен                                                                    |
+|   chat_id              |          | ID чата в который будет приходить оповещение                             |
+
+#### Mqtt secton (опциональная)
+
+| Option                 | Required | Description                                                              |
+|------------------------|----------|--------------------------------------------------------------------------|
+| mqtt                   |          | Telegram секция для опещения                                             |
+|   hostname             |          | Хост mqtt                                                                |
+|   port                 |          | Порт mqtt                                                                |
 
 
 ## Credit

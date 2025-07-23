@@ -9,6 +9,8 @@ services:
       - ./argus:/app/argus
       - ./models:/app/models
       - ./res:/app/res
-      - ./data/Stills:/app/Stills
-      - ./data/state:/app/state
+      - ./data:/app/data
+    env_file: 
+      - path: env
+        required: false
     command: /usr/bin/python3.8 /app/argus/run.py

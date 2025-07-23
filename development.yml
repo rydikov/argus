@@ -5,8 +5,7 @@ sources:
   first-cam:
     source: /app/res/demo.mov
     save_every_sec: 3600
-    stills_dir: /app/Stills
-    host_stills_uri: http://localhost/Stills/
+    stills_dir: /app/data/Stills
     important_objects:
       - person
       - car
@@ -14,7 +13,3 @@ sources:
 recognizer:
   device_name: CPU
   num_requests: 4
-
-mqtt:
-  hostname: host.docker.internal
-  port: 1880

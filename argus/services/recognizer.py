@@ -161,15 +161,16 @@ class OpenVinoRecognizer:
             need_save = save_throttlers[thread_name].is_allowed()
 
         if need_save:
-            frame_url = queue_item.save()
+            queue_item.save()
 
             # Send mqtt message
             if queue_item.objects_detected and self.mqtt_service is not None:
                 self.mqtt_service.publish(
-                    topic=f"argus/source/{queue_item.thread_name}/",
+                    topic=f"argus/source/{queue_item.thread_name}/meta",
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,
-                        'frame_url': frame_url,
+                        'path': queue_item.path,
+                        'url': queue_item.url,
                         'detections': detections,
                         'datetime': datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                     }),
@@ -181,4 +182,7 @@ class OpenVinoRecognizer:
                 notification_throttlers[thread_name].is_allowed() and
                 self.telegram is not None
             ):
-                self.telegram.send_message(f'Objects detected: {frame_url}')
+                if queue_item.url is not None:
+                    self.telegram.send_message(f'Objects detected: {queue_item.url}')
+                else:
+                    self.telegram.send_frame(queue_item.frame, f'Objects detected')
