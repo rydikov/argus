@@ -68,8 +68,6 @@ class QueueItem:
 
         path = os.path.join(self.stills_dir, frame_filename)
 
-        print(path)
-
         if not cv2.imwrite(path, self.frame):
             logger.error('Unable to save file: %s' % frame_filename)
         else:
