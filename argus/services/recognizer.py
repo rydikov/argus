@@ -154,7 +154,7 @@ class OpenVinoRecognizer:
         # Send frame to telegram after external signal
         if thread_name in send_frames_after_signal and self.telegram is not None:
             send_frames_after_signal.remove(thread_name)
-            self.telegram.send_frame(queue_item.frame, f'Photo from {thread_name}')
+            run_async(self.telegram.send_frame, queue_item.frame, f'Photo from {thread_name}')
 
         if queue_item.important_objects_detected:
             need_save = save_throttlers[thread_name + '_detected'].is_allowed() # save detected frames every 1 sec
