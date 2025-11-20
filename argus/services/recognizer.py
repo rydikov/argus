@@ -13,6 +13,7 @@ from argus.settings import (
     notification_throttlers,
     send_frames_after_signal,
 )
+from argus.utils.helpers import run_async
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 
@@ -183,6 +184,6 @@ class OpenVinoRecognizer:
                 self.telegram is not None
             ):
                 if queue_item.url is not None:
-                    self.telegram.send_message(f'Objects detected: {queue_item.url}')
+                    run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
                 else:
-                    self.telegram.send_frame(queue_item.frame, f'Objects detected')
+                    run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
