@@ -13,7 +13,7 @@ from argus.settings import (
     notification_throttlers,
     send_frames_after_signal,
 )
-from argus.utils.helpers import run_async
+from argus.utils.tg_async_loop import run_async
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 

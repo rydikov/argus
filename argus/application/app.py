@@ -13,6 +13,7 @@ from time import sleep
 from argus.utils.timing import Throttler
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
+from argus.utils.tg_async_loop import init_tg_async_loop
 from argus.settings import (
     SILENT_TIME,
     save_throttlers,
@@ -142,6 +143,9 @@ def check_and_restart_dead_snapshot_threads():
 def run():
 
     last_log_temperature_time = datetime.now()
+
+    # Create loop for async telegram
+    init_tg_async_loop()
 
     # Create and start threading for every source
     for source in config['sources']:
