@@ -14,11 +14,13 @@ from argus.utils.timing import Throttler
 from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.tg_async_loop import init_tg_async_loop
+from argus.utils.multi_hit_confirmation import MultiHitConfirmation
 from argus.settings import (
     SILENT_TIME,
     save_throttlers,
     notification_throttlers, 
     send_frames_after_signal, 
+    multi_hit_confirmations
 )
 
 from argus.globals import (
@@ -157,6 +159,9 @@ def run():
         save_throttlers[source] = Throttler(interval=config['sources'][source]['save_every_sec'])
         save_throttlers[source + '_detected'] = Throttler(interval=1)
         notification_throttlers[source] = Throttler(interval=SILENT_TIME)
+
+        # Set Multi-hit confirmation for detections
+        multi_hit_confirmations[source] = MultiHitConfirmation()
 
 
     # Create and start threading for external events

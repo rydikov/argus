@@ -9,3 +9,7 @@ save_throttlers = {}
 
 # List for frames to be sent after an external signal
 send_frames_after_signal = []
+
+
+# Protection against false detections
+multi_hit_confirmations = {}

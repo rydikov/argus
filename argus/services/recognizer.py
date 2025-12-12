@@ -12,6 +12,7 @@ from argus.settings import (
     save_throttlers, 
     notification_throttlers,
     send_frames_after_signal,
+    multi_hit_confirmations
 )
 from argus.utils.tg_async_loop import run_async
 
@@ -177,13 +178,17 @@ class OpenVinoRecognizer:
                     }),
                 )
 
-            # Telegram alerting for important objects
+            # Оповещение в телеграмм. on_detect и is_allowed должны быть в разных условиях
+            # т.к. изменяют внутренние счетчики
             if (
                 queue_item.important_objects_detected and
-                notification_throttlers[thread_name].is_allowed() and
                 self.telegram is not None
             ):
-                if queue_item.url is not None:
-                    run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
-                else:
-                    run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
+                # on detect change deque
+                if multi_hit_confirmations[thread_name].on_detect():
+                    # is allowed calculate time
+                    if notification_throttlers[thread_name].is_allowed():
+                        if queue_item.url is not None:
+                            run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
+                        else:
+                            run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
