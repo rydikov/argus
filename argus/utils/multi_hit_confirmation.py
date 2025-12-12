@@ -7,7 +7,7 @@ logger = logging.getLogger('json')
 
 
 class MultiHitConfirmation:
-    def __init__(self, window_seconds=5, threshold=3):
+    def __init__(self, window_seconds=3, threshold=5):
         self.window = window_seconds
         self.threshold = threshold
         self.events = deque()
@@ -31,7 +31,6 @@ class MultiHitConfirmation:
 
         # Если накопилось нужное количество — подтверждаем
         if len(self.events) >= self.threshold:
-            self.events.clear()  # сброс, чтобы не спамить
             return True
 
         return False

@@ -158,8 +158,10 @@ class OpenVinoRecognizer:
             run_async(self.telegram.send_frame, queue_item.frame, f'Photo from {thread_name}')
 
         if queue_item.important_objects_detected:
+            detection_is_confirm = multi_hit_confirmations[thread_name].on_detect()
             need_save = save_throttlers[thread_name + '_detected'].is_allowed() # save detected frames every 1 sec
         else:
+            detection_is_confirm = False
             need_save = save_throttlers[thread_name].is_allowed()
 
         if need_save:
@@ -182,13 +184,12 @@ class OpenVinoRecognizer:
             # т.к. изменяют внутренние счетчики
             if (
                 queue_item.important_objects_detected and
+                detection_is_confirm and
                 self.telegram is not None
             ):
-                # on detect change deque
-                if multi_hit_confirmations[thread_name].on_detect():
-                    # is allowed calculate time
-                    if notification_throttlers[thread_name].is_allowed():
-                        if queue_item.url is not None:
-                            run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
-                        else:
-                            run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
+                # is allowed calculate time
+                if notification_throttlers[thread_name].is_allowed():
+                    if queue_item.url is not None:
+                        run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
+                    else:
+                        run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
