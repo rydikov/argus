@@ -180,14 +180,9 @@ class OpenVinoRecognizer:
                     }),
                 )
 
-            # Оповещение в телеграмм. on_detect и is_allowed должны быть в разных условиях
+            # Оповещение в телеграмм. is_allowed должен быть в другом условии
             # т.к. изменяют внутренние счетчики
-            if (
-                queue_item.important_objects_detected and
-                detection_is_confirm and
-                self.telegram is not None
-            ):
-                # is allowed calculate time
+            if detection_is_confirm and self.telegram is not None:
                 if notification_throttlers[thread_name].is_allowed():
                     if queue_item.url is not None:
                         run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
