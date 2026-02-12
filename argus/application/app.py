@@ -1,7 +1,6 @@
 import asyncio
 import copy 
 import logging
-import os
 import threading
 import sys
 
@@ -15,6 +14,7 @@ from argus.domain.queue_item import QueueItem
 from argus.utils.frame_grabber import FrameGrabber
 from argus.utils.tg_async_loop import init_tg_async_loop
 from argus.utils.multi_hit_confirmation import MultiHitConfirmation
+from argus.utils.fatal_restart import fatal_restart
 from argus.settings import (
     SILENT_TIME,
     save_throttlers,
@@ -57,7 +57,7 @@ class ServerProtocol(asyncio.Protocol):
         if message == 'restart':
             self.transport.write(DEFAULT_SERVER_RESPONSE.encode())
             self.transport.close()
-            os._exit(0)
+            fatal_restart('External signal: restart command')
         elif message == 'reset':
             notification_throttlers.clear()
         elif message == 'get_photos':
@@ -184,7 +184,7 @@ def run():
                     recognizer.log_temperature()
                 except RuntimeError as e:
                     logger.warning(f'Unable to get device temperature {e}')
-                    os._exit(0)
+                    fatal_restart(f'Unable to get device temperature: {e}')
                 else:
                     last_log_temperature_time = datetime.now()
 

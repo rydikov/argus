@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os
-import sys
 
 from datetime import datetime, timedelta
 from openvino.runtime import Core, AsyncInferQueue
@@ -15,6 +14,7 @@ from argus.settings import (
     multi_hit_confirmations
 )
 from argus.utils.tg_async_loop import run_async
+from argus.utils.fatal_restart import fatal_restart
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 
@@ -71,7 +71,7 @@ class OpenVinoRecognizer:
             _, devices = self.net_config['device_name'].split(':')
             devices = devices.split(',')
         elif 'MYRIAD' in self.net_config['device_name']:
-            devices = self.net_config['device_name']
+            devices = [self.net_config['device_name']]
        
         for device in devices:
             themperature = self.core.get_property(device, 'DEVICE_THERMAL')
@@ -94,8 +94,8 @@ class OpenVinoRecognizer:
         try:
             self.ireqs.start_async({self.input_layer_ir.any_name: blob}, queue_item)
         except Exception as e:
-            logger.exception('Exec Network is down. Restart. {e}')
-            os._exit(0)
+            logger.exception('Exec Network is down. Restart. %s', e)
+            fatal_restart(f'Infer request failed: {e}')
 
 
     def process_frame(self, infer_request, queue_item):
