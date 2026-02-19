@@ -2,9 +2,9 @@
 
 | Details                 |               |
 |-------------------------|---------------|
-| Neural network:         |[![YOLOv9](https://img.shields.io/badge/yolo-9-blue)](https://github.com/WongKinYiu/yolov9) |
-| CV Framework:           |[![OpenVINO 2022.3.2](https://img.shields.io/badge/openvino-2022.3-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
-| Hardware:               | Минимум Intel CPU 6-го поколения, PC с Intel GPU или Neural Compute Stick. |
+| Neural network:         |[![YOLOv11](https://img.shields.io/badge/yolo-11-blue)](https://github.com/ultralytics/ultralytics) |
+| CV Framework:           |[![OpenVINO 2025.4.1](https://img.shields.io/badge/openvino-2025.4-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
+| Hardware:               | Минимум Intel CPU 6-го поколения, PC с Intel GPU. |
 
 
 ![Detected](https://github.com/rydikov/argus/raw/main/res/detected.jpg)
@@ -118,7 +118,7 @@ sources:
 Example for recognizer secton with all options:
 ```yaml
 recognizer:
-  model: yolov9c
+  model: yolo11n
   device_name: MYRIAD
   num_requests: 4
 ```
@@ -143,4 +143,4 @@ recognizer:
 ## Credit
 
 - [OpenVino](https://docs.openvinotoolkit.org/latest/index.html)
-- [Yolov9](https://github.com/WongKinYiu/yolov9)
+- [Ultralytics](https://github.com/ultralytics/ultralytics)
