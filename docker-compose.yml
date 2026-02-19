@@ -10,7 +10,8 @@ services:
       - ./models:/app/models
       - ./res:/app/res
       - ./data:/app/data
+      - ./staff:/app/staff
     env_file: 
       - path: env
         required: false
-    command: /usr/bin/python3.8 /app/argus/run.py
+    command: python3 -m argus.run

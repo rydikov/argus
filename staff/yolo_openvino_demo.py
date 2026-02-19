@@ -4,7 +4,7 @@ import cv2, time
 from openvino.runtime import Core
 
 
-MODEL_NAME = "yolov9s"
+MODEL_NAME = "yolo11n"
 
 with open('/app/models/coco.names', 'r') as f:
     CLASSES = [x.strip() for x in f]
@@ -46,7 +46,11 @@ print('xxxx')
 outputs = ir.infer(blob)[output_node]
 print('zzzz')
 
+# print(outputs.shape)
+
 outputs = np.array([cv2.transpose(outputs[0])])
+
+print(outputs.shape)
 
 rows = outputs.shape[1]
 
@@ -87,6 +91,7 @@ end = time.time()
 # show FPS
 fps = (1 / (end - start)) 
 fps_label = "Throughput: %.2f FPS" % fps
+print(fps_label)
 cv2.putText(frame, fps_label, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 cv2.imwrite("/app/Stills/result.jpg", frame)

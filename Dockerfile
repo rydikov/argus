@@ -1,12 +1,13 @@
-FROM openvino/ubuntu20_runtime:2022.3.1
+FROM openvino/ubuntu24_runtime:2025.4.1
 
 WORKDIR /app
+USER root
 
 COPY models models
 COPY res res
 
 COPY requires.txt requires.txt
-RUN python3.8 -m pip install --upgrade pip
+RUN python -m pip install --upgrade pip
 RUN pip install -r requires.txt
 
 COPY argus argus
