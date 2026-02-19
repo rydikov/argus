@@ -18,7 +18,7 @@ from argus.utils.fatal_restart import fatal_restart
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 
-PROB_THRESHOLD = 0.35
+PROB_THRESHOLD = 0.65
 
 logger = logging.getLogger('json')
 
