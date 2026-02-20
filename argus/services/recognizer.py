@@ -169,7 +169,8 @@ class OpenVinoRecognizer:
 
             # Send mqtt message
             if queue_item.objects_detected and self.mqtt_service is not None:
-                self.mqtt_service.publish(
+                run_async(
+                    self.mqtt_service.publish_async,
                     topic=f"argus/source/{queue_item.thread_name}/meta",
                     payload=json.dumps({
                         'important_objects_detected': queue_item.important_objects_detected,

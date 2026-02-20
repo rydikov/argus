@@ -1,6 +1,7 @@
 import logging
 import os
 
+import asyncio
 import paho.mqtt.publish as publish
 
 logger = logging.getLogger('json')
@@ -20,3 +21,6 @@ class MQTTService:
             hostname=self.hostname,
             port=self.port,
         )
+
+    async def publish_async(self, topic, payload):
+        await asyncio.to_thread(self.publish, topic, payload)
