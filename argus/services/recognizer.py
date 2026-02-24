@@ -13,7 +13,7 @@ from argus.settings import (
     send_frames_after_signal,
     multi_hit_confirmations
 )
-from argus.utils.tg_async_loop import run_async
+from argus.utils.async_loop import run_async
 from argus.utils.fatal_restart import fatal_restart
 
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
