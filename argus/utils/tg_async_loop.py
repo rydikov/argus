@@ -1,8 +1,10 @@
 import asyncio
+import logging
 import threading
 
 # Глобальный loop
 _loop = None
+logger = logging.getLogger('json')
 
 def init_tg_async_loop():
     # Отдельный event loop для отправки сообщений в телеграм из колбека
@@ -17,7 +19,18 @@ def run_async(func, *args, **kwargs):
     if _loop is None:
         raise RuntimeError("Async loop not initialized")
 
-    return asyncio.run_coroutine_threadsafe(
+    future = asyncio.run_coroutine_threadsafe(
         func(*args, **kwargs),
         _loop,
     )
+
+    task_name = getattr(func, '__qualname__', str(func))
+
+    def _log_async_error(done_future):
+        try:
+            done_future.result()
+        except Exception:
+            logger.exception('Async task failed: %s', task_name)
+
+    future.add_done_callback(_log_async_error)
+    return future
