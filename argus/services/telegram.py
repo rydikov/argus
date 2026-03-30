@@ -1,6 +1,9 @@
+import os
+
 import cv2
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.types import FSInputFile
 from tempfile import NamedTemporaryFile
 
@@ -10,9 +13,16 @@ class TelegramService:
     def __init__(self, bot_token, bot_chat_id):
         self.bot_token = bot_token
         self.bot_chat_id = bot_chat_id
+
+        bot_kwargs = {
+            "token": self.bot_token,
+            "default": DefaultBotProperties(parse_mode="Markdown"),
+        }
+        if proxy_url := os.getenv("TELEGRAM_PROXY"):
+            bot_kwargs["session"] = AiohttpSession(proxy=proxy_url)
+
         self.bot = Bot(
-            token=self.bot_token,
-            default=DefaultBotProperties(parse_mode="Markdown")
+            **bot_kwargs
         )
 
     async def send_message(self, message):
