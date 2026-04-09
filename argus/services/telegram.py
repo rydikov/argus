@@ -1,5 +1,3 @@
-import os
-
 import cv2
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
@@ -10,7 +8,7 @@ from tempfile import NamedTemporaryFile
 
 class TelegramService:
     # Async Service for nonblocking recognized thread, run with run_async in helpers from sync callback
-    def __init__(self, bot_token, bot_chat_id):
+    def __init__(self, bot_token, bot_chat_id, proxy_url=None):
         self.bot_token = bot_token
         self.bot_chat_id = bot_chat_id
 
@@ -18,7 +16,7 @@ class TelegramService:
             "token": self.bot_token,
             "default": DefaultBotProperties(parse_mode="Markdown"),
         }
-        if proxy_url := os.getenv("TELEGRAM_PROXY"):
+        if proxy_url:
             bot_kwargs["session"] = AiohttpSession(proxy=proxy_url)
 
         self.bot = Bot(

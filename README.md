@@ -130,6 +130,15 @@ recognizer:
 | telegram_bot           |          | Telegram секция для опещения                                             |
 |   token                |          | Токен                                                                    |
 |   chat_id              |          | ID чата в который будет приходить оповещение                             |
+|   proxy                |          | URL прокси для Telegram, например `socks5://user:pass@host:port`         |
+
+Пример Telegram-секции:
+```yaml
+telegram_bot:
+  token: 123456:ABCDEF
+  chat_id: -1001234567890
+  proxy: socks5://user:pass@proxy.example.com:1080
+```
 
 #### Mqtt secton (опциональная)
 
