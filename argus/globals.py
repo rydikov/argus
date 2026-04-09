@@ -19,7 +19,8 @@ if not os.path.exists(state_dir):
 if config.get('telegram_bot') is not None:
     telegram_service = TelegramService(
         config['telegram_bot']['token'], 
-        config['telegram_bot']['chat_id']
+        config['telegram_bot']['chat_id'],
+        config['telegram_bot'].get('proxy')
     )
 else:
     telegram_service = None
