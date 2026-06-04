@@ -6,6 +6,7 @@ sources:
     source: /app/res/demo.mov
     save_every_sec: 3600
     stills_dir: /app/data/Stills
+    object_detected_prompt: Object detected.
     important_objects:
       - person
       - car

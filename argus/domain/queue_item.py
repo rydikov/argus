@@ -7,6 +7,7 @@ from datetime import datetime
 from argus.globals import config
 
 WHITE_COLOR = (255, 255, 255)
+DEFAULT_OBJECT_DETECTED_PROMPT = 'Object detected.'
 
 logger = logging.getLogger('json')
 
@@ -24,6 +25,10 @@ class QueueItem:
 
         self.stills_dir = source_config['stills_dir']
         self.host_stills_uri = source_config.get('host_stills_uri')
+        self.object_detected_prompt = source_config.get(
+            'object_detected_prompt',
+            DEFAULT_OBJECT_DETECTED_PROMPT,
+        )
 
         self.path = None
         self.url = None
