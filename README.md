@@ -76,6 +76,8 @@ CONFIG_PATH = /app/data/development.override.yml
 |     important_objects  |          | Объекты, при обнаружении который будет оповещение в telegram. По умолчани: person.                                                |
 |     other_objects      |          | Объекты, которые будут распозноваться и помечаться на изображении                                                                 |
 |     save_every_sec     |          | Сохранять изображения каждые N секунд, если 0, то будут сохраняться только изображения с important_objects                        |
+|     object_detected_prompt |     | Подпись/prompt для кадра, отправляемого в Telegram при обнаружении important_objects. По умолчанию: `Object detected.`             |
+|     photo_requested_prompt |     | Подпись/prompt для кадра, отправляемого в Telegram по команде `get_photos`. По умолчанию: `Photo requested.`                      |
 
 
 Пример с двумя камерами и всеми опциями для секций:
@@ -86,6 +88,8 @@ sources:
     source: rtsp://login:password@192.168.1.55:554/Streaming/Channels/101
     save_every_sec: 15
     stills_dir: /../../Stills/first
+    object_detected_prompt: Object detected.
+    photo_requested_prompt: Photo requested.
     important_objects:
       - person
   second-cam:
@@ -93,6 +97,8 @@ sources:
     save_every_sec: 0
     stills_dir: ../../Stills/second
     host_stills_uri: http://localhost/Stills/second
+    object_detected_prompt: "@volta_clawdbot Охранная система обнаружила объект на фото. Опиши, что там происходит и риск опасности"
+    photo_requested_prompt: "@volta_clawdbot Опиши, что сейчас видно на фото"
     important_objects:
       - person
       - car

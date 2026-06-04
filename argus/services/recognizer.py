@@ -155,7 +155,7 @@ class OpenVinoRecognizer:
         # Send frame to telegram after external signal
         if thread_name in send_frames_after_signal and self.telegram is not None:
             send_frames_after_signal.remove(thread_name)
-            run_async(self.telegram.send_frame, queue_item.frame, queue_item.object_detected_prompt)
+            run_async(self.telegram.send_frame, queue_item.frame, queue_item.photo_requested_prompt)
 
         if queue_item.important_objects_detected:
             detection_is_confirm = multi_hit_confirmations[thread_name].on_detect()
