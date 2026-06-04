@@ -14,7 +14,7 @@ class TelegramService:
 
         bot_kwargs = {
             "token": self.bot_token,
-            "default": DefaultBotProperties(parse_mode="Markdown"),
+            "default": DefaultBotProperties(parse_mode=None),
         }
         if proxy_url:
             bot_kwargs["session"] = AiohttpSession(proxy=proxy_url)

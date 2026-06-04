@@ -13,3 +13,4 @@ sources:
 recognizer:
   device_name: CPU
   num_requests: 4
+  object_detected_prompt: Object detected.

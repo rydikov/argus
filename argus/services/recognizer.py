@@ -19,6 +19,7 @@ from argus.utils.fatal_restart import fatal_restart
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 
 PROB_THRESHOLD = 0.65
+DEFAULT_OBJECT_DETECTED_PROMPT = 'Object detected.'
 
 logger = logging.getLogger('json')
 
@@ -42,6 +43,10 @@ class OpenVinoRecognizer:
         self.net_config = net_config
         self.telegram  = telegram_service
         self.mqtt_service = mqtt_service
+        self.object_detected_prompt = self.net_config.get(
+            'object_detected_prompt',
+            DEFAULT_OBJECT_DETECTED_PROMPT,
+        )
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolo11n')
@@ -188,4 +193,4 @@ class OpenVinoRecognizer:
                     if queue_item.url is not None:
                         run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
                     else:
-                        run_async(self.telegram.send_frame, queue_item.frame, f'Objects detected')
+                        run_async(self.telegram.send_frame, queue_item.frame, self.object_detected_prompt)
