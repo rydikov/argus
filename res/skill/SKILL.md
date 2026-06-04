@@ -67,6 +67,7 @@ Use when the user asks to request current photos or frames from the video detect
 Russian examples:
 
 - получи фото с камер
+- запроси фото
 - запроси кадры
 - отправь текущие фото
 - покажи последние снимки

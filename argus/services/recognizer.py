@@ -19,7 +19,6 @@ from argus.utils.fatal_restart import fatal_restart
 LOG_RECOGNIZE_RPS_TIME = timedelta(minutes=1)
 
 PROB_THRESHOLD = 0.65
-DEFAULT_OBJECT_DETECTED_PROMPT = 'Object detected.'
 
 logger = logging.getLogger('json')
 
@@ -43,10 +42,6 @@ class OpenVinoRecognizer:
         self.net_config = net_config
         self.telegram  = telegram_service
         self.mqtt_service = mqtt_service
-        self.object_detected_prompt = self.net_config.get(
-            'object_detected_prompt',
-            DEFAULT_OBJECT_DETECTED_PROMPT,
-        )
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolo11n')
@@ -160,7 +155,7 @@ class OpenVinoRecognizer:
         # Send frame to telegram after external signal
         if thread_name in send_frames_after_signal and self.telegram is not None:
             send_frames_after_signal.remove(thread_name)
-            run_async(self.telegram.send_frame, queue_item.frame, f'Photo from {thread_name}')
+            run_async(self.telegram.send_frame, queue_item.frame, queue_item.object_detected_prompt)
 
         if queue_item.important_objects_detected:
             detection_is_confirm = multi_hit_confirmations[thread_name].on_detect()
@@ -193,4 +188,8 @@ class OpenVinoRecognizer:
                     if queue_item.url is not None:
                         run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
                     else:
-                        run_async(self.telegram.send_frame, queue_item.frame, self.object_detected_prompt)
+                        run_async(
+                            self.telegram.send_frame,
+                            queue_item.frame,
+                            queue_item.object_detected_prompt
+                        )
