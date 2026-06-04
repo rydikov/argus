@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import socket
 import sys
 
@@ -8,6 +9,8 @@ import sys
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8888
 DEFAULT_TIMEOUT = 5.0
+
+logger = logging.getLogger("argus_cli")
 
 COMMANDS = {
     "restart": "Перезапустить систему видеообнаружения",
@@ -17,6 +20,7 @@ COMMANDS = {
 
 
 def send_bus_message(host: str, port: int, message: str, timeout: float) -> str:
+    logger.info("Sending skill command", extra={"command": message, "host": host, "port": port})
     try:
         with socket.create_connection((host, port), timeout=timeout) as sock:
             sock.settimeout(timeout)
@@ -32,10 +36,17 @@ def send_bus_message(host: str, port: int, message: str, timeout: float) -> str:
     if received != "OK":
         raise RuntimeError(f"server error: {received!r}")
 
+    logger.info("Skill command succeeded", extra={"command": message, "response": received})
     return received
 
 
 def main() -> int:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        stream=sys.stderr,
+    )
+
     parser = argparse.ArgumentParser(
         prog="video-signal",
         description="CLI для отправки команд",
@@ -75,8 +86,9 @@ def main() -> int:
             port=args.port,
             message=args.command,
             timeout=args.timeout,
-        )
+    )
     except RuntimeError as exc:
+        logger.error("Skill command failed", extra={"command": args.command, "error": str(exc)})
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
