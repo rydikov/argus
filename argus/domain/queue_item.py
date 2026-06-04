@@ -8,6 +8,7 @@ from argus.globals import config
 
 WHITE_COLOR = (255, 255, 255)
 DEFAULT_OBJECT_DETECTED_PROMPT = 'Object detected.'
+DEFAULT_PHOTO_REQUESTED_PROMPT = 'Photo requested.'
 
 logger = logging.getLogger('json')
 
@@ -28,6 +29,10 @@ class QueueItem:
         self.object_detected_prompt = source_config.get(
             'object_detected_prompt',
             DEFAULT_OBJECT_DETECTED_PROMPT,
+        )
+        self.photo_requested_prompt = source_config.get(
+            'photo_requested_prompt',
+            DEFAULT_PHOTO_REQUESTED_PROMPT,
         )
 
         self.path = None
