@@ -4,6 +4,7 @@ import yaml
 from argus.services.telegram import TelegramService
 from argus.services.recognizer import OpenVinoRecognizer
 from argus.services.mqtt import MQTTService
+from argus.services.email import EmailService
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -33,9 +34,26 @@ if config.get('mqtt') is not None:
 else:
     mqtt_service = None
 
+if config.get('email') is not None:
+    email_config = config['email']
+    email_service = EmailService(
+        email_config['smtp_host'],
+        email_config['smtp_port'],
+        email_config['from_addr'],
+        email_config['to_addrs'],
+        email_config.get('username'),
+        email_config.get('password'),
+        email_config.get('use_tls', True),
+        email_config.get('use_ssl', False),
+        email_config.get('subject', 'Argus object detected')
+    )
+else:
+    email_service = None
+
 
 recognizer = OpenVinoRecognizer(
     config['recognizer'], 
     telegram_service,
-    mqtt_service
+    mqtt_service,
+    email_service
 )
