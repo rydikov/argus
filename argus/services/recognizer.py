@@ -38,10 +38,11 @@ def up_rps():
 
 class OpenVinoRecognizer:
 
-    def __init__(self, net_config, telegram_service, mqtt_service):
+    def __init__(self, net_config, telegram_service, mqtt_service, email_service=None):
         self.net_config = net_config
         self.telegram  = telegram_service
         self.mqtt_service = mqtt_service
+        self.email_service = email_service
 
         models_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'models'))
         model_name = self.net_config.get('model', 'yolo11n')
@@ -181,15 +182,32 @@ class OpenVinoRecognizer:
                     }),
                 )
 
-            # Оповещение в телеграмм. is_allowed должен быть в другом условии
+            # Оповещение. is_allowed должен быть в другом условии
             # т.к. изменяют внутренние счетчики
-            if detection_is_confirm and self.telegram is not None:
-                if notification_throttlers[thread_name].is_allowed():
-                    if queue_item.url is not None:
-                        run_async(self.telegram.send_message, f'Objects detected: {queue_item.url}')
-                    else:
-                        run_async(
-                            self.telegram.send_frame,
-                            queue_item.frame,
-                            queue_item.object_detected_prompt
-                        )
+            self.notify_on_confirmed_detection(queue_item, detection_is_confirm)
+
+    def notify_on_confirmed_detection(self, queue_item, detection_is_confirm):
+        if detection_is_confirm:
+            if notification_throttlers[queue_item.thread_name].is_allowed():
+                self.send_detection_notifications(queue_item)
+
+    def send_detection_notifications(self, queue_item):
+        if queue_item.url is not None:
+            message = f'Objects detected: {queue_item.url}'
+            if self.telegram is not None:
+                run_async(self.telegram.send_message, message)
+            if self.email_service is not None:
+                run_async(self.email_service.send_message, message)
+        else:
+            if self.telegram is not None:
+                run_async(
+                    self.telegram.send_frame,
+                    queue_item.frame,
+                    queue_item.object_detected_prompt
+                )
+            if self.email_service is not None:
+                run_async(
+                    self.email_service.send_frame,
+                    queue_item.frame,
+                    'Objects detected'
+                )
