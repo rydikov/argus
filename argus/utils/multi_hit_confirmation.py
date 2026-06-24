@@ -18,7 +18,6 @@ class MultiHitConfirmation:
         Возвращает True, если за последние N секунд набралось threshold событий.
         После этого сбрасывает счётчик, чтобы избежать спама.
         """
-        logger.info(f'Events in deque: {len(self.events)}')
 
         now = time.time()
 

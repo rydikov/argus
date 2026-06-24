@@ -63,11 +63,13 @@ class EmailService:
 
     async def send_message(self, message):
         email_message = self._build_message(message)
-        await asyncio.to_thread(self._send_message, email_message)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self._send_message, email_message)
 
     async def send_frame(self, frame, message):
         import cv2
 
         _, img = cv2.imencode('.jpg', frame)
         email_message = self._build_frame_message(img.tobytes(), message)
-        await asyncio.to_thread(self._send_message, email_message)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self._send_message, email_message)
