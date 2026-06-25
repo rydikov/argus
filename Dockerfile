@@ -1,4 +1,4 @@
-FROM openvino/ubuntu24_runtime:2025.4.1
+FROM openvino/ubuntu24_runtime:2026.2.1
 
 WORKDIR /app
 USER root

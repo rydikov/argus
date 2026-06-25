@@ -3,7 +3,7 @@
 | Details                 |               |
 |-------------------------|---------------|
 | Neural network:         |[![YOLOv11](https://img.shields.io/badge/yolo-11-blue)](https://github.com/ultralytics/ultralytics) |
-| CV Framework:           |[![OpenVINO 2025.4.1](https://img.shields.io/badge/openvino-2025.4-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
+| CV Framework:           |[![OpenVINO 2026.2.1](https://img.shields.io/badge/openvino-2026.2-blue.svg)](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)|
 | Hardware:               | Минимум Intel CPU 6-го поколения, PC с Intel GPU. |
 
 

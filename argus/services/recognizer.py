@@ -5,7 +5,11 @@ import numpy as np
 import os
 
 from datetime import datetime, timedelta
-from openvino.runtime import Core, AsyncInferQueue
+try:
+    # 2026.2.1
+    from openvino import Core, AsyncInferQueue
+except ImportError:
+    from openvino.runtime import Core, AsyncInferQueue
 
 from argus.settings import (
     save_throttlers, 
